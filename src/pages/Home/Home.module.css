@@ -1,0 +1,19 @@
+.card {
+  width: 100%;
+  max-width: 720px;
+  height: calc(100vh - 6rem);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  .card {
+    height: calc(100vh - 3rem);
+    border-radius: var(--radius-md);
+  }
+}

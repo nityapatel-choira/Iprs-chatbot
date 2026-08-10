@@ -1,0 +1,52 @@
+.wrap {
+  max-width: min(84%, 560px);
+  margin-left: 36px;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 24px 16px;
+  background: rgba(237, 245, 255, 0.82);
+  border: 1.5px dashed #5c90ff;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s var(--ease);
+}
+
+.dropzone:hover:not(:disabled) {
+  background: rgba(237, 245, 255, 1);
+}
+
+.dropzone:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.title {
+  font-size: 0.875rem;
+  line-height: 1.43;
+  font-weight: 600;
+  color: #101111;
+  text-align: center;
+}
+
+.caption {
+  font-size: 0.75rem;
+  line-height: 1.33;
+  color: #666666;
+  text-align: center;
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

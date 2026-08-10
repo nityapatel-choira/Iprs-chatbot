@@ -1,0 +1,108 @@
+.card {
+  max-width: min(92%, 560px);
+  margin: 0 auto;
+  padding: 16px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 7px 8px 29px rgba(0, 0, 0, 0.12);
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.stage:last-child {
+  flex: 0 0 auto;
+}
+
+.dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #cccccc;
+  background: #ffffff;
+}
+
+.dot.completed {
+  background: #25c196;
+  border-color: #25c196;
+}
+
+.dot.in-progress {
+  background: #007bff;
+  border-color: #007bff;
+}
+
+.dot.pending {
+  background: #ffffff;
+  border-color: #cccccc;
+}
+
+.line {
+  flex: 1;
+  height: 2px;
+  background: #cccccc;
+  margin: 0 4px;
+}
+
+.labels {
+  display: flex;
+  margin-top: 8px;
+}
+
+.labelGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepNum {
+  font-size: 0.5rem;
+  line-height: 1.75;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: #a8aabc;
+}
+
+.stageName {
+  font-size: 0.75rem;
+  line-height: 1.33;
+  font-weight: 600;
+  color: #333333;
+}
+
+.badge {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge.completed {
+  color: #25c196;
+  background: rgba(37, 193, 150, 0.08);
+}
+
+.badge.in-progress {
+  color: #007bff;
+  background: rgba(0, 123, 255, 0.12);
+}
+
+.badge.pending {
+  color: #a8aabc;
+  background: transparent;
+  border: 1px solid #cccccc;
+}

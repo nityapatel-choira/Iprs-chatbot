@@ -1,0 +1,89 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: min(84%, 560px);
+  margin-left: 36px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #c8ddf0;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(59, 116, 196, 0.16);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.row:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #b2b2b2;
+  color: #ffffff;
+  transition: background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.boxChecked {
+  background: linear-gradient(90deg, #1a5ce6 39%, #3b7aff 100%);
+  border-color: #3b7aff;
+}
+
+.label {
+  font-size: 0.875rem;
+  line-height: 1.7;
+  font-weight: 600;
+  color: #2b2a3c;
+}
+
+.caption {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.33;
+  color: #4d4d4d;
+}
+
+.submit {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 8px 20px;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(90deg, #1a5ce6 39%, #3b7aff 100%);
+  box-shadow: 0 0 12px rgba(59, 122, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.submit:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.submit:disabled {
+  background: #dfdddd;
+  color: #808080;
+  box-shadow: none;
+  cursor: not-allowed;
+}

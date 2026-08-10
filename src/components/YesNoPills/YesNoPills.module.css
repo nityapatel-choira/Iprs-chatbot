@@ -1,0 +1,35 @@
+.row {
+  display: flex;
+  gap: 12px;
+  max-width: min(84%, 560px);
+  margin-left: 36px;
+}
+
+.pill {
+  flex: 1;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #dfdddd;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  font-weight: 600;
+  text-align: center;
+  color: #2b2a3c;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.pill:hover:not(:disabled) {
+  border-color: #3b7aff;
+}
+
+.pill:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.pill:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
