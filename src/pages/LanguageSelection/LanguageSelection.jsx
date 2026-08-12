@@ -1,30 +1,10 @@
 import { useState } from "react";
 import iprsLogo from "../../assets/iprs-logo.png";
+import LanguageCard from "../../components/LanguageCard/LanguageCard";
+import { LANGUAGES } from "../../constants/languages";
 import styles from "./LanguageSelection.module.css";
 
-export const LANGUAGES = [
-  { code: "en", name: "English", native: "English" },
-  { code: "hi", name: "Hindi", native: "हिन्दी" },
-  { code: "mr", name: "Marathi", native: "मराठी" },
-  { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
-];
-
-function LanguageCard({ name, native, selected, onSelect }) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      className={`${styles.card} ${selected ? styles.cardSelected : ""}`}
-      onClick={onSelect}
-    >
-      <span className={styles.cardName}>{name}</span>
-      <span className={styles.cardNative}>{native}</span>
-    </button>
-  );
-}
-
-export default function LanguageSelection({ onContinue }) {
+function LanguageSelection({ onContinue }) {
   const [selected, setSelected] = useState(null);
 
   const handleContinue = () => {
@@ -74,3 +54,5 @@ export default function LanguageSelection({ onContinue }) {
     </div>
   );
 }
+
+export default LanguageSelection;

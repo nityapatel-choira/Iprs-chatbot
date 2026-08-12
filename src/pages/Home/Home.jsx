@@ -1,10 +1,10 @@
 import ChatWindow from "../../components/ChatWindow/ChatWindow";
 import ChatInput from "../../components/ChatInput/ChatInput";
 import QuickTopics from "../../components/QuickTopics/QuickTopics";
-import { useChat } from "../../hooks/useChat";
+import useChat from "../../hooks/useChat";
 import styles from "./Home.module.css";
 
-export default function Home() {
+function Home() {
   const { messages, isTyping, sendMessage } = useChat();
 
   return (
@@ -15,3 +15,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default Home;

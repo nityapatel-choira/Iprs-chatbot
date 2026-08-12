@@ -2,7 +2,7 @@ import { useState } from "react";
 import Button from "../Button/Button";
 import styles from "./ChatInput.module.css";
 
-export default function ChatInput({ onSend, disabled }) {
+function ChatInput({ onSend, disabled }) {
   const [value, setValue] = useState("");
 
   const handleSubmit = (e) => {
@@ -30,3 +30,5 @@ export default function ChatInput({ onSend, disabled }) {
     </form>
   );
 }
+
+export default ChatInput;

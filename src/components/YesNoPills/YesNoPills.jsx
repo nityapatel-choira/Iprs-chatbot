@@ -1,6 +1,6 @@
 import styles from "./YesNoPills.module.css";
 
-export default function YesNoPills({ onSelect, disabled }) {
+function YesNoPills({ onSelect, disabled }) {
   return (
     <div className={styles.row}>
       {["Yes", "No"].map((label) => (
@@ -17,3 +17,5 @@ export default function YesNoPills({ onSelect, disabled }) {
     </div>
   );
 }
+
+export default YesNoPills;

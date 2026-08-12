@@ -7,7 +7,7 @@ const TOPICS = [
   "DigiLocker Verification",
 ];
 
-export default function QuickTopics({ onSelect }) {
+function QuickTopics({ onSelect }) {
   return (
     <div className={styles.container}>
       <span className={styles.label}>Quick topics:</span>
@@ -26,3 +26,5 @@ export default function QuickTopics({ onSelect }) {
     </div>
   );
 }
+
+export default QuickTopics;

@@ -1,6 +1,6 @@
 import styles from "./Button.module.css";
 
-export default function Button({
+function Button({
   children,
   variant = "primary",
   type = "button",
@@ -20,3 +20,5 @@ export default function Button({
     </button>
   );
 }
+
+export default Button;

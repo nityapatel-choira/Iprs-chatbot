@@ -1,6 +1,6 @@
 import styles from "./QuickReplyCard.module.css";
 
-export default function QuickReplyCard({ options, onSelect, disabled }) {
+function QuickReplyCard({ options, onSelect, disabled }) {
   return (
     <div className={styles.card}>
       {options.map((option) => (
@@ -18,3 +18,5 @@ export default function QuickReplyCard({ options, onSelect, disabled }) {
     </div>
   );
 }
+
+export default QuickReplyCard;

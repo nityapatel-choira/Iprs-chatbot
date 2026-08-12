@@ -10,7 +10,7 @@ const WELCOME = {
 
 let idCounter = 1;
 
-export function useChat() {
+function useChat() {
   const [messages, setMessages] = useState([WELCOME]);
   const [isTyping, setIsTyping] = useState(false);
 
@@ -43,3 +43,5 @@ export function useChat() {
 
   return { messages, isTyping, sendMessage };
 }
+
+export default useChat;

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import MessageBubble from "../MessageBubble/MessageBubble";
 import styles from "./ChatWindow.module.css";
 
-export default function ChatWindow({ messages, isTyping }) {
+function ChatWindow({ messages, isTyping }) {
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -25,3 +25,5 @@ export default function ChatWindow({ messages, isTyping }) {
     </div>
   );
 }
+
+export default ChatWindow;

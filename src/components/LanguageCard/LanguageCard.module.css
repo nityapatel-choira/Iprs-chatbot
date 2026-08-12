@@ -1,0 +1,59 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1.5px solid var(--fig-card-border);
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.card:hover {
+  border-color: var(--fig-select-border);
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.cardSelected {
+  background: var(--fig-select-bg);
+  border-color: var(--fig-select-border);
+}
+
+.cardName {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--fig-card-name);
+}
+
+.cardSelected .cardName {
+  color: var(--fig-select-name);
+}
+
+.cardNative {
+  font-size: 0.75rem;
+  line-height: 1.33;
+  color: var(--fig-card-native);
+}
+
+.cardSelected .cardNative {
+  color: var(--fig-select-native);
+}
+
+@media (min-width: 768px) {
+  .card {
+    padding: 1.15rem 1.25rem;
+  }
+}
+
+@media (max-width: 340px) {
+  .card {
+    padding: 0.85rem 0.85rem;
+  }
+}

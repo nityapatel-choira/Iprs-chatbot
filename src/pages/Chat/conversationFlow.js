@@ -17,6 +17,8 @@ export const CONSENT = {
 
 export const TRACKER_STAGES = ["Personal Details", "Bank Details", "Work Notifications", "Declaration"];
 
+export const FINAL_STEP_ID = "done";
+
 export const STEPS = {
   start: {
     bot: [
@@ -177,19 +179,21 @@ export const STEPS = {
   email: {
     bot: ["Share your email address"],
     tracker: { activeIndex: 0 },
-    input: { type: "text", placeholder: "Enter email address", inputMode: "email", next: "done" },
+    input: { type: "text", placeholder: "Enter email address", inputMode: "email", next: FINAL_STEP_ID },
   },
-  done: {
+  [FINAL_STEP_ID]: {
     bot: ["Thank you! Your account is set up — I'll let you know here once your membership review is complete."],
     tracker: { activeIndex: 1 },
     input: null,
   },
 };
 
-export function summarizeCheckboxSelection(selected) {
+function summarizeCheckboxSelection(selected) {
   const keys = selected.map((opt) => opt.key);
   if (keys.includes("lyrics") && keys.includes("music")) return "I write lyrics and compose the music.";
   if (keys.includes("lyrics")) return "I write lyrics.";
   if (keys.includes("music")) return "I compose the music.";
   return selected.map((opt) => opt.label).join(", ");
 }
+
+export { summarizeCheckboxSelection };

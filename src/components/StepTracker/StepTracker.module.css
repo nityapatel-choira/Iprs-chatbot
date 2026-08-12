@@ -1,7 +1,8 @@
 .wrap {
   width: 100%;
-  max-width: min(100%, var(--card-max, 560px));
+  max-width: min(100%, var(--card-max, 640px));
   margin: 0 auto;
+  padding: 0 4px;
 }
 
 .track {
@@ -14,15 +15,13 @@
 .node {
   display: flex;
   flex-direction: column;
-  flex: 1 1 0%;
+  flex: 1;
   min-width: 0;
-  padding-right: 4px;
+  align-items: flex-start;
 }
 
 .nodeLast {
-  flex: 1 1 0%;
-  min-width: 0;
-  padding-right: 0;
+  flex: 0 0 auto;
 }
 
 .iconRow {
@@ -36,21 +35,21 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
   border-radius: 50%;
   transition: all 0.3s var(--ease, ease);
 }
 
-.circle.active {
-  border: 2.5px solid #0066ff;
+.circle.completed {
+  border: none;
   background: #0066ff;
   color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
 }
 
-.circle.completed {
-  border: 2.5px solid #0066ff;
+.circle.active {
+  border: none;
   background: #0066ff;
   color: #ffffff;
 }
@@ -63,7 +62,8 @@
 
 .connectorWrap {
   flex: 1;
-  height: 3px;
+  min-width: 24px;
+  height: 4px;
   margin: 0 4px;
   background: #e2e8f0;
   border-radius: 2px;
@@ -87,39 +87,32 @@
 }
 
 .connectorCurrent {
-  width: 48%;
+  width: 50%;
 }
 
 .textCol {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-top: 6px;
+  margin-top: 10px;
+  padding-right: 4px;
 }
 
 .stepNum {
-  font-size: 0.6rem;
-  line-height: 1.3;
-  font-weight: 500;
-  letter-spacing: 0.03em;
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .stageName {
-  font-size: 0.75rem;
-  line-height: 1.2;
-  font-weight: 400;
-  color: #1e293b;
+  font-size: 0.875rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #0f172a;
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
 }
-
-@media (min-width: 768px) {
-  .stageName {
-    font-size: 0.8125rem;
-  }
-}
-
-
