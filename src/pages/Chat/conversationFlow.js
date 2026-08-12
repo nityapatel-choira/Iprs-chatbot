@@ -15,7 +15,7 @@ export const CONSENT = {
   },
 };
 
-export const TRACKER_STAGES = ["Personal Details", "Bank Details", "Work Notifications"];
+export const TRACKER_STAGES = ["Personal Details", "Bank Details", "Work Notifications", "Declaration"];
 
 export const STEPS = {
   start: {

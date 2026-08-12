@@ -19,6 +19,7 @@
 }
 
 .sheet {
+  position: relative;
   width: 100%;
   max-width: 480px;
   max-height: 80vh;
@@ -47,6 +48,14 @@
   border-radius: 999px;
   background: #dfdddd;
   margin: 8px auto 16px;
+}
+
+.closeButton {
+  display: none;
+}
+
+.divider {
+  display: none;
 }
 
 .title {
@@ -109,4 +118,69 @@
 
 .acceptButton:active {
   transform: scale(0.98);
+}
+
+/* Tablet/desktop: present as a centered dialog card instead of a bottom
+   sheet — rounded on all corners, closed via an explicit X, single CTA. */
+@media (min-width: 768px) {
+  .scrim {
+    align-items: center;
+  }
+
+  .sheet {
+    max-height: 85vh;
+    border-radius: 20px;
+    padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+    animation: fadeUp 0.25s var(--ease);
+  }
+
+  @keyframes fadeUp {
+    from {
+      transform: translateY(12px) scale(0.98);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 50%;
+    background: #f2f2f2;
+    color: #1a1a1a;
+    cursor: pointer;
+  }
+
+  .title {
+    margin-right: 28px;
+  }
+
+  .divider {
+    display: block;
+    height: 1px;
+    background: #e3e5ea;
+    margin-top: 20px;
+  }
+
+  .footer {
+    padding-top: 20px;
+  }
+
+  .backButton {
+    display: none;
+  }
 }

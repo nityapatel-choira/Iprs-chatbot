@@ -175,7 +175,7 @@
   cursor: not-allowed;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .panel {
     justify-content: center;
   }
@@ -195,6 +195,24 @@
 
   .card {
     padding: 1.15rem 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .content,
+  .footer {
+    max-width: 480px;
+  }
+
+  .logo {
+    width: 128px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .content,
+  .footer {
+    max-width: 520px;
   }
 }
 

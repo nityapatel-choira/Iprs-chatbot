@@ -1,5 +1,6 @@
 .wrap {
-  max-width: min(84%, 560px);
+  position: relative;
+  max-width: min(var(--card-pct, 84%), var(--card-max, 560px));
   margin-left: 36px;
 }
 
@@ -27,6 +28,11 @@
   opacity: 0.6;
 }
 
+.dropzoneUploading:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .title {
   font-size: 0.875rem;
   line-height: 1.43;
@@ -42,8 +48,32 @@
   text-align: center;
 }
 
+.spinnerWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(92, 144, 255, 0.25);
+  border-top-color: #5c90ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .hiddenInput {
   position: absolute;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;

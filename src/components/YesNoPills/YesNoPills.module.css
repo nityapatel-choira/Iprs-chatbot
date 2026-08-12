@@ -1,7 +1,7 @@
 .row {
   display: flex;
   gap: 12px;
-  max-width: min(84%, 560px);
+  max-width: min(var(--card-pct, 84%), var(--card-max, 560px));
   margin-left: 36px;
 }
 

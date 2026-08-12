@@ -46,6 +46,33 @@ function SendIcon() {
   );
 }
 
+function FileCardBubble({ fileName, fileSize, previewUrl }) {
+  return (
+    <a
+      href={previewUrl || "#"}
+      target={previewUrl ? "_blank" : undefined}
+      rel="noreferrer"
+      className={styles.fileBubbleUser}
+      title={previewUrl ? "Click to view uploaded document" : undefined}
+      style={{ textDecoration: "none" }}
+    >
+      <div className={styles.fileIconBox}>
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M14 2v6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      <div className={styles.fileMetaBox}>
+        <span className={styles.fileNameText}>{fileName}</span>
+        <span className={styles.fileDetailText}>
+          {fileSize || "1.2 MB"} · View Document ↗
+        </span>
+      </div>
+    </a>
+  );
+}
+
 function BotAvatar() {
   return (
     <span className={styles.avatar} aria-hidden="true">
@@ -61,11 +88,16 @@ export default function Chat({ language = "English", onBack }) {
   const [inputVisible, setInputVisible] = useState(false);
   const [trackerIndex, setTrackerIndex] = useState(null);
   const [consentSheet, setConsentSheet] = useState(null);
-  const endRef = useRef(null);
+  const messagesRef = useRef(null);
   const startedRef = useRef(false);
 
   const pushBot = (entry) => setHistory((prev) => [...prev, { id: nextId(), sender: "bot", ...entry }]);
   const pushUser = (text) => setHistory((prev) => [...prev, { id: nextId(), sender: "user", kind: "text", text }]);
+  const pushUserFile = (fileName, fileSize, rawFile, previewUrl) =>
+    setHistory((prev) => [
+      ...prev,
+      { id: nextId(), sender: "user", kind: "file", fileName, fileSize, rawFile, previewUrl },
+    ]);
 
   const runStep = (id) => {
     const step = STEPS[id];
@@ -115,7 +147,9 @@ export default function Chat({ language = "English", onBack }) {
   }, []);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [history, isTyping, inputVisible, consentSheet]);
 
   const advance = (targetId, userText) => {
@@ -130,7 +164,16 @@ export default function Chat({ language = "English", onBack }) {
   const handleQuickReply = (option) => advance(option.next, option.label);
   const handleYesNo = (value) => advance(input.next, value);
   const handleCheckboxSubmit = (selected) => advance(input.next, summarizeCheckboxSelection(selected));
-  const handleFileUploaded = (fileName) => advance(input.next, `${fileName} uploaded`);
+  const handleFileUploaded = (fileData) => {
+    const fileName = typeof fileData === "string" ? fileData : fileData?.name || "Uploaded File.pdf";
+    const fileSize = typeof fileData === "object" ? fileData?.size : "1.2 MB";
+    const rawFile = typeof fileData === "object" ? fileData?.rawFile : null;
+    const previewUrl = typeof fileData === "object" ? fileData?.previewUrl : null;
+
+    pushUserFile(fileName, fileSize, rawFile, previewUrl);
+    setInputVisible(false);
+    runStep(input.next);
+  };
   const handleTextSubmit = (value) => advance(input.next, value);
 
   const handleConsentAccept = () => {
@@ -167,12 +210,14 @@ export default function Chat({ language = "English", onBack }) {
           </div>
         )}
 
-        <div className={styles.messages}>
+        <div className={styles.messages} ref={messagesRef}>
           {history.map((msg) => (
             <div key={msg.id} className={`${styles.row} ${msg.sender === "user" ? styles.rowUser : styles.rowBot}`}>
               {msg.sender === "bot" && msg.kind !== "summaryCard" && <BotAvatar />}
               {msg.kind === "summaryCard" ? (
                 <FeeSummaryCard {...msg.data} />
+              ) : msg.kind === "file" ? (
+                <FileCardBubble fileName={msg.fileName} fileSize={msg.fileSize} previewUrl={msg.previewUrl} />
               ) : (
                 <div className={`${styles.bubble} ${msg.sender === "user" ? styles.bubbleUser : styles.bubbleBot}`}>
                   {msg.text}
@@ -202,11 +247,10 @@ export default function Chat({ language = "English", onBack }) {
           {inputVisible && input?.type === "fileUpload" && (
             <FileUploader title={input.title} caption={input.caption} onUploaded={handleFileUploaded} />
           )}
-
-          <div ref={endRef} />
         </div>
 
         <ChatComposer
+          key={stepId}
           onSend={handleTextSubmit}
           disabled={isTyping || !isTextStep}
           placeholder={isTextStep ? input.placeholder : "Write your message"}
@@ -240,10 +284,6 @@ export default function Chat({ language = "English", onBack }) {
 
 function ChatComposer({ onSend, disabled, placeholder, inputMode }) {
   const [value, setValue] = useState("");
-
-  useEffect(() => {
-    if (disabled) setValue("");
-  }, [disabled]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
