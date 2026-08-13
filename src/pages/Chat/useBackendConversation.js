@@ -43,10 +43,10 @@ function useBackendConversation() {
 
   const pushBot = (entries) => setHistory((prev) => [...prev, ...entries]);
   const pushUser = (text) => setHistory((prev) => [...prev, { id: nextId(), sender: "user", kind: "text", text }]);
-  const pushUserFile = (fileName, fileSize, rawFile, previewUrl) =>
+  const pushUserFile = (id, fileName, fileSize, rawFile, previewUrl, status = "uploading") =>
     setHistory((prev) => [
       ...prev,
-      { id: nextId(), sender: "user", kind: "file", fileName, fileSize, rawFile, previewUrl },
+      { id, sender: "user", kind: "file", fileName, fileSize, rawFile, previewUrl, status },
     ]);
 
   const applyResponse = (data) => {
@@ -100,10 +100,11 @@ function useBackendConversation() {
     if (isUploadingRef.current) return;
     isUploadingRef.current = true;
 
+    const fileId = nextId();
     const targetInputId = input?.id ?? null;
     const previewUrl = URL.createObjectURL(file);
     const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-    pushUserFile(file.name, `${sizeMb} MB`, file, previewUrl);
+    pushUserFile(fileId, file.name, `${sizeMb} MB`, file, previewUrl, "uploading");
     setUploadForInputId(targetInputId);
     setUploadStatus("uploading");
     setUploadProgress(0);
@@ -113,11 +114,17 @@ function useBackendConversation() {
     try {
       const data = await uploadFile(file, setUploadProgress);
       setUploadStatus("success");
+      setHistory((prev) =>
+        prev.map((msg) => (msg.id === fileId ? { ...msg, status: "success" } : msg))
+      );
       await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
       applyResponse(data);
     } catch (err) {
       setUploadStatus("error");
       setUploadError(err.message || "Upload failed. Please try again.");
+      setHistory((prev) =>
+        prev.map((msg) => (msg.id === fileId ? { ...msg, status: "error" } : msg))
+      );
     } finally {
       isUploadingRef.current = false;
     }

@@ -19,6 +19,7 @@ function MessageRow({ message }) {
           previewUrl={message.previewUrl}
           mimeType={message.rawFile?.type || message.mimeType}
           rawFile={message.rawFile}
+          status={message.status}
         />
       ) : message.kind === "richText" ? (
         <div className={`${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`}>
