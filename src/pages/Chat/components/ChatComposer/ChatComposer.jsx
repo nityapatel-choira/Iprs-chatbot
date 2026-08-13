@@ -3,7 +3,7 @@ import MicIcon from "../../../../components/icons/MicIcon";
 import SendIcon from "../../../../components/icons/SendIcon";
 import styles from "./ChatComposer.module.css";
 
-function ChatComposer({ onSend, disabled, placeholder, inputMode }) {
+function ChatComposer({ onSend, disabled, placeholder, inputMode, type = "text" }) {
   const [value, setValue] = useState("");
 
   const handleSubmit = (e) => {
@@ -21,7 +21,7 @@ function ChatComposer({ onSend, disabled, placeholder, inputMode }) {
         </button>
         <input
           className={styles.composerInput}
-          type="text"
+          type={type}
           inputMode={inputMode}
           placeholder={placeholder}
           value={value}

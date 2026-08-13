@@ -1,7 +1,7 @@
 import TranslateIcon from "../../../../components/icons/TranslateIcon";
 import styles from "./ChatHeader.module.css";
 
-function ChatHeader({ title, language, onBack }) {
+function ChatHeader({ title, language, onBack, onLogout }) {
   return (
     <header className={styles.header}>
       {onBack && (
@@ -14,6 +14,11 @@ function ChatHeader({ title, language, onBack }) {
         <TranslateIcon />
         {language}
       </span>
+      {onLogout && (
+        <button type="button" className={styles.logoutButton} onClick={onLogout}>
+          Logout
+        </button>
+      )}
     </header>
   );
 }

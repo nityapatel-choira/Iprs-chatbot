@@ -1,47 +1,41 @@
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
-import YesNoPills from "../../components/YesNoPills/YesNoPills";
-import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FileUploader from "../../components/FileUploader/FileUploader";
-import StepTracker from "../../components/StepTracker/StepTracker";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
-import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
-import useConversationFlow from "./useConversationFlow";
-import { TRACKER_STAGES /*, FINAL_STEP_ID */ } from "./conversationFlow";
+import useBackendConversation from "./useBackendConversation";
 import styles from "./Chat.module.css";
 
-function Chat({ language = "English", onBack /*, onFinished */ }) {
+const TEXT_INPUT_CONFIG = {
+  "text input": { type: "text", inputMode: "text" },
+  "email input": { type: "email", inputMode: "email" },
+  "url input": { type: "url", inputMode: "url" },
+};
+
+function Chat({ language = "English", onBack, onLogout }) {
   const {
     history,
-    stepId,
-    isTyping,
-    inputVisible,
-    trackerIndex,
-    consentSheet,
-    messagesRef,
     input,
-    isTextStep,
-    handleQuickReply,
-    handleYesNo,
-    handleCheckboxSubmit,
-    handleFileUploaded,
-    handleTextSubmit,
-    handleConsentAccept,
-    handleConsentBack,
-  } = useConversationFlow();
+    isTyping,
+    error,
+    sessionEnded,
+    uploadStatus,
+    uploadProgress,
+    uploadError,
+    messagesRef,
+    sendAnswer,
+    submitFile,
+    retry,
+  } = useBackendConversation();
+
+  const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
+  const isTextStep = Boolean(textConfig) && !isTyping;
 
   return (
     <div className={styles.page}>
       <div className={styles.panel}>
-        <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} />
-
-        {trackerIndex !== null && (
-          <div className={styles.trackerSlot}>
-            <StepTracker stages={TRACKER_STAGES} activeIndex={trackerIndex} />
-          </div>
-        )}
+        <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
         <div className={styles.messages} ref={messagesRef}>
           {history.map((message) => (
@@ -50,35 +44,45 @@ function Chat({ language = "English", onBack /*, onFinished */ }) {
 
           {isTyping && <TypingIndicator />}
 
-          {inputVisible && (input?.type === "quickReply" || input?.type === "summary") && (
-            <QuickReplyCard options={input.options} onSelect={handleQuickReply} />
-          )}
-          {inputVisible && input?.type === "yesNo" && <YesNoPills onSelect={handleYesNo} />}
-          {inputVisible && input?.type === "checkbox" && (
-            <CheckboxGroup options={input.options} caption={input.caption} onSubmit={handleCheckboxSubmit} />
-          )}
-          {inputVisible && input?.type === "fileUpload" && (
-            <FileUploader title={input.title} caption={input.caption} onUploaded={handleFileUploaded} />
+          {!isTyping && input?.type === "choice input" && (
+            <QuickReplyCard
+              options={(input.items || []).map((item) => ({ label: item.content }))}
+              onSelect={(option) => sendAnswer(option.label)}
+            />
           )}
 
-          {/* {stepId === FINAL_STEP_ID && !isTyping && onFinished && (
-            <QuickReplyCard
-              options={[{ label: "Continue to Face Verification" }]}
-              onSelect={() => onFinished()}
+          {!isTyping && input?.type === "file input" && (
+            <FileUploader
+              title="Upload file"
+              caption="JPEG, PNG or PDF"
+              onFileSelected={submitFile}
+              status={uploadStatus}
+              progress={uploadProgress}
+              errorMessage={uploadError}
             />
-          )} */}
+          )}
+
+          {error && (
+            <div className={styles.errorBanner} role="alert">
+              <span>{error}</span>
+              <button type="button" className={styles.retryButton} onClick={retry}>
+                Retry
+              </button>
+            </div>
+          )}
+
+          {sessionEnded && !error && <p className={styles.sessionEndedNote}>Conversation complete.</p>}
         </div>
 
         <ChatComposer
-          key={stepId}
-          onSend={handleTextSubmit}
+          key={input?.id || "composer"}
+          onSend={sendAnswer}
           disabled={isTyping || !isTextStep}
-          placeholder={isTextStep ? input.placeholder : "Write your message"}
-          inputMode={isTextStep ? input.inputMode : "text"}
+          placeholder="Write your message"
+          inputMode={textConfig?.inputMode || "text"}
+          type={textConfig?.type || "text"}
         />
       </div>
-
-      <ConsentDialog sheet={consentSheet} onAccept={handleConsentAccept} onBack={handleConsentBack} />
     </div>
   );
 }
