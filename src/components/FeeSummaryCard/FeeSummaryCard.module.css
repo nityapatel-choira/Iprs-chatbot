@@ -1,0 +1,146 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: min(var(--card-pct, 84%), var(--card-max, 560px));
+  margin-left: 36px;
+}
+
+.feeIntro {
+  margin: 0 0 -4px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 400;
+  color: #475569;
+}
+
+.outerCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 12px;
+}
+
+.feeCard {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.docCard {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.entityLabel {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.amountGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feeAmount {
+  font-size: 1.375rem;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.feeCaption {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  color: #64748b;
+}
+
+.infoPill {
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #334155;
+  font-weight: 400;
+}
+
+.docHeading {
+  margin: 0 0 4px;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.docSubtext {
+  margin: 0 0 16px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.docList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.docRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.docCheck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #0f172a;
+  margin-top: 1px;
+}
+
+.docCheck svg {
+  width: 14px;
+  height: 12px;
+}
+
+.docTextCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.docLabel {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.docSub {
+  font-size: 0.78125rem;
+  line-height: 1.35;
+  color: #64748b;
+}

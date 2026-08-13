@@ -1,0 +1,125 @@
+.wrap {
+  position: relative;
+  width: 100%;
+  max-width: min(var(--card-pct, 84%), var(--card-max, 580px));
+  margin-left: 36px;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 24px 16px;
+  background: #f0f6ff;
+  border: 1.5px dashed #0066ff;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s var(--ease, ease);
+}
+
+.dropzone:hover:not(:disabled) {
+  background: #e6f0ff;
+}
+
+.dropzone:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dropzoneUploading:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.dropzoneError {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.title {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: center;
+}
+
+.caption {
+  font-size: 0.78125rem;
+  line-height: 1.35;
+  color: #64748b;
+  text-align: center;
+}
+
+.spinnerWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(0, 102, 255, 0.2);
+  border-top-color: #0066ff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progressTrack {
+  width: 160px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 102, 255, 0.15);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #0066ff;
+  border-radius: 3px;
+  transition: width 0.15s ease;
+}
+
+.successIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.errorIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.hiddenInput {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

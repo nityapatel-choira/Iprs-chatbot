@@ -1,0 +1,118 @@
+.wrap {
+  width: 100%;
+  max-width: min(100%, var(--card-max, 640px));
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+.track {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.nodeLast {
+  flex: 0 0 auto;
+}
+
+.iconRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+  border-radius: 50%;
+  transition: all 0.3s var(--ease, ease);
+}
+
+.circle.completed {
+  border: none;
+  background: #0066ff;
+  color: #ffffff;
+}
+
+.circle.active {
+  border: none;
+  background: #0066ff;
+  color: #ffffff;
+}
+
+.circle.pending {
+  border: none;
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
+.connectorWrap {
+  flex: 1;
+  min-width: 24px;
+  height: 4px;
+  margin: 0 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.connectorLine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #0066ff;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.4s var(--ease, ease);
+}
+
+.connectorDone {
+  width: 100%;
+}
+
+.connectorCurrent {
+  width: 50%;
+}
+
+.textCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  padding-right: 4px;
+}
+
+.stepNum {
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.stageName {
+  font-size: 0.875rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
