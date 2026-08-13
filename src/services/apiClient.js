@@ -72,7 +72,8 @@ function uploadRequest(path, formData, onProgress) {
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
-        onProgress(Math.round((e.loaded / e.total) * 100));
+        const pct = Math.round((e.loaded / e.total) * 100);
+        onProgress(pct >= 100 ? 99 : pct);
       }
     };
 

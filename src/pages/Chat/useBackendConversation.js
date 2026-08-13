@@ -56,6 +56,11 @@ function useBackendConversation() {
       setInput(null);
     } else {
       setInput(data?.input ?? null);
+      if (data?.input?.type === "file input") {
+        setUploadStatus("idle");
+        setUploadProgress(0);
+        setUploadError("");
+      }
     }
   };
 
@@ -113,12 +118,23 @@ function useBackendConversation() {
 
     try {
       const data = await uploadFile(file, setUploadProgress);
-      setUploadStatus("success");
-      setHistory((prev) =>
-        prev.map((msg) => (msg.id === fileId ? { ...msg, status: "success" } : msg))
-      );
-      await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
-      applyResponse(data);
+      const isRejected = data?.input?.type === "file input";
+
+      if (isRejected) {
+        setUploadStatus("error");
+        setHistory((prev) =>
+          prev.map((msg) => (msg.id === fileId ? { ...msg, status: "error" } : msg))
+        );
+        applyResponse(data);
+      } else {
+        setUploadProgress(100);
+        setUploadStatus("success");
+        setHistory((prev) =>
+          prev.map((msg) => (msg.id === fileId ? { ...msg, status: "success" } : msg))
+        );
+        await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
+        applyResponse(data);
+      }
     } catch (err) {
       setUploadStatus("error");
       setUploadError(err.message || "Upload failed. Please try again.");

@@ -80,6 +80,7 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   }, [isPdf, fileObject, initialPreviewUrl]);
 
   const isUploading = status === "uploading";
+  const isError = status === "error";
   const activePreviewUrl = initialPreviewUrl || createdUrl;
   const activeThumbnailUrl = isImage ? activePreviewUrl : (isPdf ? pdfThumbnail : null);
   const showThumbnail = Boolean(activeThumbnailUrl);
@@ -90,7 +91,7 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
       href={isUploading ? undefined : (activePreviewUrl || "#")}
       target={isUploading ? undefined : (activePreviewUrl ? "_blank" : undefined)}
       rel="noreferrer"
-      className={styles.fileBubbleUser}
+      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
       title={isUploading ? "Uploading..." : (activePreviewUrl ? "Click to view uploaded document" : undefined)}
       style={isUploading ? { pointerEvents: "none", cursor: "default" } : undefined}
     >
@@ -99,7 +100,12 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
           <span className={styles.spinner} aria-hidden="true" />
         </div>
       ) : showThumbnail ? (
-        <img src={activeThumbnailUrl} alt={fileName || "Document preview"} className={styles.thumbnail} />
+        <img
+          src={activeThumbnailUrl}
+          alt={fileName || "Document preview"}
+          className={styles.thumbnail}
+          style={isError ? { borderColor: "#fecaca" } : undefined}
+        />
       ) : (
         <div className={styles.fileIconBox}>
           <FileDocIcon />
@@ -108,7 +114,11 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
       <div className={styles.fileMetaBox}>
         <span className={styles.fileNameText}>{fileName}</span>
         <span className={styles.fileDetailText}>
-          {isUploading ? "Uploading..." : `${formattedSize} · View Document ↗`}
+          {isUploading
+            ? "Uploading..."
+            : isError
+            ? `${formattedSize} · Verification Failed ⚠️`
+            : `${formattedSize} · View Document ↗`}
         </span>
       </div>
     </a>

@@ -78,3 +78,23 @@
     transform: rotate(360deg);
   }
 }
+
+.fileBubbleError {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+  border: 1px solid #fecaca;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.06) !important;
+}
+
+.fileBubbleError .fileNameText {
+  color: #991b1b !important;
+}
+
+.fileBubbleError .fileDetailText {
+  color: #b91c1c !important;
+}
+
+.fileBubbleError .fileIconBox {
+  background: rgba(220, 38, 38, 0.08) !important;
+  color: #dc2626 !important;
+}
