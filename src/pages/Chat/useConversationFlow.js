@@ -89,10 +89,22 @@ function useConversationFlow() {
   const handleYesNo = (value) => advance(input.next, value);
   const handleCheckboxSubmit = (selected) => advance(input.next, summarizeCheckboxSelection(selected));
   const handleFileUploaded = (fileData) => {
-    const fileName = typeof fileData === "string" ? fileData : fileData?.name || "Uploaded File.pdf";
-    const fileSize = typeof fileData === "object" ? fileData?.size : "1.2 MB";
-    const rawFile = typeof fileData === "object" ? fileData?.rawFile : null;
-    const previewUrl = typeof fileData === "object" ? fileData?.previewUrl : null;
+    let fileName = typeof fileData === "string" ? fileData : fileData?.name || "Uploaded File.pdf";
+    let fileSize = typeof fileData === "object" ? fileData?.size : "1.2 MB";
+    let rawFile = typeof fileData === "object" ? fileData?.rawFile : null;
+    let previewUrl = typeof fileData === "object" ? fileData?.previewUrl : null;
+
+    if (fileData && (fileData instanceof File || fileData instanceof Blob)) {
+      rawFile = fileData;
+      fileName = fileData.name || fileName;
+      const sizeMb = fileData.size ? (fileData.size / (1024 * 1024)).toFixed(1) : null;
+      fileSize = sizeMb ? `${sizeMb} MB` : fileSize;
+      try {
+        previewUrl = URL.createObjectURL(fileData);
+      } catch {
+        previewUrl = null;
+      }
+    }
 
     pushUserFile(fileName, fileSize, rawFile, previewUrl);
     setInputVisible(false);

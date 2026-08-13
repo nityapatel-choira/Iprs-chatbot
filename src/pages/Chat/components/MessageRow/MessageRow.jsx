@@ -13,7 +13,13 @@ function MessageRow({ message }) {
       {message.kind === "summaryCard" ? (
         <FeeSummaryCard {...message.data} />
       ) : message.kind === "file" ? (
-        <FileMessageCard fileName={message.fileName} fileSize={message.fileSize} previewUrl={message.previewUrl} />
+        <FileMessageCard
+          fileName={message.fileName}
+          fileSize={message.fileSize}
+          previewUrl={message.previewUrl}
+          mimeType={message.rawFile?.type || message.mimeType}
+          rawFile={message.rawFile}
+        />
       ) : message.kind === "richText" ? (
         <div className={`${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`}>
           <RichText nodes={message.richText} />

@@ -3,6 +3,12 @@ import { sendMessage, uploadFile } from "../../services/conversationService";
 
 let idCounter = 1;
 const nextId = () => `m${++idCounter}`;
+// Purely cosmetic: how long the success checkmark stays visible before the
+// uploader advances to the next question. The backend bundles the next
+// input into the same upload response, so without this pause the success
+// state would never actually be seen. Correctness does NOT depend on this
+// value - see uploadForInputId below.
+const UPLOAD_SUCCESS_HOLD_MS = 900;
 
 function toRichTextMessages(messages) {
   if (!Array.isArray(messages)) return [];
@@ -23,10 +29,17 @@ function useBackendConversation() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
+  // Which file-input step (by backend input.id) the upload state above
+  // belongs to. This is the actual source of truth for whether that state
+  // should be shown - see Chat.jsx, which only renders it when this still
+  // matches the currently active input.id, and treats any mismatch (a new
+  // file-input step arrived) as a fresh, idle uploader regardless of timing.
+  const [uploadForInputId, setUploadForInputId] = useState(null);
 
   const messagesRef = useRef(null);
   const startedRef = useRef(false);
   const lastActionRef = useRef(null);
+  const isUploadingRef = useRef(false);
 
   const pushBot = (entries) => setHistory((prev) => [...prev, ...entries]);
   const pushUser = (text) => setHistory((prev) => [...prev, { id: nextId(), sender: "user", kind: "text", text }]);
@@ -81,10 +94,17 @@ function useBackendConversation() {
   };
 
   const submitFile = async (file) => {
+    // Belt-and-suspenders against a second upload racing the first (the UI
+    // already disables the uploader while busy) - this guard makes it
+    // impossible regardless of how submitFile gets triggered.
+    if (isUploadingRef.current) return;
+    isUploadingRef.current = true;
+
+    const targetInputId = input?.id ?? null;
     const previewUrl = URL.createObjectURL(file);
     const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
     pushUserFile(file.name, `${sizeMb} MB`, file, previewUrl);
-    setInput(null);
+    setUploadForInputId(targetInputId);
     setUploadStatus("uploading");
     setUploadProgress(0);
     setUploadError("");
@@ -93,10 +113,13 @@ function useBackendConversation() {
     try {
       const data = await uploadFile(file, setUploadProgress);
       setUploadStatus("success");
+      await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
       applyResponse(data);
     } catch (err) {
       setUploadStatus("error");
       setUploadError(err.message || "Upload failed. Please try again.");
+    } finally {
+      isUploadingRef.current = false;
     }
   };
 
@@ -113,6 +136,7 @@ function useBackendConversation() {
     uploadStatus,
     uploadProgress,
     uploadError,
+    uploadForInputId,
     messagesRef,
     sendAnswer,
     submitFile,

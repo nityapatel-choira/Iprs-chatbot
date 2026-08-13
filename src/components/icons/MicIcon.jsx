@@ -1,9 +1,10 @@
-function MicIcon() {
+function MicIcon({ width = 22, height = 22 }) {
   return (
-    <svg viewBox="0 0 20 20" width="18" height="18" fill="none" aria-hidden="true">
-      <rect x="7" y="2" width="6" height="10" rx="3" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M4 9.5a6 6 0 0 0 12 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <line x1="10" y1="15.5" x2="10" y2="18" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    <svg viewBox="0 0 24 24" width={width} height={height} fill="none" aria-hidden="true">
+      <rect x="8.5" y="3" width="7" height="12" rx="3.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="12" y1="18" x2="12" y2="21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <line x1="9" y1="21" x2="15" y2="21" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }

@@ -1,8 +1,14 @@
 function UploadIcon() {
   return (
-    <svg viewBox="0 0 28 28" width="28" height="28" fill="none" aria-hidden="true">
-      <path d="M14 18V6M14 6 9 11M14 6l5 5" stroke="#5C90FF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M6 19v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="#5C90FF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      {/* Back page */}
+      <rect x="14" y="9" width="22" height="27" rx="3.5" fill="#E2E8F0" />
+      {/* Front page */}
+      <rect x="11" y="13" width="22" height="27" rx="3.5" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1" />
+      <circle cx="15" cy="19" r="0.8" fill="#64748B" />
+      <circle cx="15" cy="23" r="0.8" fill="#64748B" />
+      <circle cx="15" cy="27" r="0.8" fill="#64748B" />
+      <path d="M18 19H27M18 23H27M18 27H27" stroke="#475569" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

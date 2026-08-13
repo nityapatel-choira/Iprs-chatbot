@@ -20,6 +20,19 @@
   transform: scale(0.98);
 }
 
+.cardDisabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.cardDisabled:hover {
+  border-color: var(--fig-card-border);
+}
+
+.cardDisabled:active {
+  transform: none;
+}
+
 .cardSelected {
   background: var(--fig-select-bg);
   border-color: var(--fig-select-border);

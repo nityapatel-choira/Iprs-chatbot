@@ -1,24 +1,111 @@
+import { useEffect, useMemo, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
+import { getPdfThumbnailUrl } from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
-function FileMessageCard({ fileName, fileSize, previewUrl }) {
+const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
+const PDF_EXTENSION_PATTERN = /\.pdf$/i;
+
+function isImageFile(fileName, mimeType, rawFile) {
+  if (mimeType && typeof mimeType === "string" && mimeType.startsWith("image/")) {
+    return true;
+  }
+  if (rawFile && typeof rawFile.type === "string" && rawFile.type.startsWith("image/")) {
+    return true;
+  }
+  if (fileName && IMAGE_EXTENSION_PATTERN.test(fileName)) {
+    return true;
+  }
+  return false;
+}
+
+function isPdfFile(fileName, mimeType, rawFile) {
+  if (mimeType === "application/pdf") return true;
+  if (rawFile && typeof rawFile.type === "string" && rawFile.type === "application/pdf") return true;
+  if (fileName && PDF_EXTENSION_PATTERN.test(fileName)) return true;
+  return false;
+}
+
+function formatFileSize(size) {
+  if (!size) return "1.2 MB";
+  if (typeof size === "string") return size;
+  if (typeof size === "number") {
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    }
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+  return String(size);
+}
+
+function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile }) {
+  const [pdfThumbnail, setPdfThumbnail] = useState(null);
+
+  const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
+  const isImage = isImageFile(fileName, mimeType, fileObject);
+  const isPdf = isPdfFile(fileName, mimeType, fileObject);
+
+  const createdUrl = useMemo(() => {
+    if (!initialPreviewUrl && fileObject && isImage) {
+      return URL.createObjectURL(fileObject);
+    }
+    return null;
+  }, [initialPreviewUrl, fileObject, isImage]);
+
+  useEffect(() => {
+    return () => {
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [createdUrl]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (isPdf) {
+      const target = fileObject || (initialPreviewUrl && initialPreviewUrl !== "#" ? initialPreviewUrl : null);
+      if (target) {
+        getPdfThumbnailUrl(target).then((url) => {
+          if (!isCancelled && url) {
+            setPdfThumbnail(url);
+          }
+        });
+      }
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPdf, fileObject, initialPreviewUrl]);
+
+  const activePreviewUrl = initialPreviewUrl || createdUrl;
+  const activeThumbnailUrl = isImage ? activePreviewUrl : (isPdf ? pdfThumbnail : null);
+  const showThumbnail = Boolean(activeThumbnailUrl);
+  const formattedSize = formatFileSize(fileSize);
+
   return (
     <a
-      href={previewUrl || "#"}
-      target={previewUrl ? "_blank" : undefined}
+      href={activePreviewUrl || "#"}
+      target={activePreviewUrl ? "_blank" : undefined}
       rel="noreferrer"
       className={styles.fileBubbleUser}
-      title={previewUrl ? "Click to view uploaded document" : undefined}
+      title={activePreviewUrl ? "Click to view uploaded document" : undefined}
     >
-      <div className={styles.fileIconBox}>
-        <FileDocIcon />
-      </div>
+      {showThumbnail ? (
+        <img src={activeThumbnailUrl} alt={fileName || "Document preview"} className={styles.thumbnail} />
+      ) : (
+        <div className={styles.fileIconBox}>
+          <FileDocIcon />
+        </div>
+      )}
       <div className={styles.fileMetaBox}>
         <span className={styles.fileNameText}>{fileName}</span>
-        <span className={styles.fileDetailText}>{fileSize || "1.2 MB"} · View Document ↗</span>
+        <span className={styles.fileDetailText}>{formattedSize} · View Document ↗</span>
       </div>
     </a>
   );
 }
 
 export default FileMessageCard;
+

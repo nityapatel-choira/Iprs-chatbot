@@ -4,6 +4,7 @@ import LanguageSelection from "./pages/LanguageSelection/LanguageSelection";
 import { LANGUAGES } from "./constants/languages";
 import { logout } from "./services/authService";
 import { getToken } from "./services/tokenStorage";
+import { getLanguageCode, setLanguageCode, clearLanguageCode } from "./services/languagePreference";
 import { onUnauthorized } from "./services/apiClient";
 
 const Login = lazy(() => import("./pages/Login/Login"));
@@ -11,7 +12,7 @@ const Chat = lazy(() => import("./pages/Chat/Chat"));
 // const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
 function App() {
-  const [languageCode, setLanguageCode] = useState(null);
+  const [languageCode, setLanguageCodeState] = useState(() => getLanguageCode());
   const [loggedIn, setLoggedIn] = useState(() => Boolean(getToken()));
   // const [onboardingDone, setOnboardingDone] = useState(false);
 
@@ -19,8 +20,15 @@ function App() {
     onUnauthorized(() => setLoggedIn(false));
   }, []);
 
+  const handleLanguageContinue = (code) => {
+    setLanguageCode(code);
+    setLanguageCodeState(code);
+  };
+
   const handleLogout = async () => {
     setLoggedIn(false);
+    clearLanguageCode();
+    setLanguageCodeState(null);
     try {
       await logout();
     } catch {
@@ -29,7 +37,7 @@ function App() {
   };
 
   if (!languageCode) {
-    return <LanguageSelection onContinue={setLanguageCode} />;
+    return <LanguageSelection onContinue={handleLanguageContinue} />;
   }
 
   if (!loggedIn) {
