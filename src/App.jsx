@@ -27,18 +27,13 @@ function App() {
   // that step is wired up for real.
   if (typeof window !== "undefined" && window.location.search.includes("test=payment")) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", height: "100vh", background: "#f3f7f9", fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif" }}>
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", maxWidth: "780px", height: "100%", background: "#f3f7f9" }}>
-          <header style={{ padding: "16px 24px", background: "#ffffff", borderBottom: "1px solid #e2e8f0", display: "flex", alignItems: "center" }}>
-            <h1 style={{ margin: 0, fontSize: "1.0625rem", fontWeight: 600, color: "#0f172a" }}>IPRS Membership Assistant</h1>
-          </header>
-          <main style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
-            <Suspense fallback={null}>
-              <PaymentCard
-                onComplete={(result) => console.log("payment complete", result)}
-              />
-            </Suspense>
-          </main>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#f3f7f9", fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif", padding: "20px" }}>
+        <div style={{ width: "100%", maxWidth: "580px" }}>
+          <Suspense fallback={null}>
+            <PaymentCard
+              onComplete={(result) => console.log("payment complete", result)}
+            />
+          </Suspense>
         </div>
       </div>
     );
