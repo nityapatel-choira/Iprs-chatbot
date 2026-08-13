@@ -1,0 +1,85 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+}
+
+.label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.codeSelect {
+  flex-shrink: 0;
+  width: 92px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 8px;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0f172a;
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease, ease);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: #0f172a;
+  transition: border-color 0.15s var(--ease, ease), box-shadow 0.15s var(--ease, ease);
+}
+
+.codeSelect,
+.input {
+  height: 48px;
+}
+
+.input::placeholder {
+  color: #94a3b8;
+}
+
+.codeSelect:focus-visible,
+.input:focus-visible {
+  outline: none;
+  border-color: #0066ff;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.14);
+}
+
+.fieldRowError .codeSelect,
+.fieldRowError .input {
+  border-color: #dc2626;
+}
+
+.fieldRowError .input:focus-visible {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
+}
+
+.codeSelect:disabled,
+.input:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.errorText {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #dc2626;
+}
