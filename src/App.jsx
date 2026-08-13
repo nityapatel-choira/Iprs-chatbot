@@ -9,6 +9,7 @@ import { onUnauthorized } from "./services/apiClient";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
+const PaymentCard = lazy(() => import("./components/payment/PaymentCard"));
 // const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
 function App() {
@@ -19,6 +20,22 @@ function App() {
   useEffect(() => {
     onUnauthorized(() => setLoggedIn(false));
   }, []);
+
+  // TEMPORARY test route - visit ?test=payment to render PaymentCard in
+  // isolation, since the real backend doesn't send a "payment input" step
+  // yet so it can't be reached through the normal chat flow. Remove once
+  // that step is wired up for real.
+  if (typeof window !== "undefined" && window.location.search.includes("test=payment")) {
+    return (
+      <div style={{ padding: 40 }}>
+        <Suspense fallback={null}>
+          <PaymentCard
+            onComplete={(result) => console.log("payment complete", result)}
+          />
+        </Suspense>
+      </div>
+    );
+  }
 
   const handleLanguageContinue = (code) => {
     setLanguageCode(code);
