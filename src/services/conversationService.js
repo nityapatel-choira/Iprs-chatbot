@@ -1,7 +1,7 @@
 import { request, uploadRequest } from "./apiClient";
 
 function sendMessage(message) {
-  const body = message === undefined ? {} : { message };
+  const body = { message: message ?? "" };
   return request("/conversation/message", { method: "POST", body });
 }
 
