@@ -8,12 +8,17 @@ import styles from "./StepTracker.module.css";
    icon/category/music and icon/profile_page_only/agreement components. */
 const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
-function StepTracker({ stages, activeIndex }) {
+// currentFill (0-100) is how far progress has advanced through the active
+// stage's own range - it drives the active connector's fill width directly,
+// so the bar always reflects the real backend percentage rather than a
+// fixed "halfway" guess.
+function StepTracker({ stages, activeIndex, currentFill = 0 }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.track}>
         {stages.map((stage, i) => {
           const status = i < activeIndex ? "completed" : i === activeIndex ? "active" : "pending";
+          const fillPercent = i < activeIndex ? 100 : i === activeIndex ? currentFill : 0;
           const Icon = ICONS[i] || ProfileIcon;
           return (
             <div key={stage} className={`${styles.node} ${i === stages.length - 1 ? styles.nodeLast : ""}`}>
@@ -23,15 +28,7 @@ function StepTracker({ stages, activeIndex }) {
                 </span>
                 {i < stages.length - 1 && (
                   <div className={styles.connectorWrap}>
-                    <span
-                      className={`${styles.connectorLine} ${
-                        i < activeIndex
-                          ? styles.connectorDone
-                          : i === activeIndex
-                          ? styles.connectorCurrent
-                          : ""
-                      }`}
-                    />
+                    <span className={styles.connectorLine} style={{ width: `${fillPercent}%` }} />
                   </div>
                 )}
               </div>

@@ -82,14 +82,6 @@
   transition: width 0.4s var(--ease, ease);
 }
 
-.connectorDone {
-  width: 100%;
-}
-
-.connectorCurrent {
-  width: 50%;
-}
-
 .textCol {
   display: flex;
   flex-direction: column;
@@ -108,9 +100,11 @@
 }
 
 .stageName {
-  font-size: 0.875rem;
-  line-height: 1.25;
-  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
   color: #0f172a;
   white-space: normal;
   word-break: break-word;

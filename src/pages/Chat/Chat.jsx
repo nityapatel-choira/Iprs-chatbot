@@ -1,5 +1,8 @@
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
+import PaymentCard from "../../components/payment/PaymentCard";
+import StepTracker from "../../components/StepTracker/StepTracker";
+import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
@@ -26,6 +29,7 @@ function Chat({ language = "English", onBack, onLogout }) {
     isTyping,
     error,
     sessionEnded,
+    progress,
     uploadStatus,
     uploadProgress,
     uploadError,
@@ -35,6 +39,37 @@ function Chat({ language = "English", onBack, onLogout }) {
     submitFile,
     retry,
   } = useBackendConversation();
+
+  const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
+
+  // Load payment result from sessionStorage if already paid in this session
+  const [paymentResult, setPaymentResult] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("iprs_payment_success");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Automatically detect email and phone number from chat history for checkout prefill
+  const detectedPrefill = useMemo(() => {
+    let email = "";
+    let contact = "";
+    for (let i = history.length - 1; i >= 0; i--) {
+      const msg = history[i];
+      if (msg.sender === "user" && msg.text) {
+        const val = msg.text.trim();
+        if (!email && val.includes("@") && val.includes(".")) {
+          email = val;
+        }
+        if (!contact && /^\+?[0-9]{10,12}$/.test(val.replace(/[\s-]/g, ""))) {
+          contact = val;
+        }
+      }
+    }
+    return { email, contact };
+  }, [history]);
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -54,6 +89,12 @@ function Chat({ language = "English", onBack, onLogout }) {
     <div className={styles.page}>
       <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
+
+        {!sessionEnded && (
+          <div className={styles.trackerSlot}>
+            <StepTracker stages={STAGE_LABELS} activeIndex={trackerActiveIndex} currentFill={trackerFill} />
+          </div>
+        )}
 
         <div className={styles.messages} ref={messagesRef}>
           {history.map((message) => (
