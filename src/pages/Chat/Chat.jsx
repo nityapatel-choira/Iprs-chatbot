@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PaymentCard from "../../components/payment/PaymentCard";
@@ -22,7 +23,7 @@ const TEXT_INPUT_CONFIG = {
   "otp input": { type: "text", inputMode: "numeric" },
 };
 
-function Chat({ language = "English", onBack, onLogout }) {
+function Chat({ language = "English", onBack, onLogout, onFinished }) {
   const {
     history,
     input,
@@ -122,6 +123,62 @@ function Chat({ language = "English", onBack, onLogout }) {
             />
           )}
 
+          {/*
+            TODO: confirm with backend - "payment input" isn't in the documented
+            conversation contract (only text/email/url/choice/file input are).
+            Named to match that contract's "<noun> input" convention so it drops
+            in the same way once the real type/payload lands; amount/prefill
+            field names below are guesses and should be verified against the
+            actual backend response shape.
+          */}
+          {!isTyping && input?.type === "payment input" && (
+            <PaymentCard
+              key={input.id}
+              amountInRupees={input.amount ? input.amount / 100 : undefined}
+              prefill={{ name: input.prefillName, email: input.prefillEmail, contact: input.prefillContact }}
+              onComplete={(result) =>
+                sendAnswer(result?.paymentId ? `Payment completed (${result.paymentId})` : "Payment completed")
+              }
+            />
+          )}
+
+          {/* Render PaymentCard after the last step (when session has ended) if not paid yet */}
+          {!isTyping && sessionEnded && !error && !paymentResult && (
+            <PaymentCard
+              key="fallback-payment-final"
+              amountInRupees={1200}
+              prefill={detectedPrefill}
+              onComplete={(result) => {
+                sessionStorage.setItem("iprs_payment_success", JSON.stringify(result));
+                setPaymentResult(result);
+                onFinished?.();
+              }}
+            />
+          )}
+
+          {/* If payment completed, show nice message rows and complete state */}
+          {sessionEnded && !error && paymentResult && (
+            <>
+              <MessageRow
+                message={{
+                  id: "payment-completed-user-msg",
+                  sender: "user",
+                  kind: "text",
+                  text: `Payment completed. Transaction ID: ${paymentResult.paymentId}`,
+                }}
+              />
+              <MessageRow
+                message={{
+                  id: "payment-completed-bot-msg",
+                  sender: "bot",
+                  kind: "richText",
+                  richText: `Thank you! Your payment of <strong>₹1,200</strong> has been verified. Your application is now complete and under review.`,
+                }}
+              />
+              <p className={styles.sessionEndedNote}>Conversation complete.</p>
+            </>
+          )}
+
           {error && (
             <div className={styles.errorBanner} role="alert">
               <span>{error}</span>
@@ -130,8 +187,6 @@ function Chat({ language = "English", onBack, onLogout }) {
               </button>
             </div>
           )}
-
-          {sessionEnded && !error && <p className={styles.sessionEndedNote}>Conversation complete.</p>}
         </div>
 
         {showComposer && (
