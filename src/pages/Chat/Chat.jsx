@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
-import PaymentCard from "../../components/payment/PaymentCard";
+// import PaymentCard from "../../components/payment/PaymentCard";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
@@ -23,7 +23,7 @@ const TEXT_INPUT_CONFIG = {
   "otp input": { type: "text", inputMode: "numeric" },
 };
 
-function Chat({ language = "English", onBack, onLogout, onFinished }) {
+function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   const {
     history,
     input,
@@ -44,7 +44,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
   const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
 
   // Load payment result from sessionStorage if already paid in this session
-  const [paymentResult, setPaymentResult] = useState(() => {
+  const [paymentResult /*, setPaymentResult */] = useState(() => {
     try {
       const stored = sessionStorage.getItem("iprs_payment_success");
       return stored ? JSON.parse(stored) : null;
@@ -53,6 +53,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
     }
   });
 
+  /*
   // Automatically detect email and phone number from chat history for checkout prefill
   const detectedPrefill = useMemo(() => {
     let email = "";
@@ -71,6 +72,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
     }
     return { email, contact };
   }, [history]);
+  */
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -131,6 +133,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
             field names below are guesses and should be verified against the
             actual backend response shape.
           */}
+          {/* Payment gateway commented out for now
           {!isTyping && input?.type === "payment input" && (
             <PaymentCard
               key={input.id}
@@ -142,7 +145,6 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
             />
           )}
 
-          {/* Render PaymentCard after the last step (when session has ended) if not paid yet */}
           {!isTyping && sessionEnded && !error && !paymentResult && (
             <PaymentCard
               key="fallback-payment-final"
@@ -155,6 +157,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
               }}
             />
           )}
+          */}
 
           {/* If payment completed, show nice message rows and complete state */}
           {sessionEnded && !error && paymentResult && (
