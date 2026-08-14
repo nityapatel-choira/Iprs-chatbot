@@ -1,4 +1,4 @@
-import { useState } from "react";
+// import { useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 // import PaymentCard from "../../components/payment/PaymentCard";
@@ -51,8 +51,9 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
   const displayFill = sessionEnded ? 100 : trackerFill;
 
+  /*
   // Load payment result from sessionStorage if already paid in this session
-  const [paymentResult /*, setPaymentResult */] = useState(() => {
+  const [paymentResult] = useState(() => {
     try {
       const stored = sessionStorage.getItem("iprs_payment_success");
       return stored ? JSON.parse(stored) : null;
@@ -60,6 +61,7 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
       return null;
     }
   });
+  */
 
   /*
   // Automatically detect email and phone number from chat history for checkout prefill
@@ -165,28 +167,26 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
           )}
           */}
 
-          {/* If payment completed, show nice message rows and complete state */}
-          {sessionEnded && !error && paymentResult && (
-            <>
-              <MessageRow
-                message={{
-                  id: "payment-completed-user-msg",
-                  sender: "user",
-                  kind: "text",
-                  text: `Payment completed. Transaction ID: ${paymentResult.paymentId}`,
-                }}
-              />
-              <MessageRow
-                message={{
-                  id: "payment-completed-bot-msg",
-                  sender: "bot",
-                  kind: "richText",
-                  richText: `Thank you! Your payment of <strong>₹1,200</strong> has been verified. Your application is now complete and under review.`,
-                }}
-              />
-              <p className={styles.sessionEndedNote}>Conversation complete.</p>
-            </>
+          {/* Completion summary card when session has ended / registration complete */}
+          {sessionEnded && !error && (
+            <div className={styles.completionCard}>
+              <div className={styles.completionBadge}>
+                <span className={styles.completionCheck}>✓</span> Application Submitted
+              </div>
+              <h3 className={styles.completionTitle}>IPRS Membership Registration Complete</h3>
+              <p className={styles.completionDesc}>
+                Your details have been successfully received and verified by the system. Your membership profile is now under review.
+              </p>
+              <div className={styles.completionMetaGrid}>
+                <div className={styles.completionMetaItem}>
+                  <span className={styles.completionMetaLabel}>Status</span>
+                  <span className={styles.completionMetaValueActive}>Under Review</span>
+                </div>
+              </div>
+            </div>
           )}
+
+          {sessionEnded && <p className={styles.sessionEndedNote}>Conversation complete.</p>}
 
           {error && (
             <div className={styles.errorBanner} role="alert">

@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { sendMessage, uploadFile } from "../../services/conversationService";
 import { getRegistrationCompleted, setRegistrationCompleted } from "../../services/registrationState";
+import {
+  getStoredHistory,
+  setStoredHistory,
+  getStoredProgress,
+  setStoredProgress,
+  consumeFreshLoginFlag,
+} from "../../services/conversationStorage";
 
 let idCounter = 1;
 const nextId = () => `m${++idCounter}`;
@@ -28,10 +35,10 @@ function toRichTextMessages(messages) {
 // the exact same message UI as a normal assistant message, so it's wrapped
 // in the same richText node shape RichText already knows how to render,
 // rather than inventing a second message kind/component. Only produces a
-// message when `data.messages` is absent, so a normal Typebot response is
+// message when `data.messages` has items, so a normal Typebot response is
 // never double-rendered.
 function replyToRichTextMessage(data) {
-  if (Array.isArray(data?.messages)) return null;
+  if (Array.isArray(data?.messages) && data.messages.length > 0) return null;
   if (typeof data?.reply !== "string" || !data.reply.trim()) return null;
   return {
     id: nextId(),
@@ -41,8 +48,45 @@ function replyToRichTextMessage(data) {
   };
 }
 
+function extractMessageText(msg) {
+  if (!msg) return "";
+  if (typeof msg === "string") return msg.trim();
+  if (typeof msg.text === "string" && msg.text.trim()) return msg.text.trim();
+  if (Array.isArray(msg.richText)) {
+    return msg.richText
+      .map((node) => {
+        if (typeof node === "string") return node;
+        if (node?.children && Array.isArray(node.children)) {
+          return node.children.map((c) => c?.text || "").join(" ");
+        }
+        return "";
+      })
+      .join(" ")
+      .trim();
+  }
+  return "";
+}
+
+function mergeBotMessages(existingHistory, newMessages) {
+  if (!Array.isArray(newMessages) || newMessages.length === 0) return existingHistory;
+
+  const updated = [...existingHistory];
+  for (const msg of newMessages) {
+    const newText = extractMessageText(msg);
+    const lastMsg = updated[updated.length - 1];
+    const lastText = extractMessageText(lastMsg);
+
+    if (newText && lastText && newText === lastText) {
+      continue;
+    }
+
+    updated.push(msg);
+  }
+  return updated;
+}
+
 function useBackendConversation() {
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => getStoredHistory());
   const [input, setInput] = useState(null);
   // If a previous session already confirmed registration is complete,
   // restore that instantly from localStorage - both `sessionEnded` (drives
@@ -62,7 +106,10 @@ function useBackendConversation() {
   // truth for the stepper - see components/StepTracker/stepProgress.js.
   // Kept at its last known value when a response omits the field, rather
   // than resetting to 0, so the stepper never jumps backwards on its own.
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(() => {
+    if (getRegistrationCompleted()) return 100;
+    return getStoredProgress();
+  });
   // Which file-input step (by backend input.id) the upload state above
   // belongs to. This is the actual source of truth for whether that state
   // should be shown - see Chat.jsx, which only renders it when this still
@@ -75,7 +122,14 @@ function useBackendConversation() {
   const lastActionRef = useRef(null);
   const isUploadingRef = useRef(false);
 
-  const pushBot = (entries) => setHistory((prev) => [...prev, ...entries]);
+  useEffect(() => {
+    setStoredHistory(history);
+  }, [history]);
+
+  useEffect(() => {
+    setStoredProgress(progress);
+  }, [progress]);
+
   const pushUser = (text) => setHistory((prev) => [...prev, { id: nextId(), sender: "user", kind: "text", text }]);
   const pushUserFile = (id, fileName, fileSize, rawFile, previewUrl, status = "uploading") =>
     setHistory((prev) => [
@@ -85,7 +139,7 @@ function useBackendConversation() {
 
   const applyResponse = (data) => {
     const replyMessage = replyToRichTextMessage(data);
-    pushBot(replyMessage ? [replyMessage] : toRichTextMessages(data?.messages));
+    const incomingMessages = replyMessage ? [replyMessage] : toRichTextMessages(data?.messages);
 
     if (typeof data?.progress === "number") {
       setProgress(data.progress);
@@ -97,11 +151,17 @@ function useBackendConversation() {
     // hidden, no composer/choice/file input, first question never re-asked)
     // instead of leaving `input` null with no explanation.
     const isTerminalReply = Boolean(replyMessage) && !data?.input;
+    const isSessionEnded = Boolean(data?.sessionEnded) || isTerminalReply;
 
-    if (data?.sessionEnded || isTerminalReply) {
+    if (isSessionEnded) {
       setSessionEnded(true);
       setInput(null);
       setRegistrationCompleted(true);
+      setProgress(100);
+
+      if (incomingMessages.length > 0) {
+        setHistory((prev) => mergeBotMessages(prev, incomingMessages));
+      }
     } else {
       // The backend is always authoritative: a normal continuation response
       // means the conversation is still active, so any stale "completed"
@@ -116,6 +176,23 @@ function useBackendConversation() {
         setUploadStatus("idle");
         setUploadProgress(0);
         setUploadError("");
+      }
+
+      const isFreshLogin = consumeFreshLoginFlag();
+      let messagesToAppend = incomingMessages;
+
+      if (isFreshLogin) {
+        const inProgressNotice = {
+          id: nextId(),
+          sender: "bot",
+          kind: "richText",
+          richText: [{ type: "p", children: [{ text: "Your registration is still in progress." }] }],
+        };
+        messagesToAppend = [inProgressNotice, ...incomingMessages];
+      }
+
+      if (messagesToAppend.length > 0) {
+        setHistory((prev) => mergeBotMessages(prev, messagesToAppend));
       }
     }
   };

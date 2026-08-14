@@ -428,8 +428,95 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
+.completionCard {
+  width: 100%;
+  max-width: min(var(--card-pct, 84%), var(--card-max, 580px));
+  margin: 0.5rem auto;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-family: var(--font-body, "Inter", sans-serif);
+}
+
+.completionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-body, "Inter", sans-serif);
+}
+
+.completionCheck {
+  font-weight: 700;
+}
+
+.completionTitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #0f172a;
+  font-family: var(--font-body, "Inter", sans-serif);
+}
+
+.completionDesc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #475569;
+  font-family: var(--font-body, "Inter", sans-serif);
+}
+
+.completionMetaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+}
+
+.completionMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.completionMetaLabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.completionMetaValue {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.completionMetaValueActive {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
 @media (max-width: 480px) {
   .trackerSlot {
     padding: 10px 20px 4px;
+  }
+
+  .completionCard {
+    padding: 1rem 1.15rem;
   }
 }
