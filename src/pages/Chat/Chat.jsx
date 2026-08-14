@@ -186,7 +186,7 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             </div>
           )}
 
-          {sessionEnded && <p className={styles.sessionEndedNote}>Conversation complete.</p>}
+          {/* sessionEndedNote removed */}
 
           {error && (
             <div className={styles.errorBanner} role="alert">

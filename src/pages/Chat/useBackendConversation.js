@@ -181,7 +181,8 @@ function useBackendConversation() {
       const isFreshLogin = consumeFreshLoginFlag();
       let messagesToAppend = incomingMessages;
 
-      if (isFreshLogin) {
+      const hasProgress = (typeof data?.progress === "number" && data.progress > 0) || history.length > 0;
+      if (isFreshLogin && hasProgress) {
         const inProgressNotice = {
           id: nextId(),
           sender: "bot",

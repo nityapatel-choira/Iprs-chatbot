@@ -7,6 +7,9 @@ import { getToken } from "./services/tokenStorage";
 import { getLanguageCode, setLanguageCode, clearLanguageCode } from "./services/languagePreference";
 import { onUnauthorized } from "./services/apiClient";
 
+import { clearRegistrationCompleted } from "./services/registrationState";
+import { clearStoredConversation } from "./services/conversationStorage";
+
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
 // const PaymentCard = lazy(() => import("./components/payment/PaymentCard"));
@@ -18,7 +21,11 @@ function App() {
   // const [onboardingDone, setOnboardingDone] = useState(false);
 
   useEffect(() => {
-    onUnauthorized(() => setLoggedIn(false));
+    onUnauthorized(() => {
+      setLoggedIn(false);
+      clearRegistrationCompleted();
+      clearStoredConversation();
+    });
   }, []);
 
   // TEMPORARY test route commented out for now
@@ -47,6 +54,8 @@ function App() {
     setLoggedIn(false);
     clearLanguageCode();
     setLanguageCodeState(null);
+    clearRegistrationCompleted();
+    clearStoredConversation();
     try {
       await logout();
     } catch {

@@ -119,7 +119,7 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   width: 100%;
-  padding: 1.25rem clamp(1.25rem, 4vw, 2.5rem);
+  padding: 1.25rem clamp(3.5rem, 11vw, 7.5rem);
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
@@ -513,7 +513,11 @@
 
 @media (max-width: 480px) {
   .trackerSlot {
-    padding: 10px 20px 4px;
+    padding: 10px 16px 4px;
+  }
+
+  .messages {
+    padding: 1rem 1rem;
   }
 
   .completionCard {

@@ -1,8 +1,8 @@
 .wrap {
   width: 100%;
-  max-width: min(100%, var(--card-max, 640px));
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 4px;
+  padding: 0;
 }
 
 .trackContainer {
