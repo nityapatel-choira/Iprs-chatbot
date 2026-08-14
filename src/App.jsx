@@ -7,9 +7,12 @@ import { getToken } from "./services/tokenStorage";
 import { getLanguageCode, setLanguageCode, clearLanguageCode } from "./services/languagePreference";
 import { onUnauthorized } from "./services/apiClient";
 
+import { clearRegistrationCompleted } from "./services/registrationState";
+import { clearStoredConversation } from "./services/conversationStorage";
+
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
-const PaymentCard = lazy(() => import("./components/payment/PaymentCard"));
+// const PaymentCard = lazy(() => import("./components/payment/PaymentCard"));
 // const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
 function App() {
@@ -18,13 +21,15 @@ function App() {
   // const [onboardingDone, setOnboardingDone] = useState(false);
 
   useEffect(() => {
-    onUnauthorized(() => setLoggedIn(false));
+    onUnauthorized(() => {
+      setLoggedIn(false);
+      clearRegistrationCompleted();
+      clearStoredConversation();
+    });
   }, []);
 
-  // TEMPORARY test route - visit ?test=payment to render PaymentCard in
-  // isolation, since the real backend doesn't send a "payment input" step
-  // yet so it can't be reached through the normal chat flow. Remove once
-  // that step is wired up for real.
+  // TEMPORARY test route commented out for now
+  /*
   if (typeof window !== "undefined" && window.location.search.includes("test=payment")) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#f3f7f9", fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif", padding: "20px" }}>
@@ -38,6 +43,7 @@ function App() {
       </div>
     );
   }
+  */
 
   const handleLanguageContinue = (code) => {
     setLanguageCode(code);
@@ -48,6 +54,8 @@ function App() {
     setLoggedIn(false);
     clearLanguageCode();
     setLanguageCodeState(null);
+    clearRegistrationCompleted();
+    clearStoredConversation();
     try {
       await logout();
     } catch {

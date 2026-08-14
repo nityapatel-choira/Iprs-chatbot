@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+// import { useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
-import PaymentCard from "../../components/payment/PaymentCard";
+// import PaymentCard from "../../components/payment/PaymentCard";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
@@ -23,7 +23,7 @@ const TEXT_INPUT_CONFIG = {
   "otp input": { type: "text", inputMode: "numeric" },
 };
 
-function Chat({ language = "English", onBack, onLogout, onFinished }) {
+function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   const {
     history,
     input,
@@ -42,9 +42,18 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
   } = useBackendConversation();
 
   const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
+  // Once the session has ended (registration complete - whether reached
+  // live or restored on refresh, both set the same `sessionEnded` flag),
+  // the tracker should show every stage as completed rather than disappear.
+  // Passing an index one past the last stage marks all of them "completed"
+  // via the tracker's own existing `i < activeIndex` logic - no new status
+  // type needed.
+  const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
+  const displayFill = sessionEnded ? 100 : trackerFill;
 
+  /*
   // Load payment result from sessionStorage if already paid in this session
-  const [paymentResult, setPaymentResult] = useState(() => {
+  const [paymentResult] = useState(() => {
     try {
       const stored = sessionStorage.getItem("iprs_payment_success");
       return stored ? JSON.parse(stored) : null;
@@ -52,7 +61,9 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
       return null;
     }
   });
+  */
 
+  /*
   // Automatically detect email and phone number from chat history for checkout prefill
   const detectedPrefill = useMemo(() => {
     let email = "";
@@ -71,6 +82,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
     }
     return { email, contact };
   }, [history]);
+  */
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -91,11 +103,9 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
       <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
-        {!sessionEnded && (
-          <div className={styles.trackerSlot}>
-            <StepTracker stages={STAGE_LABELS} activeIndex={trackerActiveIndex} currentFill={trackerFill} />
-          </div>
-        )}
+        <div className={styles.trackerSlot}>
+          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} currentFill={displayFill} />
+        </div>
 
         <div className={styles.messages} ref={messagesRef}>
           {history.map((message) => (
@@ -115,7 +125,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
             <FileUploader
               key={input.id}
               title={input.title || "Choose a file or drag & drop it here"}
-              caption={input.caption || "JPEG, PNG, PDF, and MP4 formats, up to 50MB"}
+              caption={input.caption || "JPEG and PNG formats, up to 50MB"}
               onFileSelected={submitFile}
               status={effectiveUploadStatus}
               progress={effectiveUploadProgress}
@@ -131,6 +141,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
             field names below are guesses and should be verified against the
             actual backend response shape.
           */}
+          {/* Payment gateway commented out for now
           {!isTyping && input?.type === "payment input" && (
             <PaymentCard
               key={input.id}
@@ -142,7 +153,6 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
             />
           )}
 
-          {/* Render PaymentCard after the last step (when session has ended) if not paid yet */}
           {!isTyping && sessionEnded && !error && !paymentResult && (
             <PaymentCard
               key="fallback-payment-final"
@@ -155,29 +165,46 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
               }}
             />
           )}
+          */}
 
-          {/* If payment completed, show nice message rows and complete state */}
-          {sessionEnded && !error && paymentResult && (
-            <>
-              <MessageRow
-                message={{
-                  id: "payment-completed-user-msg",
-                  sender: "user",
-                  kind: "text",
-                  text: `Payment completed. Transaction ID: ${paymentResult.paymentId}`,
-                }}
-              />
-              <MessageRow
-                message={{
-                  id: "payment-completed-bot-msg",
-                  sender: "bot",
-                  kind: "richText",
-                  richText: `Thank you! Your payment of <strong>₹1,200</strong> has been verified. Your application is now complete and under review.`,
-                }}
-              />
-              <p className={styles.sessionEndedNote}>Conversation complete.</p>
-            </>
+          {/* Completion summary card when session has ended / registration complete */}
+          {sessionEnded && !error && (
+            <div className={styles.completionCard}>
+              <div className={styles.completionBadge}>
+                <span className={styles.completionCheck}>✓</span> Application Submitted
+              </div>
+              <h3 className={styles.completionTitle}>IPRS Membership Registration Complete</h3>
+              <p className={styles.completionDesc}>
+                Your application has been received. Track your membership verification status through the timeline below:
+              </p>
+
+              <div className={styles.horizontalTimeline}>
+                <div className={`${styles.hStepNode} ${styles.hStepNodeActive}`}>
+                  <div className={styles.hStepCircleActive}>1</div>
+                  <span className={styles.hStepTitleActive}>Application Under Review</span>
+                  <span className={styles.hStepBadgeActive}>Under Review</span>
+                </div>
+
+                <div className={styles.hStepLine} />
+
+                <div className={styles.hStepNode}>
+                  <div className={styles.hStepCirclePending}>2</div>
+                  <span className={styles.hStepTitlePending}>Document Verification</span>
+                  <span className={styles.hStepBadgePending}>Pending</span>
+                </div>
+
+                <div className={styles.hStepLine} />
+
+                <div className={styles.hStepNode}>
+                  <div className={styles.hStepCirclePending}>3</div>
+                  <span className={styles.hStepTitlePending}>Member ID Activation</span>
+                  <span className={styles.hStepBadgePending}>Pending</span>
+                </div>
+              </div>
+            </div>
           )}
+
+          {/* sessionEndedNote removed */}
 
           {error && (
             <div className={styles.errorBanner} role="alert">
