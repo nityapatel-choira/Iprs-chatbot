@@ -65,13 +65,15 @@
 }
 
 .circle.completed {
-  border: none;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px #0066ff;
   background: #0066ff;
   color: #ffffff;
 }
 
 .circle.active {
-  border: none;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px #0066ff;
   background: #0066ff;
   color: #ffffff;
 }
