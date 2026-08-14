@@ -38,7 +38,7 @@ function formatFileSize(size) {
   return String(size);
 }
 
-function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile }) {
+function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
 
   const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
@@ -79,6 +79,8 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
     };
   }, [isPdf, fileObject, initialPreviewUrl]);
 
+  const isUploading = status === "uploading";
+  const isError = status === "error";
   const activePreviewUrl = initialPreviewUrl || createdUrl;
   const activeThumbnailUrl = isImage ? activePreviewUrl : (isPdf ? pdfThumbnail : null);
   const showThumbnail = Boolean(activeThumbnailUrl);
@@ -86,14 +88,24 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
 
   return (
     <a
-      href={activePreviewUrl || "#"}
-      target={activePreviewUrl ? "_blank" : undefined}
+      href={isUploading ? undefined : (activePreviewUrl || "#")}
+      target={isUploading ? undefined : (activePreviewUrl ? "_blank" : undefined)}
       rel="noreferrer"
-      className={styles.fileBubbleUser}
-      title={activePreviewUrl ? "Click to view uploaded document" : undefined}
+      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
+      title={isUploading ? "Uploading..." : (activePreviewUrl ? "Click to view uploaded document" : undefined)}
+      style={isUploading ? { pointerEvents: "none", cursor: "default" } : undefined}
     >
-      {showThumbnail ? (
-        <img src={activeThumbnailUrl} alt={fileName || "Document preview"} className={styles.thumbnail} />
+      {isUploading ? (
+        <div className={styles.spinnerWrap}>
+          <span className={styles.spinner} aria-hidden="true" />
+        </div>
+      ) : showThumbnail ? (
+        <img
+          src={activeThumbnailUrl}
+          alt={fileName || "Document preview"}
+          className={styles.thumbnail}
+          style={isError ? { borderColor: "#fecaca" } : undefined}
+        />
       ) : (
         <div className={styles.fileIconBox}>
           <FileDocIcon />
@@ -101,7 +113,13 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
       )}
       <div className={styles.fileMetaBox}>
         <span className={styles.fileNameText}>{fileName}</span>
-        <span className={styles.fileDetailText}>{formattedSize} · View Document ↗</span>
+        <span className={styles.fileDetailText}>
+          {isUploading
+            ? "Uploading..."
+            : isError
+            ? `${formattedSize} · Verification Failed ⚠️`
+            : `${formattedSize} · View Document ↗`}
+        </span>
       </div>
     </a>
   );
