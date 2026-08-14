@@ -28,7 +28,7 @@
 }
 
 .option:hover:not(:disabled) {
-  border-color: #0066ff;
+  border-color: #007BFF;
   background: #f0f6ff;
 }
 
