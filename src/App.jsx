@@ -5,6 +5,7 @@ import { LANGUAGES } from "./constants/languages";
 import { logout } from "./services/authService";
 import { getToken } from "./services/tokenStorage";
 import { getLanguageCode, setLanguageCode, clearLanguageCode } from "./services/languagePreference";
+import { clearRegistrationCompleted } from "./services/registrationState";
 import { onUnauthorized } from "./services/apiClient";
 
 const Login = lazy(() => import("./pages/Login/Login"));
@@ -47,6 +48,7 @@ function App() {
     setLoggedIn(false);
     clearLanguageCode();
     setLanguageCodeState(null);
+    clearRegistrationCompleted();
     try {
       await logout();
     } catch {

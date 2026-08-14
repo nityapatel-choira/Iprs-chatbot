@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { sendMessage, uploadFile } from "../../services/conversationService";
+import { getRegistrationCompleted, setRegistrationCompleted } from "../../services/registrationState";
 
 let idCounter = 1;
 const nextId = () => `m${++idCounter}`;
@@ -20,12 +21,40 @@ function toRichTextMessages(messages) {
   }));
 }
 
+// The backend uses a second response shape for turns that don't go through
+// the normal Typebot relay - most notably when the user's registration is
+// already complete, it replies with { engine: "AI", reply: "<text>" }
+// instead of { messages: [...], input: {...} }. This must render through
+// the exact same message UI as a normal assistant message, so it's wrapped
+// in the same richText node shape RichText already knows how to render,
+// rather than inventing a second message kind/component. Only produces a
+// message when `data.messages` is absent, so a normal Typebot response is
+// never double-rendered.
+function replyToRichTextMessage(data) {
+  if (Array.isArray(data?.messages)) return null;
+  if (typeof data?.reply !== "string" || !data.reply.trim()) return null;
+  return {
+    id: nextId(),
+    sender: "bot",
+    kind: "richText",
+    richText: [{ type: "p", children: [{ text: data.reply }] }],
+  };
+}
+
 function useBackendConversation() {
   const [history, setHistory] = useState([]);
   const [input, setInput] = useState(null);
-  const [isTyping, setIsTyping] = useState(false);
+  // If a previous session already confirmed registration is complete,
+  // restore that instantly from localStorage - both `sessionEnded` (drives
+  // the completed-state UI in Chat.jsx) and `isTyping` start from it, so a
+  // refresh renders the exact same completed screen on the very first paint
+  // instead of a loading/typing state that only resolves to it after the
+  // network call below returns. The backend call still runs regardless (see
+  // the mount effect) and remains the source of truth - this is purely
+  // about not flickering through the wrong UI while waiting for it.
+  const [isTyping, setIsTyping] = useState(() => !getRegistrationCompleted());
   const [error, setError] = useState(null);
-  const [sessionEnded, setSessionEnded] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(() => getRegistrationCompleted());
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
@@ -55,14 +84,33 @@ function useBackendConversation() {
     ]);
 
   const applyResponse = (data) => {
-    pushBot(toRichTextMessages(data?.messages));
+    const replyMessage = replyToRichTextMessage(data);
+    pushBot(replyMessage ? [replyMessage] : toRichTextMessages(data?.messages));
+
     if (typeof data?.progress === "number") {
       setProgress(data.progress);
     }
-    if (data?.sessionEnded) {
+
+    // A `reply`-shaped response with no further `input` means there is
+    // nothing left to answer (e.g. registration already complete) - treat
+    // it as session-ended so the UI shows the completed state (tracker
+    // hidden, no composer/choice/file input, first question never re-asked)
+    // instead of leaving `input` null with no explanation.
+    const isTerminalReply = Boolean(replyMessage) && !data?.input;
+
+    if (data?.sessionEnded || isTerminalReply) {
       setSessionEnded(true);
       setInput(null);
+      setRegistrationCompleted(true);
     } else {
+      // The backend is always authoritative: a normal continuation response
+      // means the conversation is still active, so any stale "completed"
+      // state (e.g. left over from a previous session/user on this browser,
+      // or the optimistic restore above turning out to be wrong) must be
+      // cleared rather than sticking forever - `sessionEnded` otherwise
+      // never has anywhere else to reset back to false.
+      setSessionEnded(false);
+      setRegistrationCompleted(false);
       setInput(data?.input ?? null);
       if (data?.input?.type === "file input") {
         setUploadStatus("idle");

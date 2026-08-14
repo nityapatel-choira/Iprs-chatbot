@@ -42,6 +42,14 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   } = useBackendConversation();
 
   const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
+  // Once the session has ended (registration complete - whether reached
+  // live or restored on refresh, both set the same `sessionEnded` flag),
+  // the tracker should show every stage as completed rather than disappear.
+  // Passing an index one past the last stage marks all of them "completed"
+  // via the tracker's own existing `i < activeIndex` logic - no new status
+  // type needed.
+  const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
+  const displayFill = sessionEnded ? 100 : trackerFill;
 
   // Load payment result from sessionStorage if already paid in this session
   const [paymentResult /*, setPaymentResult */] = useState(() => {
@@ -93,11 +101,9 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
       <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
-        {!sessionEnded && (
-          <div className={styles.trackerSlot}>
-            <StepTracker stages={STAGE_LABELS} activeIndex={trackerActiveIndex} currentFill={trackerFill} />
-          </div>
-        )}
+        <div className={styles.trackerSlot}>
+          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} currentFill={displayFill} />
+        </div>
 
         <div className={styles.messages} ref={messagesRef}>
           {history.map((message) => (
