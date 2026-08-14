@@ -29,6 +29,11 @@ function useBackendConversation() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
+  // Backend's overall registration progress (0-100), the sole source of
+  // truth for the stepper - see components/StepTracker/stepProgress.js.
+  // Kept at its last known value when a response omits the field, rather
+  // than resetting to 0, so the stepper never jumps backwards on its own.
+  const [progress, setProgress] = useState(0);
   // Which file-input step (by backend input.id) the upload state above
   // belongs to. This is the actual source of truth for whether that state
   // should be shown - see Chat.jsx, which only renders it when this still
@@ -43,19 +48,27 @@ function useBackendConversation() {
 
   const pushBot = (entries) => setHistory((prev) => [...prev, ...entries]);
   const pushUser = (text) => setHistory((prev) => [...prev, { id: nextId(), sender: "user", kind: "text", text }]);
-  const pushUserFile = (fileName, fileSize, rawFile, previewUrl) =>
+  const pushUserFile = (id, fileName, fileSize, rawFile, previewUrl, status = "uploading") =>
     setHistory((prev) => [
       ...prev,
-      { id: nextId(), sender: "user", kind: "file", fileName, fileSize, rawFile, previewUrl },
+      { id, sender: "user", kind: "file", fileName, fileSize, rawFile, previewUrl, status },
     ]);
 
   const applyResponse = (data) => {
     pushBot(toRichTextMessages(data?.messages));
+    if (typeof data?.progress === "number") {
+      setProgress(data.progress);
+    }
     if (data?.sessionEnded) {
       setSessionEnded(true);
       setInput(null);
     } else {
       setInput(data?.input ?? null);
+      if (data?.input?.type === "file input") {
+        setUploadStatus("idle");
+        setUploadProgress(0);
+        setUploadError("");
+      }
     }
   };
 
@@ -100,10 +113,11 @@ function useBackendConversation() {
     if (isUploadingRef.current) return;
     isUploadingRef.current = true;
 
+    const fileId = nextId();
     const targetInputId = input?.id ?? null;
     const previewUrl = URL.createObjectURL(file);
     const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-    pushUserFile(file.name, `${sizeMb} MB`, file, previewUrl);
+    pushUserFile(fileId, file.name, `${sizeMb} MB`, file, previewUrl, "uploading");
     setUploadForInputId(targetInputId);
     setUploadStatus("uploading");
     setUploadProgress(0);
@@ -112,12 +126,29 @@ function useBackendConversation() {
 
     try {
       const data = await uploadFile(file, setUploadProgress);
-      setUploadStatus("success");
-      await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
-      applyResponse(data);
+      const isRejected = data?.input?.type === "file input";
+
+      if (isRejected) {
+        setUploadStatus("error");
+        setHistory((prev) =>
+          prev.map((msg) => (msg.id === fileId ? { ...msg, status: "error" } : msg))
+        );
+        applyResponse(data);
+      } else {
+        setUploadProgress(100);
+        setUploadStatus("success");
+        setHistory((prev) =>
+          prev.map((msg) => (msg.id === fileId ? { ...msg, status: "success" } : msg))
+        );
+        await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
+        applyResponse(data);
+      }
     } catch (err) {
       setUploadStatus("error");
       setUploadError(err.message || "Upload failed. Please try again.");
+      setHistory((prev) =>
+        prev.map((msg) => (msg.id === fileId ? { ...msg, status: "error" } : msg))
+      );
     } finally {
       isUploadingRef.current = false;
     }
@@ -133,6 +164,7 @@ function useBackendConversation() {
     isTyping,
     error,
     sessionEnded,
+    progress,
     uploadStatus,
     uploadProgress,
     uploadError,

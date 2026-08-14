@@ -1,5 +1,9 @@
+import { useState, useMemo } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
+import PaymentCard from "../../components/payment/PaymentCard";
+import StepTracker from "../../components/StepTracker/StepTracker";
+import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
@@ -19,13 +23,14 @@ const TEXT_INPUT_CONFIG = {
   "otp input": { type: "text", inputMode: "numeric" },
 };
 
-function Chat({ language = "English", onBack, onLogout }) {
+function Chat({ language = "English", onBack, onLogout, onFinished }) {
   const {
     history,
     input,
     isTyping,
     error,
     sessionEnded,
+    progress,
     uploadStatus,
     uploadProgress,
     uploadError,
@@ -35,6 +40,37 @@ function Chat({ language = "English", onBack, onLogout }) {
     submitFile,
     retry,
   } = useBackendConversation();
+
+  const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
+
+  // Load payment result from sessionStorage if already paid in this session
+  const [paymentResult, setPaymentResult] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("iprs_payment_success");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Automatically detect email and phone number from chat history for checkout prefill
+  const detectedPrefill = useMemo(() => {
+    let email = "";
+    let contact = "";
+    for (let i = history.length - 1; i >= 0; i--) {
+      const msg = history[i];
+      if (msg.sender === "user" && msg.text) {
+        const val = msg.text.trim();
+        if (!email && val.includes("@") && val.includes(".")) {
+          email = val;
+        }
+        if (!contact && /^\+?[0-9]{10,12}$/.test(val.replace(/[\s-]/g, ""))) {
+          contact = val;
+        }
+      }
+    }
+    return { email, contact };
+  }, [history]);
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -54,6 +90,12 @@ function Chat({ language = "English", onBack, onLogout }) {
     <div className={styles.page}>
       <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
+
+        {!sessionEnded && (
+          <div className={styles.trackerSlot}>
+            <StepTracker stages={STAGE_LABELS} activeIndex={trackerActiveIndex} currentFill={trackerFill} />
+          </div>
+        )}
 
         <div className={styles.messages} ref={messagesRef}>
           {history.map((message) => (
@@ -81,6 +123,62 @@ function Chat({ language = "English", onBack, onLogout }) {
             />
           )}
 
+          {/*
+            TODO: confirm with backend - "payment input" isn't in the documented
+            conversation contract (only text/email/url/choice/file input are).
+            Named to match that contract's "<noun> input" convention so it drops
+            in the same way once the real type/payload lands; amount/prefill
+            field names below are guesses and should be verified against the
+            actual backend response shape.
+          */}
+          {!isTyping && input?.type === "payment input" && (
+            <PaymentCard
+              key={input.id}
+              amountInRupees={input.amount ? input.amount / 100 : undefined}
+              prefill={{ name: input.prefillName, email: input.prefillEmail, contact: input.prefillContact }}
+              onComplete={(result) =>
+                sendAnswer(result?.paymentId ? `Payment completed (${result.paymentId})` : "Payment completed")
+              }
+            />
+          )}
+
+          {/* Render PaymentCard after the last step (when session has ended) if not paid yet */}
+          {!isTyping && sessionEnded && !error && !paymentResult && (
+            <PaymentCard
+              key="fallback-payment-final"
+              amountInRupees={1200}
+              prefill={detectedPrefill}
+              onComplete={(result) => {
+                sessionStorage.setItem("iprs_payment_success", JSON.stringify(result));
+                setPaymentResult(result);
+                onFinished?.();
+              }}
+            />
+          )}
+
+          {/* If payment completed, show nice message rows and complete state */}
+          {sessionEnded && !error && paymentResult && (
+            <>
+              <MessageRow
+                message={{
+                  id: "payment-completed-user-msg",
+                  sender: "user",
+                  kind: "text",
+                  text: `Payment completed. Transaction ID: ${paymentResult.paymentId}`,
+                }}
+              />
+              <MessageRow
+                message={{
+                  id: "payment-completed-bot-msg",
+                  sender: "bot",
+                  kind: "richText",
+                  richText: `Thank you! Your payment of <strong>₹1,200</strong> has been verified. Your application is now complete and under review.`,
+                }}
+              />
+              <p className={styles.sessionEndedNote}>Conversation complete.</p>
+            </>
+          )}
+
           {error && (
             <div className={styles.errorBanner} role="alert">
               <span>{error}</span>
@@ -89,8 +187,6 @@ function Chat({ language = "English", onBack, onLogout }) {
               </button>
             </div>
           )}
-
-          {sessionEnded && !error && <p className={styles.sessionEndedNote}>Conversation complete.</p>}
         </div>
 
         {showComposer && (
