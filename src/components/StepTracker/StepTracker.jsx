@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import ProfileIcon from "../icons/ProfileIcon";
 import BankIcon from "../icons/BankIcon";
 import MusicNoteIcon from "../icons/MusicNoteIcon";
@@ -13,32 +14,37 @@ const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 // so the bar always reflects the real backend percentage rather than a
 // fixed "halfway" guess.
 function StepTracker({ stages, activeIndex, currentFill = 0 }) {
+  const totalPercent = useMemo(() => {
+    if (stages.length <= 1) return 0;
+    const pct = ((activeIndex + currentFill / 100) / (stages.length - 1)) * 100;
+    return Math.min(Math.max(pct, 0), 100);
+  }, [stages.length, activeIndex, currentFill]);
+
   return (
     <div className={styles.wrap}>
-      <div className={styles.track}>
-        {stages.map((stage, i) => {
-          const status = i < activeIndex ? "completed" : i === activeIndex ? "active" : "pending";
-          const fillPercent = i < activeIndex ? 100 : i === activeIndex ? currentFill : 0;
-          const Icon = ICONS[i] || ProfileIcon;
-          return (
-            <div key={stage} className={`${styles.node} ${i === stages.length - 1 ? styles.nodeLast : ""}`}>
-              <div className={styles.iconRow}>
+      <div className={styles.trackContainer}>
+        {/* Horizontal progress bar line behind the circles */}
+        <div className={styles.progressBarBg}>
+          <div className={styles.progressBarFill} style={{ width: `${totalPercent}%` }} />
+        </div>
+
+        <div className={styles.track}>
+          {stages.map((stage, i) => {
+            const status = i < activeIndex ? "completed" : i === activeIndex ? "active" : "pending";
+            const Icon = ICONS[i] || ProfileIcon;
+            return (
+              <div key={stage} className={styles.node}>
                 <span className={`${styles.circle} ${styles[status]}`} aria-hidden="true">
                   <Icon />
                 </span>
-                {i < stages.length - 1 && (
-                  <div className={styles.connectorWrap}>
-                    <span className={styles.connectorLine} style={{ width: `${fillPercent}%` }} />
-                  </div>
-                )}
+                <div className={styles.textCol}>
+                  <span className={styles.stepNum}>{`STEP ${i + 1}`}</span>
+                  <span className={styles.stageName}>{stage}</span>
+                </div>
               </div>
-              <div className={styles.textCol}>
-                <span className={styles.stepNum}>{`STEP ${i + 1}`}</span>
-                <span className={styles.stageName}>{stage}</span>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -427,3 +427,9 @@
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.85);
 }
+
+@media (max-width: 480px) {
+  .trackerSlot {
+    padding: 10px 20px 4px;
+  }
+}
