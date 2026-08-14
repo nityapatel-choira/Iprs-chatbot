@@ -29,6 +29,11 @@ function useBackendConversation() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState("");
+  // Backend's overall registration progress (0-100), the sole source of
+  // truth for the stepper - see components/StepTracker/stepProgress.js.
+  // Kept at its last known value when a response omits the field, rather
+  // than resetting to 0, so the stepper never jumps backwards on its own.
+  const [progress, setProgress] = useState(0);
   // Which file-input step (by backend input.id) the upload state above
   // belongs to. This is the actual source of truth for whether that state
   // should be shown - see Chat.jsx, which only renders it when this still
@@ -51,6 +56,9 @@ function useBackendConversation() {
 
   const applyResponse = (data) => {
     pushBot(toRichTextMessages(data?.messages));
+    if (typeof data?.progress === "number") {
+      setProgress(data.progress);
+    }
     if (data?.sessionEnded) {
       setSessionEnded(true);
       setInput(null);
@@ -156,6 +164,7 @@ function useBackendConversation() {
     isTyping,
     error,
     sessionEnded,
+    progress,
     uploadStatus,
     uploadProgress,
     uploadError,

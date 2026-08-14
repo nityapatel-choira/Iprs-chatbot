@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PaymentCard from "../../components/payment/PaymentCard";
+import StepTracker from "../../components/StepTracker/StepTracker";
+import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
@@ -28,6 +30,7 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
     isTyping,
     error,
     sessionEnded,
+    progress,
     uploadStatus,
     uploadProgress,
     uploadError,
@@ -37,6 +40,8 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
     submitFile,
     retry,
   } = useBackendConversation();
+
+  const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
 
   // Load payment result from sessionStorage if already paid in this session
   const [paymentResult, setPaymentResult] = useState(() => {
@@ -85,6 +90,12 @@ function Chat({ language = "English", onBack, onLogout, onFinished }) {
     <div className={styles.page}>
       <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
+
+        {!sessionEnded && (
+          <div className={styles.trackerSlot}>
+            <StepTracker stages={STAGE_LABELS} activeIndex={trackerActiveIndex} currentFill={trackerFill} />
+          </div>
+        )}
 
         <div className={styles.messages} ref={messagesRef}>
           {history.map((message) => (
