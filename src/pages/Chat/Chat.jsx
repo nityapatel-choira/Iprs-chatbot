@@ -125,7 +125,7 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             <FileUploader
               key={input.id}
               title={input.title || "Choose a file or drag & drop it here"}
-              caption={input.caption || "JPEG, PNG, PDF, and MP4 formats, up to 50MB"}
+              caption={input.caption || "JPEG and PNG formats, up to 50MB"}
               onFileSelected={submitFile}
               status={effectiveUploadStatus}
               progress={effectiveUploadProgress}
@@ -175,12 +175,30 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
               </div>
               <h3 className={styles.completionTitle}>IPRS Membership Registration Complete</h3>
               <p className={styles.completionDesc}>
-                Your details have been successfully received and verified by the system. Your membership profile is now under review.
+                Your application has been received. Track your membership verification status through the timeline below:
               </p>
-              <div className={styles.completionMetaGrid}>
-                <div className={styles.completionMetaItem}>
-                  <span className={styles.completionMetaLabel}>Status</span>
-                  <span className={styles.completionMetaValueActive}>Under Review</span>
+
+              <div className={styles.horizontalTimeline}>
+                <div className={`${styles.hStepNode} ${styles.hStepNodeActive}`}>
+                  <div className={styles.hStepCircleActive}>1</div>
+                  <span className={styles.hStepTitleActive}>Application Under Review</span>
+                  <span className={styles.hStepBadgeActive}>Under Review</span>
+                </div>
+
+                <div className={styles.hStepLine} />
+
+                <div className={styles.hStepNode}>
+                  <div className={styles.hStepCirclePending}>2</div>
+                  <span className={styles.hStepTitlePending}>Document Verification</span>
+                  <span className={styles.hStepBadgePending}>Pending</span>
+                </div>
+
+                <div className={styles.hStepLine} />
+
+                <div className={styles.hStepNode}>
+                  <div className={styles.hStepCirclePending}>3</div>
+                  <span className={styles.hStepTitlePending}>Member ID Activation</span>
+                  <span className={styles.hStepBadgePending}>Pending</span>
                 </div>
               </div>
             </div>

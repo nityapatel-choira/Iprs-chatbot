@@ -6,7 +6,7 @@ import styles from "./FileUploader.module.css";
 
 function FileUploader({
   title = "Choose a file or drag & drop it here",
-  caption = "JPEG, PNG, PDF formats, up to 2MB",
+  caption = "JPEG and PNG formats, up to 2MB",
   onFileSelected,
   status = "idle",
   progress = 0,
@@ -138,7 +138,7 @@ function FileUploader({
       <input
         ref={inputRef}
         type="file"
-        accept=".jpg,.jpeg,.png,.pdf"
+        accept=".jpg,.jpeg,.png"
         className={styles.hiddenInput}
         onChange={handleChange}
         disabled={isDisabled}

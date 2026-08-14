@@ -162,7 +162,7 @@ export const STEPS = {
     input: {
       type: "fileUpload",
       title: "Upload PAN Card",
-      caption: "JPEG and PDF up to 2MB",
+      caption: "JPEG and PNG up to 2MB",
       next: "mobile",
     },
   },
