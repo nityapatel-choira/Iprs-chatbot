@@ -1,194 +1,164 @@
+/* Same --canvas-bg/--card-border/--card-max/--card-pct contract and .page/
+   .panel structure as Chat.module.css, so ChatHeader (reused as-is below)
+   renders pixel-identical to every other screen, and FileUploader (also
+   reused as-is) computes the exact same width it does in Chat - not just a
+   similar width, the same variables driving the same min(pct, max) logic. */
 .page {
   --canvas-bg: #f3f7f9;
+  --card-border: #e2e8f0;
+  --card-max: 580px;
 
   display: flex;
   justify-content: center;
   min-height: 100dvh;
   min-height: 100vh;
-  background: var(--canvas-bg);
+  background: #ffffff;
 }
 
 .panel {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 780px;
   min-height: 100dvh;
   min-height: 100vh;
-  background: var(--canvas-bg);
-}
-
-.header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 1rem clamp(1.25rem, 4vw, 2.5rem);
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
 }
 
-.title {
-  margin: 0;
-  font-family: inherit;
-  font-size: 1.0625rem;
-  font-weight: 600;
-  color: #0f172a;
+@media (min-width: 768px) {
+  .page {
+    --card-max: 640px;
+    --card-pct: 72%;
+  }
+
+  .panel {
+    max-width: 780px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    --card-max: 720px;
+  }
+
+  .panel {
+    max-width: 980px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .page {
+    --card-max: 800px;
+  }
+
+  .panel {
+    max-width: 1200px;
+  }
 }
 
 .content {
   flex: 1;
   min-height: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 1.5rem clamp(1.25rem, 5vw, 2.5rem);
+}
+
+@media (min-width: 1024px) {
+  .content {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+  }
+}
+
+/* The live-capture group (ring/status/actions) stays its own, deliberately
+   narrower width - a 380-460px circular preview is the right size for a
+   face, unrelated to how wide a document-upload card should be. Only the
+   upload card (below) follows the shared --card-pct/--card-max width. */
+.frameGroup {
+  display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 20px;
   width: 100%;
-  max-width: 420px;
+  max-width: 380px;
   margin: 0 auto;
-  padding: clamp(1.5rem, 5vw, 2.5rem) 1.25rem;
-  text-align: center;
 }
 
-.centerState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  margin: auto 0;
-}
-
-.iconBadge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: #f0f6ff;
-  color: #0066ff;
-  margin-bottom: 18px;
-}
-
-.heading {
-  margin: 0 0 8px;
-  font-family: inherit;
-  font-size: 1.25rem;
-  line-height: 1.3;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.subtitle {
-  margin: 0 0 24px;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: #64748b;
-  max-width: 34ch;
-}
-
-.instructionList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-}
-
-.instructionRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #0f172a;
-}
-
-.instructionIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #eff6ff;
-  color: #0066ff;
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(0, 102, 255, 0.2);
-  border-top-color: #0066ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+@media (min-width: 768px) {
+  .frameGroup {
+    max-width: 420px;
+    gap: 24px;
   }
 }
 
-.statusText {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.statusTextAligned {
-  color: #16a34a;
-}
-
-.hintText {
-  margin: 8px 0 0;
-  font-size: 0.78125rem;
-  color: #94a3b8;
-}
-
-.alertIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #fef2f2;
-  color: #dc2626;
-  margin-bottom: 16px;
-}
-
-.ringSpin {
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  padding: 5px;
-  margin-bottom: 20px;
-  background: conic-gradient(from 0deg, #0066ff, #93c5fd, #0066ff);
-  animation: ringRotate 2.2s linear infinite;
-}
-
-.ringSpinAligned {
-  background: #22c55e;
-  animation: none;
-}
-
-@keyframes ringRotate {
-  to {
-    transform: rotate(360deg);
+@media (min-width: 1024px) {
+  .frameGroup {
+    max-width: 460px;
+    gap: 28px;
   }
+}
+
+.uploadArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+/* Circular face-guide ring: color is the primary alignment signal - neutral
+   gray by default/adjusting, green once aligned, amber the moment more
+   than one face is detected. */
+.ring {
+  width: clamp(220px, 62vw, 300px);
+  height: clamp(220px, 62vw, 300px);
+  border-radius: 50%;
+  padding: 6px;
+  border: 4px solid transparent;
+  transition: border-color 0.2s ease;
+  position: relative;
+}
+
+/* Above ~480px wide the 62vw clamp is already pinned at its 300px mobile
+   ceiling, so it'd stay frozen there all the way up to a 1440px+ desktop
+   viewport - explicit sizes here are what actually give the desktop
+   version its own intentional scale instead of a stretched phone screen. */
+@media (min-width: 768px) {
+  .ring {
+    width: 320px;
+    height: 320px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ring {
+    width: 360px;
+    height: 360px;
+  }
+}
+
+/* Smallest phones (iPhone SE and similar, ~320-375px) - the ring's 220px
+   mobile floor plus .content's side padding can get tight, so it steps
+   down further here rather than risking edge-to-edge clipping. */
+@media (max-width: 340px) {
+  .ring {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+.ringNeutral {
+  border-color: #cbd5e1;
+}
+
+.ringAligned {
+  border-color: #22c55e;
+}
+
+.ringAlert {
+  border-color: #f59e0b;
 }
 
 .videoStage {
@@ -207,17 +177,46 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* Mirrored so the live preview reads naturally, like a mirror/selfie
+     camera - the captured frame is un-mirrored back in useFaceDetection's
+     capture(), so the saved photo isn't reversed. */
   transform: translate(-50%, -50%) scaleX(-1);
 }
 
-.resultStage {
-  position: relative;
-  width: 260px;
-  height: 260px;
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.55);
+  color: #ffffff;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
   border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid #22c55e;
-  margin-bottom: 20px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.alertIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
 }
 
 .resultImage {
@@ -228,8 +227,8 @@
 
 .successBadge {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
+  bottom: 6px;
+  right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -241,18 +240,85 @@
   border: 3px solid #ffffff;
 }
 
-.footer {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+.statusText {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #64748b;
+  text-align: center;
 }
 
-.primaryButton {
+.statusTextAligned {
+  color: #16a34a;
+}
+
+.statusTextAlert {
+  color: #b45309;
+}
+
+/* Large circular capture/shutter button, enabled once the camera is
+   actually live - manual tap works alongside the existing auto-capture-
+   on-alignment behavior in useFaceDetection, not instead of it. */
+.shutterButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 4px solid #ffffff;
+  background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3), 0 0 0 1.5px #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.shutterButton:active {
+  transform: scale(0.94);
+}
+
+@media (min-width: 768px) {
+  .shutterButton {
+    width: 84px;
+    height: 84px;
+  }
+
+  .shutterButton:hover {
+    transform: scale(1.04);
+  }
+}
+
+.retryButton {
+  border: none;
+  border-radius: 16px;
+  padding: 12px 28px;
+  min-height: 46px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.retryButton:active {
+  transform: scale(0.98);
+}
+
+.resultActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.continueButton {
   width: 100%;
   border: none;
   border-radius: 16px;
@@ -265,53 +331,58 @@
   background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
   box-shadow: 0 4px 16px rgba(0, 102, 255, 0.2);
   cursor: pointer;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
-.primaryButton:active {
+.continueButton:active {
   transform: scale(0.98);
 }
 
-.secondaryButton {
-  width: 100%;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 14px 20px;
-  min-height: 50px;
-  font-size: 0.9375rem;
-  font-weight: 600;
+.retakeButton {
+  border: none;
+  background: transparent;
+  color: #007aff;
   font-family: inherit;
-  color: #334155;
-  background: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  /* Text-only button, so the visible label stays small while the tap
+     target itself still clears the ~44px touch-target guideline. */
+  padding: 12px;
+  min-height: 44px;
 }
 
-.secondaryButton:hover {
-  background: #f1f5f9;
+/* Same text-link language as .retakeButton (matching color/weight) - the
+   camera<->upload switch and "retake" are the same kind of secondary,
+   low-emphasis action in this flow. */
+.fallbackLink {
+  border: none;
+  background: transparent;
+  color: #007aff;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 12px 8px;
+  min-height: 44px;
+  text-align: center;
+}
+
+/* Small trust label at the bottom - IPRS's own shield mark rather than
+   copying another vendor's "Powered by" badge. */
+.trustBadge {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom));
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .hiddenCanvas {
   display: none;
-}
-
-@media (max-width: 380px) {
-  .ringSpin,
-  .resultStage {
-    width: 210px;
-    height: 210px;
-  }
-
-  .iconBadge {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-@media (min-width: 768px) {
-  .ringSpin,
-  .resultStage {
-    width: 300px;
-    height: 300px;
-  }
 }

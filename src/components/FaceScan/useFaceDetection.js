@@ -1,35 +1,65 @@
 import { useEffect, useRef, useState } from "react";
 
+// Keep in sync with the installed @mediapipe/tasks-vision version (see
+// package.json) - the CDN path below is versioned and must match exactly,
+// this is Google's own documented way to load the WASM runtime for web.
 const TASKS_VISION_VERSION = "1.0.1";
 const WASM_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`;
 const MODEL_ASSET_URL =
   "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/1/blaze_face_short_range.tflite";
 
 const MIN_CONFIDENCE = 0.6;
-const GOOD_FRAMES_TO_CAPTURE = 24;
+const GOOD_FRAMES_TO_CAPTURE = 18;
+// Detection cadence, not render cadence: the video keeps playing at full
+// framerate, only the (comparatively expensive) model inference is
+// throttled - real-time alignment feedback doesn't need 60 checks/sec, and
+// running one on every rAF tick was pure wasted CPU/battery.
+const DETECT_INTERVAL_MS = 90;
+// Consecutive in-loop inference failures (a transient WASM/driver hiccup,
+// not a startup failure) before we give up and surface a recoverable error
+// instead of retrying forever or letting an exception escape the loop.
+const MAX_CONSECUTIVE_ERRORS = 5;
 
-function isFaceAligned(detection, videoWidth, videoHeight) {
-  const category = detection.categories?.[0];
-  if (!category || category.score < MIN_CONFIDENCE) return false;
+const TOO_CLOSE_WIDTH_RATIO = 0.85;
+const TOO_FAR_WIDTH_RATIO = 0.22;
+const CENTER_TOLERANCE = 0.18;
 
-  const box = detection.boundingBox;
-  if (!box) return false;
+// One discriminated status instead of a single aligned/not-aligned boolean,
+// so the UI can show a specific, actionable reason instead of a generic
+// "not aligned" hint.
+export const ALIGNMENT_MESSAGES = {
+  "no-face": "Position your face inside the frame",
+  "multiple-faces": "Multiple faces detected - make sure it's just you",
+  "too-close": "Move back a little",
+  "too-far": "Move a little closer",
+  "off-center": "Center your face in the frame",
+  aligned: "Hold still, scanning...",
+};
 
-  const boxCenterX = box.originX + box.width / 2;
-  const boxCenterY = box.originY + box.height / 2;
-  const frameCenterX = videoWidth / 2;
-  const frameCenterY = videoHeight / 2;
+function classifyAlignment(detections, videoWidth, videoHeight) {
+  if (!detections || detections.length === 0) return "no-face";
+  if (detections.length > 1) return "multiple-faces";
 
-  const offsetX = Math.abs(boxCenterX - frameCenterX) / videoWidth;
-  const offsetY = Math.abs(boxCenterY - frameCenterY) / videoHeight;
+  const category = detections[0].categories?.[0];
+  if (!category || category.score < MIN_CONFIDENCE) return "no-face";
+
+  const box = detections[0].boundingBox;
+  if (!box) return "no-face";
+
   const widthRatio = box.width / videoWidth;
+  if (widthRatio > TOO_CLOSE_WIDTH_RATIO) return "too-close";
+  if (widthRatio < TOO_FAR_WIDTH_RATIO) return "too-far";
 
-  return offsetX < 0.18 && offsetY < 0.18 && widthRatio > 0.22 && widthRatio < 0.85;
+  const offsetX = Math.abs(box.originX + box.width / 2 - videoWidth / 2) / videoWidth;
+  const offsetY = Math.abs(box.originY + box.height / 2 - videoHeight / 2) / videoHeight;
+  if (offsetX > CENTER_TOLERANCE || offsetY > CENTER_TOLERANCE) return "off-center";
+
+  return "aligned";
 }
 
 function useFaceDetection({ onCapture } = {}) {
-  const [status, setStatus] = useState("idle");
-  const [faceAligned, setFaceAligned] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | loading | scanning | error | success
+  const [alignment, setAlignment] = useState("no-face");
   const [errorMessage, setErrorMessage] = useState("");
   const [capturedImage, setCapturedImage] = useState(null);
 
@@ -39,6 +69,8 @@ function useFaceDetection({ onCapture } = {}) {
   const detectorRef = useRef(null);
   const rafIdRef = useRef(null);
   const goodFrameCountRef = useRef(0);
+  const lastDetectAtRef = useRef(0);
+  const consecutiveErrorsRef = useRef(0);
   const mountedRef = useRef(true);
   const startingRef = useRef(false);
 
@@ -47,6 +79,7 @@ function useFaceDetection({ onCapture } = {}) {
     return () => {
       mountedRef.current = false;
       stopEverything();
+      closeDetector();
     };
   }, []);
 
@@ -56,6 +89,21 @@ function useFaceDetection({ onCapture } = {}) {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+    }
+  }
+
+  function closeDetector() {
+    // Releases the detector's native WASM heap allocation. The previous
+    // implementation never did this, leaking a full detector instance on
+    // every retake/remount - the most likely reason it eventually started
+    // throwing after normal use (WASM allocation failures).
+    if (detectorRef.current) {
+      try {
+        detectorRef.current.close();
+      } catch {
+        // Already released - nothing to clean up.
+      }
+      detectorRef.current = null;
     }
   }
 
@@ -74,20 +122,18 @@ function useFaceDetection({ onCapture } = {}) {
       if (!detectorRef.current) {
         const { FaceDetector, FilesetResolver } = await import("@mediapipe/tasks-vision");
         const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL);
-        try {
-          detectorRef.current = await FaceDetector.createFromOptions(vision, {
-            baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "GPU" },
-            runningMode: "VIDEO",
-            minDetectionConfidence: MIN_CONFIDENCE,
-          });
-        } catch (gpuErr) {
-          console.warn("Face detector GPU delegate failed, falling back to CPU.", gpuErr);
-          detectorRef.current = await FaceDetector.createFromOptions(vision, {
-            baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
-            runningMode: "VIDEO",
-            minDetectionConfidence: MIN_CONFIDENCE,
-          });
-        }
+        // CPU delegate only, deliberately - MediaPipe's GPU/WebGL delegate
+        // is a well-documented source of instability in Safari (macOS and
+        // iOS) and many Android WebViews, and the old code's fallback only
+        // covered *creation* failures, not the far more common case of it
+        // failing mid-inference. The blaze_face_short_range model is light
+        // enough that CPU WASM inference is comfortably real-time at the
+        // resolution used here, so there's no real tradeoff.
+        detectorRef.current = await FaceDetector.createFromOptions(vision, {
+          baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
+          runningMode: "VIDEO",
+          minDetectionConfidence: MIN_CONFIDENCE,
+        });
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -108,6 +154,9 @@ function useFaceDetection({ onCapture } = {}) {
       if (!mountedRef.current) return;
 
       goodFrameCountRef.current = 0;
+      consecutiveErrorsRef.current = 0;
+      lastDetectAtRef.current = 0;
+      setAlignment("no-face");
       setStatus("scanning");
       rafIdRef.current = requestAnimationFrame(tick);
     } catch (err) {
@@ -126,23 +175,39 @@ function useFaceDetection({ onCapture } = {}) {
     }
   }
 
-  function tick() {
+  function tick(now) {
     if (!mountedRef.current || !streamRef.current) return;
 
     const video = videoRef.current;
     const detector = detectorRef.current;
 
-    if (video && detector && video.readyState >= 2) {
-      const result = detector.detectForVideo(video, performance.now());
-      const detection = result.detections?.[0];
-      const aligned = detection ? isFaceAligned(detection, video.videoWidth, video.videoHeight) : false;
+    if (video && detector && video.readyState >= 2 && now - lastDetectAtRef.current >= DETECT_INTERVAL_MS) {
+      lastDetectAtRef.current = now;
+      try {
+        const result = detector.detectForVideo(video, now);
+        consecutiveErrorsRef.current = 0;
 
-      setFaceAligned(aligned);
-      goodFrameCountRef.current = aligned ? goodFrameCountRef.current + 1 : 0;
+        const nextAlignment = classifyAlignment(result.detections, video.videoWidth, video.videoHeight);
+        setAlignment(nextAlignment);
+        goodFrameCountRef.current = nextAlignment === "aligned" ? goodFrameCountRef.current + 1 : 0;
 
-      if (goodFrameCountRef.current >= GOOD_FRAMES_TO_CAPTURE) {
-        capture();
-        return;
+        if (goodFrameCountRef.current >= GOOD_FRAMES_TO_CAPTURE) {
+          capture();
+          return;
+        }
+      } catch (err) {
+        // A transient per-frame inference error (not a startup failure) -
+        // the old code had no handling here at all, so this would have
+        // been an uncaught exception killing the loop silently. Tolerate a
+        // few in a row (camera hiccup, dropped frame) before giving up.
+        consecutiveErrorsRef.current += 1;
+        console.warn("Face detection frame failed:", err);
+        if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
+          stopEverything();
+          setStatus("error");
+          setErrorMessage("Face detection stopped unexpectedly. Please try again.");
+          return;
+        }
       }
     }
 
@@ -170,24 +235,26 @@ function useFaceDetection({ onCapture } = {}) {
 
   function retake() {
     setCapturedImage(null);
-    setFaceAligned(false);
+    setAlignment("no-face");
     start();
   }
 
   function cancel() {
     stopEverything();
     setStatus("idle");
-    setFaceAligned(false);
+    setAlignment("no-face");
   }
 
   return {
     status,
-    faceAligned,
+    alignment,
+    alignmentMessage: ALIGNMENT_MESSAGES[alignment],
     errorMessage,
     capturedImage,
     videoRef,
     canvasRef,
     start,
+    capture,
     retake,
     cancel,
   };
