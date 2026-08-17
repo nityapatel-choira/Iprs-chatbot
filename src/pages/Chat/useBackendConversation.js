@@ -215,6 +215,29 @@ function useBackendConversation() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+
+    // Dev-only escape hatch for visually QA-ing cards the live backend
+    // can't trigger yet (see devMocks.js) - e.g. `?mockInput=summary`.
+    // import.meta.env.DEV is statically false in production builds, so
+    // Vite dead-code-eliminates this whole branch (and its devMocks.js
+    // import) out of the prod bundle.
+    if (import.meta.env.DEV) {
+      const mockKey = new URLSearchParams(window.location.search).get("mockInput");
+      if (mockKey) {
+        import("./devMocks").then(({ DEV_MOCK_INPUTS }) => {
+          const mock = DEV_MOCK_INPUTS[mockKey];
+          if (mock) {
+            setIsTyping(false);
+            applyResponse(mock);
+          } else {
+            console.warn(`No dev mock registered for mockInput="${mockKey}"`, Object.keys(DEV_MOCK_INPUTS));
+            runMessage(undefined);
+          }
+        });
+        return;
+      }
+    }
+
     runMessage(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

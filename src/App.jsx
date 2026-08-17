@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import "./App.css";
+import Splash from "./pages/Splash/Splash";
 import LanguageSelection from "./pages/LanguageSelection/LanguageSelection";
 import { LANGUAGES } from "./constants/languages";
 import { logout } from "./services/authService";
@@ -16,6 +17,7 @@ const Chat = lazy(() => import("./pages/Chat/Chat"));
 // const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [languageCode, setLanguageCodeState] = useState(() => getLanguageCode());
   const [loggedIn, setLoggedIn] = useState(() => Boolean(getToken()));
   // const [onboardingDone, setOnboardingDone] = useState(false);
@@ -62,6 +64,10 @@ function App() {
       // token is already cleared locally by authService.logout regardless of API outcome
     }
   };
+
+  if (showSplash) {
+    return <Splash onDone={() => setShowSplash(false)} />;
+  }
 
   if (!languageCode) {
     return <LanguageSelection onContinue={handleLanguageContinue} />;

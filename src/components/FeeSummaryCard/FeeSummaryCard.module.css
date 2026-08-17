@@ -144,3 +144,94 @@
   line-height: 1.35;
   color: #64748b;
 }
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.optionButtonPrimary,
+.optionButtonSecondary {
+  width: 100%;
+  border-radius: 14px;
+  padding: 12px 20px;
+  min-height: 46px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease, ease), opacity 0.15s var(--ease, ease);
+}
+
+.optionButtonPrimary {
+  border: none;
+  color: #ffffff;
+  background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
+}
+
+.optionButtonSecondary {
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  background: #ffffff;
+}
+
+.optionButtonPrimary:active:not(:disabled),
+.optionButtonSecondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.optionButtonPrimary:disabled {
+  background: #cdcdcd;
+  color: #767676;
+  cursor: not-allowed;
+}
+
+.confirmRow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.confirmCheckboxRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.confirmBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  color: #ffffff;
+  background: #ffffff;
+  transition: background 0.15s var(--ease, ease), border-color 0.15s var(--ease, ease);
+}
+
+.confirmBox svg {
+  width: 12px;
+  height: 10px;
+}
+
+.confirmBoxChecked {
+  background: #0066ff;
+  border-color: #0066ff;
+}
+
+.confirmLabel {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #334155;
+}

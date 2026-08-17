@@ -23,9 +23,9 @@ function LanguageSelection({ onContinue }) {
           <img src={iprsLogo} alt="IPRS" className={styles.logo} />
 
           <div className={styles.textGroup}>
-            <h1 className={styles.heading}>Welcome · स्वागत · સ્વાગત</h1>
+            <h1 className={styles.heading}>Choose your language</h1>
             <p className={styles.subtitle}>
-              Become an IPRS member from your phone, in your language, at your pace.
+              Select the language you&apos;d like to use. You can change it later in settings.
             </p>
           </div>
 

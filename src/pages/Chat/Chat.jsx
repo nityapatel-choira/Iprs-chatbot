@@ -1,6 +1,14 @@
 // import { useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
+import PinInput from "../../components/PinInput/PinInput";
+import AadhaarField from "../../components/AadhaarField/AadhaarField";
+import CompletionCard from "./components/CompletionCard/CompletionCard";
+import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
+import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
+import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard";
+import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
+import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 // import PaymentCard from "../../components/payment/PaymentCard";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
@@ -20,7 +28,6 @@ const TEXT_INPUT_CONFIG = {
   "email input": { type: "email", inputMode: "email" },
   "url input": { type: "url", inputMode: "url" },
   "phone input": { type: "tel", inputMode: "tel" },
-  "otp input": { type: "text", inputMode: "numeric" },
 };
 
 function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
@@ -84,9 +91,18 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   }, [history]);
   */
 
+  // The backend's "text input" type is generic (mobile number, name, email,
+  // Aadhaar - anything typed) and carries no sub-type of its own, only a
+  // human-readable placeholder/title. Sniffing that label is the only way to
+  // opt a specific known field into a nicer widget (Figma's boxed Aadhaar
+  // field) without inventing a new input.type the backend doesn't send -
+  // the backend still fully owns copy, ordering and progression either way.
+  const isAadhaarStep =
+    input?.type === "text input" && /aadhaar|aadhar/i.test(`${input.placeholder || ""} ${input.title || ""}`);
+
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig);
+  const showComposer = Boolean(textConfig) && !isAadhaarStep;
 
   // input.id is the source of truth for which file-input step the upload
   // state belongs to: once the backend moves on to a new file-input (a new
@@ -121,11 +137,54 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             />
           )}
 
+          {!isTyping && input?.type === "otp input" && (
+            <PinInput key={input.id} onComplete={sendAnswer} />
+          )}
+
+          {!isTyping && isAadhaarStep && <AadhaarField key={input.id} onSubmit={sendAnswer} />}
+
+          {/*
+            TODO: none of the four cases below (checkbox/summary/document/
+            declaration input) are in the documented conversation contract
+            today - only choice/file/text-family/otp are. Named to match
+            that contract's "<noun> input" convention (mirroring the
+            pre-existing "payment input" TODO below) so each drops in the
+            moment the backend actually sends it; type names and payload
+            shapes are our best guess from Figma + the old mock's STEPS
+            data and should be confirmed with backend before relying on
+            them. Until then these branches are unreachable in production -
+            see devMocks.js for how to exercise them locally.
+          */}
+          {!isTyping && input?.type === "checkbox input" && (
+            <CheckboxGroup
+              options={input.options || []}
+              caption={input.caption}
+              onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
+            />
+          )}
+
+          {!isTyping && input?.type === "summary input" && (
+            <FeeSummaryCard
+              {...input.data}
+              onOptionSelect={(option) => sendAnswer(option.label)}
+              onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}
+            />
+          )}
+
+          {!isTyping && input?.type === "document input" && (
+            <DocumentScanCard
+              key={input.id}
+              title={input.title}
+              caption={input.caption}
+              onCapture={() => sendAnswer("Document captured")}
+            />
+          )}
+
           {!isTyping && input?.type === "file input" && (
             <FileUploader
               key={input.id}
               title={input.title || "Choose a file or drag & drop it here"}
-              caption={input.caption || "JPEG and PNG formats, up to 50MB"}
+              caption={input.caption || "JPEG and PDF formats, up to 2MB"}
               onFileSelected={submitFile}
               status={effectiveUploadStatus}
               progress={effectiveUploadProgress}
@@ -168,41 +227,7 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
           */}
 
           {/* Completion summary card when session has ended / registration complete */}
-          {sessionEnded && !error && (
-            <div className={styles.completionCard}>
-              <div className={styles.completionBadge}>
-                <span className={styles.completionCheck}>✓</span> Application Submitted
-              </div>
-              <h3 className={styles.completionTitle}>IPRS Membership Registration Complete</h3>
-              <p className={styles.completionDesc}>
-                Your application has been received. Track your membership verification status through the timeline below:
-              </p>
-
-              <div className={styles.horizontalTimeline}>
-                <div className={`${styles.hStepNode} ${styles.hStepNodeActive}`}>
-                  <div className={styles.hStepCircleActive}>1</div>
-                  <span className={styles.hStepTitleActive}>Application Under Review</span>
-                  <span className={styles.hStepBadgeActive}>Under Review</span>
-                </div>
-
-                <div className={styles.hStepLine} />
-
-                <div className={styles.hStepNode}>
-                  <div className={styles.hStepCirclePending}>2</div>
-                  <span className={styles.hStepTitlePending}>Document Verification</span>
-                  <span className={styles.hStepBadgePending}>Pending</span>
-                </div>
-
-                <div className={styles.hStepLine} />
-
-                <div className={styles.hStepNode}>
-                  <div className={styles.hStepCirclePending}>3</div>
-                  <span className={styles.hStepTitlePending}>Member ID Activation</span>
-                  <span className={styles.hStepBadgePending}>Pending</span>
-                </div>
-              </div>
-            </div>
-          )}
+          {sessionEnded && !error && <CompletionCard />}
 
           {/* sessionEndedNote removed */}
 
@@ -215,6 +240,27 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             </div>
           )}
         </div>
+
+        {/*
+            Neither sheet is given onBack/onClose: this is a backend-driven,
+            single-path conversation with no "go back" concept anywhere else
+            in the UI (choice/checkbox/file steps offer no skip either), so
+            the consent/declaration step must be answered to proceed rather
+            than dismissed - matching how a required legal consent should
+            behave anyway.
+          */}
+        {!isTyping && input?.type === "consent input" && (
+          <ConsentDialog sheet={input.sheet} onAccept={() => sendAnswer("I Accept")} />
+        )}
+
+        {!isTyping && input?.type === "declaration input" && (
+          <DeclarationSheet
+            open
+            title={input.title}
+            options={input.options || []}
+            onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")}
+          />
+        )}
 
         {showComposer && (
           <ChatComposer

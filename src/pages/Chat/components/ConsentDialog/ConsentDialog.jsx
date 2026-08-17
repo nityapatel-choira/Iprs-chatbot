@@ -2,7 +2,7 @@ import ConsentSheet from "../../../../components/ConsentSheet/ConsentSheet";
 import { CONSENT } from "../../conversationFlow";
 
 function ConsentDialog({ sheet, onAccept, onBack }) {
-  if (!sheet) return null;
+  if (!sheet || !CONSENT[sheet]) return null;
 
   return (
     <ConsentSheet open title={CONSENT[sheet].title} onAccept={onAccept} onBack={onBack}>
