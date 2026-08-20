@@ -26,6 +26,23 @@ function botParagraphs(paragraphs) {
 }
 
 export const DEV_MOCK_INPUTS = {
+  // Reproduces the real raw-text document/fee message (see
+  // parseDocumentSummaryText.js) followed by a genuine "Start
+  // Application"/"Change my previous answers" choice-input - the parser
+  // should turn this into the Figma-style card with its buttons folded in,
+  // and the raw paragraph should never also appear as a plain bubble.
+  documentSummaryText: {
+    messages: [
+      botText(
+        "Requirements for Author/Composer (Individual)\nIdentity Proof (Pan Card)\nBank Proof (Passbook front page/ Bank Statement/ Cancelled Cheque)\nPermanent Address Proof (Passport, Driving License, Voter ID, electricity Bill, Telephone Bill, Mobile Bill, letter from Owner)\nPresent Address Proof (Passport, Driving License, Voter ID, Registered Leave License Copy, electricity Bill, Telephone Bill, Mobile Bill, letter from Owner)\nGST Registration Certificate (If Applicable)\nIf an applicant is a member of another society, then the applicant needs to provide a copy of the NOC from that society.\nPassport size Photo applicant.\n\nAPPLICATION FEE: ₹1200\n\nNon Refundable"
+      ),
+    ],
+    input: {
+      id: "mock-document-summary-text",
+      type: "choice input",
+      items: [{ content: "Start Application" }, { content: "Change my previous answers" }],
+    },
+  },
   checkbox: {
     messages: [botText("What's your part in the music?")],
     input: {
@@ -171,6 +188,18 @@ export const DEV_MOCK_INPUTS = {
       type: "file input",
       title: "Passport Size Photo",
       caption: "Scan your face or upload a clear passport size photo",
+    },
+  },
+  // Confirmed real shape: no input.title/caption at all (unlike the
+  // passport-photo mock above) - just the bot message text plus
+  // options.variableId, matching how Chat.jsx's isProfilePhotoStep detects
+  // and titles this step.
+  profilePhoto: {
+    messages: [botText("Upload your Profile photo")],
+    input: {
+      id: "mock-profile-photo",
+      type: "file input",
+      options: { variableId: "vww01qa7jizgywxikfu1yu48x" },
     },
   },
   aadhaar: {

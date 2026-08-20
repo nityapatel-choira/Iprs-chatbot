@@ -26,6 +26,18 @@ function isPdfFile(fileName, mimeType, rawFile) {
   return false;
 }
 
+// Splits off the extension so it can be kept visible while only the base
+// name gets ellipsis-truncated (see .fileNameBase/.fileNameExt in the CSS
+// module) - a plain single-span ellipsis would just as likely clip the
+// extension itself on a long filename, which is the one part that tells
+// the user what kind of file this is.
+function splitFileName(name) {
+  if (!name) return { base: "", ext: "" };
+  const dotIndex = name.lastIndexOf(".");
+  if (dotIndex <= 0 || dotIndex === name.length - 1) return { base: name, ext: "" };
+  return { base: name.slice(0, dotIndex), ext: name.slice(dotIndex) };
+}
+
 function formatFileSize(size) {
   if (!size) return "1.2 MB";
   if (typeof size === "string") return size;
@@ -85,6 +97,7 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   const activeThumbnailUrl = isImage ? activePreviewUrl : (isPdf ? pdfThumbnail : null);
   const showThumbnail = Boolean(activeThumbnailUrl);
   const formattedSize = formatFileSize(fileSize);
+  const { base: fileNameBase, ext: fileNameExt } = splitFileName(fileName);
 
   return (
     <a
@@ -112,7 +125,10 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         </div>
       )}
       <div className={styles.fileMetaBox}>
-        <span className={styles.fileNameText}>{fileName}</span>
+        <span className={styles.fileNameText}>
+          <span className={styles.fileNameBase}>{fileNameBase}</span>
+          {fileNameExt && <span className={styles.fileNameExt}>{fileNameExt}</span>}
+        </span>
         <span className={styles.fileDetailText}>
           {isUploading
             ? "Uploading..."

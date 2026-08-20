@@ -15,7 +15,7 @@ import ConsentSheet from "../../../../components/ConsentSheet/ConsentSheet";
 // title and renders entirely as body. Either way the body is rendered via
 // RichText straight from the backend's richText, so a link (e.g. the
 // Privacy Notice) renders exactly as sent - nothing here is hardcoded.
-function ConsentDialog({ messages, onAccept }) {
+function ConsentDialog({ messages, onAccept, onBack }) {
   if (!messages || messages.length === 0) return null;
 
   const blocks = messages.flatMap((msg) => msg.richText || []);
@@ -27,7 +27,7 @@ function ConsentDialog({ messages, onAccept }) {
   const bodyNodes = hasSeparateTitle ? rest : blocks;
 
   return (
-    <ConsentSheet open title={title} onAccept={onAccept}>
+    <ConsentSheet open title={title} onAccept={onAccept} onBack={onBack}>
       <RichText nodes={bodyNodes} />
     </ConsentSheet>
   );

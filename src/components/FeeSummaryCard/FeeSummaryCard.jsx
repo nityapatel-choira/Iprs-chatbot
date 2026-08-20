@@ -26,8 +26,8 @@ function FeeSummaryCard({
 
   return (
     <div className={styles.wrap}>
-      <p className={styles.feeIntro}>You&apos;re applying as an</p>
       <div className={styles.outerCard}>
+        <p className={styles.feeIntro}>You&apos;re applying as an</p>
         <div className={styles.feeCard}>
           <span className={styles.entityLabel}>{entityLabel}</span>
           <div className={styles.amountGroup}>

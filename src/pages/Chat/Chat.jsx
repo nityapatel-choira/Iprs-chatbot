@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -18,6 +18,7 @@ import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
+import { parseDocumentSummaryText } from "./parseDocumentSummaryText";
 import styles from "./Chat.module.css";
 
 // Lazy-loaded rather than a plain top-level import like the other step
@@ -142,23 +143,92 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   // (see above) - a plain "choice input" that isn't consent could
   // coincidentally have a single "I Accept"-labeled item too, but that
   // would itself already satisfy isConsentAcceptStep's definition, so the
-  // equivalence holds regardless. So the bot message immediately preceding
-  // every past "I Accept" reply in history was that turn's consent content,
-  // and belongs on this permanent list alongside whichever one is pending
-  // right now.
+  // equivalence holds regardless. So both the bot message immediately
+  // preceding every past "I Accept" reply AND that reply itself were this
+  // turn's consent interaction end-to-end - the whole thing happened inside
+  // the popup, so neither belongs in the plain chat transcript, only the
+  // popup's own "I Accept" button does.
   const resolvedConsentMessageIds = new Set();
   for (let i = 1; i < history.length; i += 1) {
     const message = history[i];
     if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
       resolvedConsentMessageIds.add(history[i - 1].id);
+      resolvedConsentMessageIds.add(message.id);
     }
   }
   const consentMessageIds = new Set([...resolvedConsentMessageIds, ...pendingConsentMessages.map((m) => m.id)]);
+
+  // Presentation-only delay: when the backend bundles the document/fee
+  // recap and the consent message into the same response, the consent
+  // popup would otherwise open in the same paint as the doc/fee card and
+  // cover it before the user has had a chance to read it. Detected by
+  // whether the message immediately before this consent message is itself
+  // a parsed document/fee summary - a standalone consent step (e.g.
+  // consent 2, which normally arrives on its own after consent 1 is
+  // accepted) has no such neighbor and opens immediately, unchanged from
+  // before. Nothing here touches the backend, progress, or message
+  // suppression above - it only delays which render the popup's JSX
+  // appears in.
+  const pendingConsentMessageId = pendingConsentMessages[0]?.id ?? null;
+  const consentPrecededByDocSummary =
+    pendingConsentMessageId != null &&
+    history.length >= 2 &&
+    history[history.length - 2]?.sender === "bot" &&
+    Boolean(parseDocumentSummaryText(extractMessageText(history[history.length - 2])));
+
+  // Only the delayed (bundled) case needs state at all - the standalone
+  // case below is a plain derived boolean, no render-triggering setState
+  // required for it.
+  const [visibleConsentMessageId, setVisibleConsentMessageId] = useState(null);
+
+  useEffect(() => {
+    if (!pendingConsentMessageId || !consentPrecededByDocSummary) return undefined;
+
+    const CONSENT_POPUP_DELAY_MS = 2500;
+    const timer = setTimeout(() => setVisibleConsentMessageId(pendingConsentMessageId), CONSENT_POPUP_DELAY_MS);
+    // Also covers "user moved past this state" - if `pendingConsentMessageId`
+    // changes before the timer fires (or the input stops being a consent
+    // step at all, at which point this whole effect stops re-running for
+    // it), this cleanup cancels the stale timer before it could reopen a
+    // popup for a step that's no longer current.
+    return () => clearTimeout(timer);
+  }, [pendingConsentMessageId, consentPrecededByDocSummary]);
+
+  const showConsentPopup =
+    Boolean(pendingConsentMessageId) &&
+    (!consentPrecededByDocSummary || visibleConsentMessageId === pendingConsentMessageId);
+
+  // "Start Application" / "Change my previous answers" is a genuine
+  // backend choice-input (never the consent gate, which is excluded
+  // above), and can directly follow the parsed document/fee message with
+  // no field linking the two - only their adjacency in history does. When
+  // that's the case its buttons render as part of the parsed card instead
+  // of a separate QuickReplyCard below it, matching Figma (both live in
+  // the same card there). A past, already-answered document/fee message
+  // still gets parsed into a card everywhere else in history - it just
+  // doesn't get buttons once the conversation has moved on.
+  const isNonConsentChoiceStep = input?.type === "choice input" && !isConsentAcceptStep;
+  const lastMessageDocSummary =
+    lastMessage?.sender === "bot" ? parseDocumentSummaryText(extractMessageText(lastMessage)) : null;
+  const pendingDocSummary = isNonConsentChoiceStep ? lastMessageDocSummary : null;
 
   const isPassportPhotoStep =
     input?.type === "file input" &&
     (passportPhotoStepPattern.test(`${input.title || ""} ${input.caption || ""}`) ||
       passportPhotoStepPattern.test(trailingBotText));
+
+  // Profile Photo step: confirmed real shape is { message: "Upload your
+  // Profile photo", input: { type: "file input", options: { variableId:
+  // "vww01qa7jizgywxikfu1yu48x" } } } - a reliable field actually exists
+  // here (unlike passport photo above), so that's checked first; the
+  // message-text match is only a fallback for if the backend ever sends
+  // this step without it. Wants the exact same face-scan/upload choice as
+  // passport photo, so it's folded into isPassportPhotoStep at the two call
+  // sites below rather than duplicating them for a third boolean.
+  const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
+  const isProfilePhotoStep =
+    input?.type === "file input" &&
+    (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID || /profile photo/i.test(trailingBotText));
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -186,13 +256,27 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
         <div className={styles.messages} ref={messagesRef}>
           {history
             .filter((message) => !consentMessageIds.has(message.id))
-            .map((message) => (
-              <MessageRow key={message.id} message={message} />
-            ))}
+            .map((message) => {
+              const isLast = message.id === lastMessage?.id;
+              const parsedSummary = isLast
+                ? lastMessageDocSummary
+                : message.sender === "bot" && parseDocumentSummaryText(extractMessageText(message));
+              if (parsedSummary) {
+                return (
+                  <FeeSummaryCard
+                    key={message.id}
+                    {...parsedSummary}
+                    options={isLast && pendingDocSummary ? (input.items || []).map((item) => ({ label: item.content })) : undefined}
+                    onOptionSelect={(option) => sendAnswer(option.label)}
+                  />
+                );
+              }
+              return <MessageRow key={message.id} message={message} />;
+            })}
 
           {isTyping && <TypingIndicator />}
 
-          {!isTyping && input?.type === "choice input" && !isConsentAcceptStep && (
+          {!isTyping && input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary && (
             <QuickReplyCard
               options={(input.items || []).map((item) => ({ label: item.content }))}
               onSelect={(option) => sendAnswer(option.label)}
@@ -242,16 +326,16 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             />
           )}
 
-          {!isTyping && input?.type === "file input" && isPassportPhotoStep && (
+          {!isTyping && input?.type === "file input" && (isPassportPhotoStep || isProfilePhotoStep) && (
             <PassportPhotoCard
               key={input.id}
-              title={input.title}
+              title={input.title || (isProfilePhotoStep ? "Upload your Profile photo" : undefined)}
               caption={input.caption}
               onFileSelected={submitFile}
             />
           )}
 
-          {!isTyping && input?.type === "file input" && !isPassportPhotoStep && (
+          {!isTyping && input?.type === "file input" && !isPassportPhotoStep && !isProfilePhotoStep && (
             <FileUploader
               key={input.id}
               title={input.title || "Choose a file or drag & drop it here"}
@@ -302,15 +386,17 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
         </div>
 
         {/*
-            Neither sheet is given onBack/onClose: this is a backend-driven,
-            single-path conversation with no "go back" concept anywhere else
-            in the UI (choice/checkbox/file steps offer no skip either), so
-            the consent/declaration step must be answered to proceed rather
-            than dismissed - matching how a required legal consent should
-            behave anyway.
+            ConsentDialog's onBack is a no-op, not real back-navigation: this
+            is a backend-driven, single-path conversation with no "go back"
+            concept anywhere else in the UI (choice/checkbox/file steps offer
+            no skip either), so consent must still be answered via "I Accept"
+            to proceed. It only exists so BottomSheet's close (X) button - shown
+            on web/desktop widths only, matching Figma - has a truthy handler
+            to render against; neither it nor "Go back" changes any state.
+            DeclarationSheet below is intentionally not given one either.
           */}
-        {!isTyping && isConsentAcceptStep && (
-          <ConsentDialog messages={pendingConsentMessages} onAccept={() => sendAnswer("I Accept")} />
+        {!isTyping && isConsentAcceptStep && showConsentPopup && (
+          <ConsentDialog messages={pendingConsentMessages} onAccept={() => sendAnswer("I Accept")} onBack={() => {}} />
         )}
 
         {!isTyping && input?.type === "declaration input" && (
