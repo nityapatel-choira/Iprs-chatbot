@@ -110,4 +110,15 @@ export const DEV_MOCK_INPUTS = {
     messages: [botText("We have shared an OTP with you for verification. Please share the OTP")],
     input: { id: "mock-otp", type: "otp input" },
   },
+  payment: {
+    messages: [botText("Last step - pay the membership fee to complete your registration.")],
+    input: {
+      id: "mock-payment",
+      type: "payment input",
+      amount: 120000,
+      prefillName: "Test User",
+      prefillEmail: "test@example.com",
+      prefillContact: "9999999999",
+    },
+  },
 };
