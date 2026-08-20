@@ -45,7 +45,7 @@ function replyToRichTextMessage(data) {
   };
 }
 
-function extractMessageText(msg) {
+export function extractMessageText(msg) {
   if (!msg) return "";
   if (typeof msg === "string") return msg.trim();
   if (typeof msg.text === "string" && msg.text.trim()) return msg.text.trim();

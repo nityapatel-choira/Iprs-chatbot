@@ -17,6 +17,7 @@ import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
+import { extractMessageText } from "../../store/slices/conversationSlice";
 import styles from "./Chat.module.css";
 
 // Lazy-loaded rather than a plain top-level import like the other step
@@ -79,11 +80,35 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   // "file input" type is otherwise generic (PAN, bank proof, address
   // proof, passport photo - anything file-based), so opting the passport
   // photo step into the face-scan/upload choice (instead of the plain
-  // FileUploader every other file-input step uses) means matching its
-  // title/caption rather than inventing a new input.type the backend
-  // doesn't send.
+  // FileUploader every other file-input step uses) means matching text
+  // rather than inventing a new input.type the backend doesn't send.
+  // Requires "passport" collocated with "size" or "photo" (not just bare
+  // "passport") - the backend's address-proof step also lists "Passport"
+  // among accepted documents (e.g. "Passport/ Driving License/ Voter
+  // ID/..."), which must NOT be caught here.
+  const passportPhotoStepPattern = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
+
+  // input.title/caption turned out NOT to carry this for the real backend
+  // (they're empty/generic for this step) - the identifying copy ("Upload
+  // your passport size profile") is actually the bot's chat message
+  // immediately before the input, not a field on the input object itself.
+  // Falls back to that only because there is no better field: walks the
+  // trailing run of bot messages at the end of `history` (the message(s)
+  // just sent alongside this input, per applyConversationResponse in
+  // conversationSlice.js) rather than scanning the whole transcript, so an
+  // unrelated older message (e.g. address-proof's own copy) can't leak
+  // into a later, different file-input step. Reuses conversationSlice's
+  // own extractMessageText instead of duplicating richText-unwrapping
+  // logic here.
+  let trailingBotText = "";
+  for (let i = history.length - 1; i >= 0 && history[i]?.sender === "bot"; i -= 1) {
+    trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
+  }
+
   const isPassportPhotoStep =
-    input?.type === "file input" && /passport.{0,20}photo|photo.{0,20}passport/i.test(`${input.title || ""} ${input.caption || ""}`);
+    input?.type === "file input" &&
+    (passportPhotoStepPattern.test(`${input.title || ""} ${input.caption || ""}`) ||
+      passportPhotoStepPattern.test(trailingBotText));
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
