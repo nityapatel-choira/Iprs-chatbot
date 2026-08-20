@@ -22,9 +22,22 @@ function computeBreakdown(totalRupees) {
   return { fee, gst, total: totalRupees };
 }
 
-function PaymentCard({ amountInRupees = DEFAULT_TOTAL_RUPEES, prefill, onComplete }) {
+function PaymentCard({
+  amountInRupees = DEFAULT_TOTAL_RUPEES,
+  currency = "INR",
+  prefill,
+  description,
+  metadata,
+  onComplete,
+}) {
   const amountInPaise = Math.round(amountInRupees * 100);
-  const { status, error, result, startPayment, reset } = usePayment({ amount: amountInPaise, prefill });
+  const { status, error, result, startPayment, reset } = usePayment({
+    amount: amountInPaise,
+    currency,
+    prefill,
+    description,
+    notes: metadata,
+  });
   const breakdown = useMemo(() => computeBreakdown(amountInRupees), [amountInRupees]);
 
   if (status === "success") {

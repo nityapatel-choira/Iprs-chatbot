@@ -12,7 +12,8 @@ function OtpField({ label = "One-time code", value, onChange, onBlur, error, dis
         type="text"
         inputMode="numeric"
         autoComplete="one-time-code"
-        placeholder="123456"
+        placeholder="1234"
+        maxLength={4}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         onBlur={onBlur}

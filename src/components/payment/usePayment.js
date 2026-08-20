@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react";
 import {
-  createOrder,
+  createPaymentOrder,
   openRazorpayCheckout,
   handlePaymentSuccess,
   handlePaymentFailure,
 } from "../../services/paymentService";
 
 // status: "idle" | "creating_order" | "processing" | "verifying" | "success" | "failure" | "cancelled"
-function usePayment({ amount, currency = "INR", prefill } = {}) {
+function usePayment({ amount, currency = "INR", prefill, description, notes } = {}) {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
@@ -20,13 +20,14 @@ function usePayment({ amount, currency = "INR", prefill } = {}) {
       // TODO: Replace with backend API — once a real "payment input" step
       // exists, the order should come from that backend response instead of
       // being created client-side here.
-      const order = await createOrder({ amount, currency });
+      const order = await createPaymentOrder({ amount, currency, notes });
 
       setStatus("processing");
 
       await openRazorpayCheckout({
         order,
         prefill,
+        description,
         onSuccess: async (paymentResponse) => {
           setStatus("verifying");
           const outcome = await handlePaymentSuccess(paymentResponse);
@@ -38,8 +39,8 @@ function usePayment({ amount, currency = "INR", prefill } = {}) {
             setStatus("failure");
           }
         },
-        onFailure: (razorpayError) => {
-          setError(handlePaymentFailure(razorpayError));
+        onFailure: (razorpayError, context) => {
+          setError(handlePaymentFailure(razorpayError, context));
           setStatus("failure");
         },
         onDismiss: () => {
@@ -53,7 +54,7 @@ function usePayment({ amount, currency = "INR", prefill } = {}) {
       setError({ message: err.message || "Something went wrong. Please try again." });
       setStatus("failure");
     }
-  }, [amount, currency, prefill]);
+  }, [amount, currency, prefill, description, notes]);
 
   const reset = useCallback(() => {
     setStatus("idle");
