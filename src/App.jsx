@@ -13,8 +13,16 @@ import { clearStoredConversation } from "./services/conversationStorage";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
-// const PaymentCard = lazy(() => import("./components/payment/PaymentCard"));
 // const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
+
+// Dev-only entry point (?test=payment) for exercising the real Razorpay
+// Standard Checkout flow (open/success/failure/dismiss) without needing the
+// backend's "payment input" conversation step to exist yet - see
+// src/services/paymentService.js. import.meta.env.DEV is statically false in
+// production builds, so Vite dead-code-eliminates this whole branch (and the
+// PaymentCard chunk it lazy-imports) out of the prod bundle - same pattern
+// as useBackendConversation's ?mockInput= dev harness.
+const DevPaymentTest = import.meta.env.DEV ? lazy(() => import("./components/payment/PaymentCard")) : null;
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -30,22 +38,20 @@ function App() {
     });
   }, []);
 
-  // TEMPORARY test route commented out for now
-  /*
-  if (typeof window !== "undefined" && window.location.search.includes("test=payment")) {
+  if (DevPaymentTest && typeof window !== "undefined" && window.location.search.includes("test=payment")) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#f3f7f9", fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif", padding: "20px" }}>
-        <div style={{ width: "100%", maxWidth: "580px" }}>
+      <div className="App-devPaymentTest">
+        <div className="App-devPaymentTestPanel">
           <Suspense fallback={null}>
-            <PaymentCard
-              onComplete={(result) => console.log("payment complete", result)}
+            <DevPaymentTest
+              prefill={{ name: "Test User", email: "test@example.com", contact: "9999999999" }}
+              onComplete={(result) => console.log("[DevPaymentTest] payment complete", result)}
             />
           </Suspense>
         </div>
       </div>
     );
   }
-  */
 
   const handleLanguageContinue = (code) => {
     setLanguageCode(code);

@@ -1,4 +1,4 @@
-// import { useState } from "react";
+import { lazy, Suspense } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -9,7 +9,6 @@ import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
 import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
-// import PaymentCard from "../../components/payment/PaymentCard";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
@@ -18,6 +17,14 @@ import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import styles from "./Chat.module.css";
+
+// Lazy-loaded rather than a plain top-level import like the other step
+// components: this pulls in the Razorpay checkout script loader, the
+// payment service/hook, and their own CSS, none of which should ship as
+// part of Chat's main chunk for every user who never reaches the payment
+// step - only fetched the moment input.type === "payment input" actually
+// renders it below.
+const PaymentCard = lazy(() => import("../../components/payment/PaymentCard"));
 
 // Only these input types render the free-text composer. Everything else
 // (choice input, file input, or any future non-text type) must hide it
@@ -57,39 +64,6 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   // type needed.
   const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
   const displayFill = sessionEnded ? 100 : trackerFill;
-
-  /*
-  // Load payment result from sessionStorage if already paid in this session
-  const [paymentResult] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem("iprs_payment_success");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
-  */
-
-  /*
-  // Automatically detect email and phone number from chat history for checkout prefill
-  const detectedPrefill = useMemo(() => {
-    let email = "";
-    let contact = "";
-    for (let i = history.length - 1; i >= 0; i--) {
-      const msg = history[i];
-      if (msg.sender === "user" && msg.text) {
-        const val = msg.text.trim();
-        if (!email && val.includes("@") && val.includes(".")) {
-          email = val;
-        }
-        if (!contact && /^\+?[0-9]{10,12}$/.test(val.replace(/[\s-]/g, ""))) {
-          contact = val;
-        }
-      }
-    }
-    return { email, contact };
-  }, [history]);
-  */
 
   // The backend's "text input" type is generic (mobile number, name, email,
   // Aadhaar - anything typed) and carries no sub-type of its own, only a
@@ -198,33 +172,22 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             Named to match that contract's "<noun> input" convention so it drops
             in the same way once the real type/payload lands; amount/prefill
             field names below are guesses and should be verified against the
-            actual backend response shape.
+            actual backend response shape. PaymentCard already defaults
+            amount/prefill sensibly on its own, so a response that doesn't
+            (yet) send these fields still renders correctly.
           */}
-          {/* Payment gateway commented out for now
           {!isTyping && input?.type === "payment input" && (
-            <PaymentCard
-              key={input.id}
-              amountInRupees={input.amount ? input.amount / 100 : undefined}
-              prefill={{ name: input.prefillName, email: input.prefillEmail, contact: input.prefillContact }}
-              onComplete={(result) =>
-                sendAnswer(result?.paymentId ? `Payment completed (${result.paymentId})` : "Payment completed")
-              }
-            />
+            <Suspense fallback={null}>
+              <PaymentCard
+                key={input.id}
+                amountInRupees={input.amount ? input.amount / 100 : undefined}
+                prefill={{ name: input.prefillName, email: input.prefillEmail, contact: input.prefillContact }}
+                onComplete={(result) =>
+                  sendAnswer(result?.paymentId ? `Payment completed (${result.paymentId})` : "Payment completed")
+                }
+              />
+            </Suspense>
           )}
-
-          {!isTyping && sessionEnded && !error && !paymentResult && (
-            <PaymentCard
-              key="fallback-payment-final"
-              amountInRupees={1200}
-              prefill={detectedPrefill}
-              onComplete={(result) => {
-                sessionStorage.setItem("iprs_payment_success", JSON.stringify(result));
-                setPaymentResult(result);
-                onFinished?.();
-              }}
-            />
-          )}
-          */}
 
           {/* Completion summary card when session has ended / registration complete */}
           {sessionEnded && !error && <CompletionCard />}

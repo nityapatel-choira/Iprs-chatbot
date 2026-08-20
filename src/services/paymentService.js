@@ -1,11 +1,6 @@
 import { loadRazorpayScript } from "../utils/loadRazorpayScript";
 
 const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
-const MOCK_NETWORK_DELAY_MS = 500;
-
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 // TODO: Replace with backend API — POST /payment/create-order
 // The backend must create the order via Razorpay's Orders API using the
@@ -15,16 +10,22 @@ function delay(ms) {
 //
 // Real implementation (once the endpoint exists):
 //   import { request } from "./apiClient";
-//   async function createOrder({ amount, currency = "INR" }) {
-//     return request("/payment/create-order", { method: "POST", body: { amount, currency } });
+//   async function createPaymentOrder({ amount, currency = "INR", notes }) {
+//     return request("/payment/create-order", { method: "POST", body: { amount, currency, notes } });
 //   }
-async function createOrder({ amount = 120000, currency = "INR" } = {}) {
-  await delay(MOCK_NETWORK_DELAY_MS);
-  return {
-    orderId: "order_mock_123",
-    amount,
-    currency,
-  };
+//
+// Until then, this deliberately returns no `orderId` rather than a fake one.
+// A fake id fails Razorpay's own validation and breaks checkout outright -
+// omitting it is the honest way to exercise the real checkout flow before
+// the backend endpoint exists. The modal still opens and lists real payment
+// methods with just a key, but actually completing a payment requires a
+// real order - Razorpay rejects the attempt without one. See
+// openRazorpayCheckout below (only sends order_id when present) and
+// handlePaymentFailure's `hadOrderId` handling, which surfaces that
+// rejection as an explicit "backend not configured" message instead of
+// Razorpay's generic in-modal error.
+async function createPaymentOrder({ amount = 120000, currency = "INR", notes } = {}) {
+  return { orderId: null, amount, currency, notes };
 }
 
 // TODO: Replace with backend API — POST /payment/verify
@@ -39,7 +40,6 @@ async function createOrder({ amount = 120000, currency = "INR" } = {}) {
 //     return request("/payment/verify", { method: "POST", body: paymentResponse });
 //   }
 async function verifyPayment(paymentResponse) {
-  await delay(MOCK_NETWORK_DELAY_MS);
   return {
     verified: true,
     paymentId: paymentResponse.razorpay_payment_id,
@@ -47,19 +47,17 @@ async function verifyPayment(paymentResponse) {
   };
 }
 
-// TODO: Replace with backend API — POST /payment/webhook, or remove entirely
-// if Razorpay is configured to call the backend's webhook endpoint directly
-// instead of going through the client. Kept as a stable function so the UI
-// layer never needs to change regardless of how this ends up wired.
-async function sendPaymentWebhook(payload) {
-  console.log("[paymentService] payment webhook payload:", payload);
-  return { received: true };
-}
-
 // Opens the actual Razorpay checkout modal. This part talks to Razorpay
 // directly (as intended - the checkout UI itself is always client-side) and
 // does not change when the backend endpoints above go live.
-function openRazorpayCheckout({ order, prefill = {}, onSuccess, onFailure, onDismiss }) {
+function openRazorpayCheckout({
+  order,
+  prefill = {},
+  description = "Membership Registration Fee",
+  onSuccess,
+  onFailure,
+  onDismiss,
+}) {
   // Fail fast on a missing/misconfigured key rather than calling
   // `.open()` anyway: Razorpay's own checkout.js shows its own native
   // alert() for an invalid key and then never opens the modal - meaning
@@ -76,11 +74,11 @@ function openRazorpayCheckout({ order, prefill = {}, onSuccess, onFailure, onDis
     .then((Razorpay) => {
       // Safety net for failure modes Razorpay doesn't expose a callback for
       // at all - e.g. an order_id it can't validate against its own servers
-      // (which is exactly what happens with the mock order_id used in this
-      // phase; a real backend-created order won't hit this). Without this,
-      // an internal-to-Razorpay rejection leaves the UI on "processing"
-      // forever, since none of handler/payment.failed/ondismiss fire for it.
-      // Cleared the moment any real callback below fires first.
+      // (relevant once a real backend-created order is wired in - the id
+      // itself could still be stale/invalid). Without this, an
+      // internal-to-Razorpay rejection leaves the UI on "processing" forever,
+      // since none of handler/payment.failed/ondismiss fire for it. Cleared
+      // the moment any real callback below fires first.
       let settled = false;
       const settleOnce = (fn) => (...args) => {
         if (settled) return;
@@ -108,9 +106,14 @@ function openRazorpayCheckout({ order, prefill = {}, onSuccess, onFailure, onDis
         key: RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency || "INR",
-        order_id: order.orderId,
+        // Only sent when createPaymentOrder actually produced one (i.e. once
+        // the backend endpoint is live) - Standard Checkout also supports
+        // opening with just amount+currency, which is what happens today
+        // with no backend. See createPaymentOrder's comment above.
+        ...(order.orderId ? { order_id: order.orderId } : {}),
         name: "IPRS",
-        description: "Membership Registration Fee",
+        description,
+        notes: order.notes || {},
         prefill: {
           name: prefill.name || "",
           email: prefill.email || "",
@@ -134,7 +137,9 @@ function openRazorpayCheckout({ order, prefill = {}, onSuccess, onFailure, onDis
       };
 
       const razorpay = new Razorpay(options);
-      razorpay.on("payment.failed", (response) => settleOnce(onFailure ?? (() => {}))(response.error));
+      razorpay.on("payment.failed", (response) =>
+        settleOnce(onFailure ?? (() => {}))(response.error, { hadOrderId: Boolean(order.orderId) })
+      );
       razorpay.open();
     })
     .catch((err) => {
@@ -142,20 +147,18 @@ function openRazorpayCheckout({ order, prefill = {}, onSuccess, onFailure, onDis
     });
 }
 
+// razorpay_order_id/razorpay_signature are only present when checkout was
+// opened with a real order_id (see openRazorpayCheckout) - both are
+// undefined without a backend order today, and populated once a real order
+// is wired in. Either way, this always defers to verifyPayment's `verified`
+// result rather than treating the Razorpay callback firing as proof of a
+// completed payment - that's a backend-only guarantee.
 async function handlePaymentSuccess(paymentResponse) {
   const paymentId = paymentResponse.razorpay_payment_id;
   const orderId = paymentResponse.razorpay_order_id;
   const signature = paymentResponse.razorpay_signature;
 
   const verification = await verifyPayment(paymentResponse);
-
-  await sendPaymentWebhook({
-    event: "payment.captured",
-    paymentId,
-    orderId,
-    signature,
-    verified: verification.verified,
-  });
 
   return {
     success: Boolean(verification.verified),
@@ -165,21 +168,30 @@ async function handlePaymentSuccess(paymentResponse) {
   };
 }
 
-function handlePaymentFailure(error) {
+function handlePaymentFailure(error, { hadOrderId = true } = {}) {
   const normalized = {
     code: error?.code || "PAYMENT_FAILED",
     message: error?.description || error?.message || "Payment failed. Please try again.",
     raw: error,
   };
+
+  // The checkout modal can open and list real payment methods with just a
+  // key, but actually submitting a payment is a separate call that requires
+  // a valid order - and creating one needs the Razorpay *secret* key, which
+  // must stay server-side (see createPaymentOrder above). Until the
+  // backend's order-creation endpoint exists, every real attempt without an
+  // order_id is expected to be rejected by Razorpay for exactly this reason
+  // - surface that plainly instead of Razorpay's own (often generic) error
+  // text, since retrying changes nothing here.
+  if (!hadOrderId) {
+    normalized.message =
+      "Test payment requires an order created by the backend, which isn't wired up yet. " +
+      "The checkout itself opened and worked correctly - this step will complete once the " +
+      "backend's order-creation endpoint is live.";
+  }
+
   console.error("[paymentService] payment failed:", normalized);
   return normalized;
 }
 
-export {
-  createOrder,
-  openRazorpayCheckout,
-  verifyPayment,
-  handlePaymentSuccess,
-  handlePaymentFailure,
-  sendPaymentWebhook,
-};
+export { createPaymentOrder, openRazorpayCheckout, verifyPayment, handlePaymentSuccess, handlePaymentFailure };
