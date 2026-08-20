@@ -7,6 +7,7 @@ import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
 import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard";
+import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import StepTracker from "../../components/StepTracker/StepTracker";
@@ -73,6 +74,16 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   // the backend still fully owns copy, ordering and progression either way.
   const isAadhaarStep =
     input?.type === "text input" && /aadhaar|aadhar/i.test(`${input.placeholder || ""} ${input.title || ""}`);
+
+  // Same label-sniffing approach as isAadhaarStep above: the backend's
+  // "file input" type is otherwise generic (PAN, bank proof, address
+  // proof, passport photo - anything file-based), so opting the passport
+  // photo step into the face-scan/upload choice (instead of the plain
+  // FileUploader every other file-input step uses) means matching its
+  // title/caption rather than inventing a new input.type the backend
+  // doesn't send.
+  const isPassportPhotoStep =
+    input?.type === "file input" && /passport.{0,20}photo|photo.{0,20}passport/i.test(`${input.title || ""} ${input.caption || ""}`);
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -154,7 +165,16 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             />
           )}
 
-          {!isTyping && input?.type === "file input" && (
+          {!isTyping && input?.type === "file input" && isPassportPhotoStep && (
+            <PassportPhotoCard
+              key={input.id}
+              title={input.title}
+              caption={input.caption}
+              onFileSelected={submitFile}
+            />
+          )}
+
+          {!isTyping && input?.type === "file input" && !isPassportPhotoStep && (
             <FileUploader
               key={input.id}
               title={input.title || "Choose a file or drag & drop it here"}

@@ -2,34 +2,6 @@ const CHAT_HISTORY_KEY = "iprs_chat_history";
 const CHAT_PROGRESS_KEY = "iprs_chat_progress";
 const FRESH_LOGIN_KEY = "iprs_fresh_login";
 
-function getStoredHistory() {
-  try {
-    const raw = localStorage.getItem(CHAT_HISTORY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function setStoredHistory(history) {
-  try {
-    if (!Array.isArray(history)) return;
-    const serializable = history.map((msg) => {
-      if (msg && typeof msg === "object" && "rawFile" in msg) {
-        const copy = { ...msg };
-        delete copy.rawFile;
-        return copy;
-      }
-      return msg;
-    });
-    localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(serializable));
-  } catch {
-    // Ignore storage quota or serialization errors
-  }
-}
-
 function getStoredProgress() {
   try {
     const raw = localStorage.getItem(CHAT_PROGRESS_KEY);
@@ -73,6 +45,10 @@ function consumeFreshLoginFlag() {
 
 function clearStoredConversation() {
   try {
+    // CHAT_HISTORY_KEY is no longer written (history is never persisted -
+    // see conversationSlice's initialState), but this still purges any
+    // leftover value from before that change so a stale transcript can't
+    // linger in localStorage.
     localStorage.removeItem(CHAT_HISTORY_KEY);
     localStorage.removeItem(CHAT_PROGRESS_KEY);
     sessionStorage.removeItem(FRESH_LOGIN_KEY);
@@ -81,12 +57,4 @@ function clearStoredConversation() {
   }
 }
 
-export {
-  getStoredHistory,
-  setStoredHistory,
-  getStoredProgress,
-  setStoredProgress,
-  setFreshLoginFlag,
-  consumeFreshLoginFlag,
-  clearStoredConversation,
-};
+export { getStoredProgress, setStoredProgress, setFreshLoginFlag, consumeFreshLoginFlag, clearStoredConversation };

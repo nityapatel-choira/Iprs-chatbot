@@ -1,0 +1,100 @@
+/* Same --card-pct/--card-max width contract as FileUploader's .wrap and
+   DocumentScanCard's .wrap, so this card lines up with every other
+   Document Upload card at every breakpoint. */
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  max-width: min(var(--card-pct, 88%), var(--card-max, 580px));
+  margin: 12px auto;
+  padding: 28px 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+}
+
+.title {
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: center;
+}
+
+.caption {
+  font-size: 0.84375rem;
+  line-height: 1.35;
+  font-weight: 400;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.choiceRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 14px;
+}
+
+@media (min-width: 480px) {
+  .choiceRow {
+    flex-direction: row;
+    max-width: 420px;
+  }
+}
+
+.choiceButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 18px;
+  min-height: 50px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
+  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.choiceButton:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.choiceButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.choiceButton svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* UploadCloudIcon hardcodes stroke="#334155" on its paths (unlike
+   CameraIcon's currentColor) - CSS stroke always wins over that
+   presentation attribute, so this keeps both icons matching their
+   button's text color instead of the upload icon staying dark on the
+   solid-blue primary button. */
+.choiceButton svg path {
+  stroke: currentColor;
+}
+
+.choiceButtonSecondary {
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: none;
+}
