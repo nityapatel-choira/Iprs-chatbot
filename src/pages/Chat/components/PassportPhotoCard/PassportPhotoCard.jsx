@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import CameraIcon from "../../../../components/icons/CameraIcon";
 import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
@@ -26,13 +26,30 @@ function dataUrlToFile(dataUrl, filename) {
 // image get handed to the existing file-upload flow via onFileSelected.
 function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
+  const faceScanRef = useRef(null);
+
+  // Only "Scan Face" gets auto-scrolled - it's the tall, camera-heavy view
+  // that can land below the fold; "Upload Photo" opens the native file
+  // picker itself (see FileUploader's autoOpen) and shouldn't also animate
+  // the page under it. useLayoutEffect (not useEffect) so this runs after
+  // the DOM has the mounted FaceVerification's real height but before the
+  // browser paints, avoiding a visible pre-scroll flash/jump.
+  useLayoutEffect(() => {
+    if (mode === "camera") {
+      faceScanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [mode]);
 
   function handleContinue(dataUrl) {
     onFileSelected?.(dataUrlToFile(dataUrl, `passport-photo-${Date.now()}.jpg`));
   }
 
   if (mode) {
-    return <FaceVerification embedded initialMode={mode} onContinue={handleContinue} />;
+    return (
+      <div ref={faceScanRef} className={styles.faceScanWrap}>
+        <FaceVerification embedded initialMode={mode} onContinue={handleContinue} />
+      </div>
+    );
   }
 
   return (

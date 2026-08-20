@@ -1,3 +1,12 @@
+/* Small breathing room above the Scan Face view when it's scrolled into
+   view (see PassportPhotoCard.jsx's scrollIntoView call) - scroll-margin is
+   the CSS-native way to offset a scrollIntoView target, so it doesn't land
+   flush against .messages' own top padding/the header above it. A plain
+   spacing constant, not a viewport-height hack. */
+.faceScanWrap {
+  scroll-margin-top: 16px;
+}
+
 /* Same --card-pct/--card-max width contract as FileUploader's .wrap and
    DocumentScanCard's .wrap, so this card lines up with every other
    Document Upload card at every breakpoint. */

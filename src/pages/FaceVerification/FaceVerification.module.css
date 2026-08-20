@@ -78,7 +78,10 @@
    width, which reads the same --card-pct/--card-max the parent defines). */
 .embeddedWrap {
   width: 100%;
-  max-width: min(var(--card-pct, 88%), var(--card-max, 580px));
+  /* Fallback bumped from 580 to 620 so this reads consistently with the
+     other cards in the chat flow even when --card-max isn't inherited from
+     a parent scope. */
+  max-width: min(var(--card-pct, 88%), var(--card-max, 620px));
   margin: 12px auto;
 }
 
@@ -92,6 +95,14 @@
   padding: 24px 20px;
 }
 
+@media (min-width: 768px) {
+  /* Slightly tighter than mobile - the ring/gap growth below is the bigger
+     contributor to excess height, this just trims a little more. */
+  .embeddedPanel {
+    padding: 20px 24px;
+  }
+}
+
 .embeddedContent {
   display: flex;
   align-items: center;
@@ -100,9 +111,12 @@
 }
 
 /* The live-capture group (ring/status/actions) stays its own, deliberately
-   narrower width - a 380-460px circular preview is the right size for a
+   narrower width - a 380-430px circular preview is the right size for a
    face, unrelated to how wide a document-upload card should be. Only the
-   upload card (below) follows the shared --card-pct/--card-max width. */
+   upload card (below) follows the shared --card-pct/--card-max width.
+   Desktop growth (both here and .ring below) is intentionally modest now -
+   letting the ring keep inflating with viewport width just made the whole
+   component taller without the camera needing to be that much bigger. */
 .frameGroup {
   display: flex;
   flex-direction: column;
@@ -115,15 +129,15 @@
 
 @media (min-width: 768px) {
   .frameGroup {
-    max-width: 420px;
-    gap: 24px;
+    max-width: 400px;
+    gap: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .frameGroup {
-    max-width: 460px;
-    gap: 28px;
+    max-width: 430px;
+    gap: 22px;
   }
 }
 
@@ -151,18 +165,21 @@
 /* Above ~480px wide the 62vw clamp is already pinned at its 300px mobile
    ceiling, so it'd stay frozen there all the way up to a 1440px+ desktop
    viewport - explicit sizes here are what actually give the desktop
-   version its own intentional scale instead of a stretched phone screen. */
+   version its own intentional scale instead of a stretched phone screen.
+   Kept modest on purpose: a face-scan camera doesn't need to keep growing
+   just because the viewport is wider, and the previous 320/360 growth was
+   the main reason the embedded card felt too tall on desktop. */
 @media (min-width: 768px) {
   .ring {
-    width: 320px;
-    height: 320px;
+    width: 300px;
+    height: 300px;
   }
 }
 
 @media (min-width: 1024px) {
   .ring {
-    width: 360px;
-    height: 360px;
+    width: 320px;
+    height: 320px;
   }
 }
 

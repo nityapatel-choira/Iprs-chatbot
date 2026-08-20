@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import UploadCloudIcon from "../icons/UploadCloudIcon";
 import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
@@ -13,10 +13,25 @@ function FileUploader({
   progress = 0,
   errorMessage,
   disabled,
+  // Opt-in only (defaults false, so every other existing caller - PAN, bank
+  // proof, address proof, etc. - is unaffected): opens the native file
+  // picker itself the moment this instance mounts, skipping the extra
+  // "tap the dropzone/Browse File" step. The dropzone still renders
+  // underneath as the fallback if the user cancels that native dialog.
+  autoOpen = false,
 }) {
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (autoOpen && !disabled) {
+      inputRef.current?.click();
+    }
+    // Intentionally mount-only: this is "open the picker for me" once when
+    // this instance first appears, not "reopen every time props change."
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const busy = status === "uploading";
   const isDisabled = disabled || busy;
