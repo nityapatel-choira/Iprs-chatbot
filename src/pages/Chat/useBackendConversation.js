@@ -86,6 +86,23 @@ function useBackendConversation() {
       const mockKey = new URLSearchParams(window.location.search).get("mockInput");
       if (mockKey) {
         import("./devMocks").then(({ DEV_MOCK_INPUTS }) => {
+          // `?mockInput=consentSequence` - scripted two-turn sequence for
+          // exercising the exact scenario a single canned response can't:
+          // consent 1 answered (a real "I Accept" user reply lands in
+          // history, same as sendAnswer produces), then consent 2 arrives as
+          // the next turn. Verifies consent 1's message stays suppressed
+          // once the conversation has moved past it, not just while it's
+          // the pending input.
+          if (mockKey === "consentSequence") {
+            const { consentPrivacy, consentFraud } = DEV_MOCK_INPUTS;
+            dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));
+            setTimeout(() => {
+              dispatch(addUserMessage("I Accept"));
+              dispatch(applyMockResponse({ ...consentFraud, __isFreshLogin: false }));
+            }, 400);
+            return;
+          }
+
           const mock = DEV_MOCK_INPUTS[mockKey];
           if (mock) {
             dispatch(applyMockResponse({ ...mock, __isFreshLogin: consumeFreshLoginFlag() }));

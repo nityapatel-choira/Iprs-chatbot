@@ -1,20 +1,3 @@
-export const CONSENT = {
-  privacy: {
-    title: "Consent for collection and processing of your personal/sensitive personal data",
-    bodyBefore:
-      "If you agree to our collection and processing of your personal/sensitive personal data in accordance with the terms laid out in our ",
-    linkText: "Privacy Notice",
-    linkHref: "https://membership.iprs.org/AppDocs/Privacy_Notice.pdf",
-    bodyAfter:
-      ", please indicate your consent by clicking the 'I Accept' button. By this button, you confirm that you have read, understood and consent to the Privacy Notice. You understand that without providing your personal data as required under the Privacy Notice, you will not be able to use/access the IPRS Membership Portal.",
-  },
-  fraud: {
-    title: "Please Note!",
-    body:
-      "Members are cautioned that submitting fraudulent, falsified or misleading works data or members personal details (misleading names / pseudonyms) is strictly prohibited. Fraudulent data or profile submissions undermine the integrity of the Society's records, harms fellow creators and will not be accepted and tolerated. Fraudulent / misleading data submissions also constitute a serious breach of trust and may result in legal and disciplinary consequences, including but not limited to: (a) Termination of membership as per the Society's Rules and Constitution (b) Forfeiture of royalties, benefits and recoveries (c) Legal action under applicable copyright and other applicable laws.",
-  },
-};
-
 export const TRACKER_STAGES = ["Personal Details", "Bank Details", "Work Notifications", "Declaration"];
 
 export const FINAL_STEP_ID = "done";
