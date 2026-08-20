@@ -6,7 +6,7 @@ import styles from "./PinInput.module.css";
 // single-line input is already live in Login.jsx and works - this only
 // replaces the chat's generic composer for the "otp input" step, matching
 // Figma without touching the already-working login OTP flow.
-function PinInput({ length = 6, onComplete, disabled }) {
+function PinInput({ length = 4, onComplete, disabled }) {
   const [digits, setDigits] = useState(() => Array(length).fill(""));
   const inputRefs = useRef([]);
 

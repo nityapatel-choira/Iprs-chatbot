@@ -4,12 +4,16 @@ import Splash from "./pages/Splash/Splash";
 import LanguageSelection from "./pages/LanguageSelection/LanguageSelection";
 import { LANGUAGES } from "./constants/languages";
 import { logout } from "./services/authService";
-import { getToken } from "./services/tokenStorage";
-import { getLanguageCode, setLanguageCode, clearLanguageCode } from "./services/languagePreference";
+import { setLanguageCode, clearLanguageCode } from "./services/languagePreference";
 import { onUnauthorized } from "./services/apiClient";
 
 import { clearRegistrationCompleted } from "./services/registrationState";
 import { clearStoredConversation } from "./services/conversationStorage";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { setAuthenticated, selectIsAuthenticated } from "./store/slices/authSlice";
+import { setLanguage, clearLanguage, selectLanguageCode } from "./store/slices/uiSlice";
+import { resetConversation } from "./store/slices/conversationSlice";
+import { resetRegistration } from "./store/slices/registrationSlice";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
@@ -26,18 +30,21 @@ const Chat = lazy(() => import("./pages/Chat/Chat"));
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 
 function App() {
+  const dispatch = useAppDispatch();
+  const languageCode = useAppSelector(selectLanguageCode);
+  const loggedIn = useAppSelector(selectIsAuthenticated);
   const [showSplash, setShowSplash] = useState(true);
-  const [languageCode, setLanguageCodeState] = useState(() => getLanguageCode());
-  const [loggedIn, setLoggedIn] = useState(() => Boolean(getToken()));
   // const [onboardingDone, setOnboardingDone] = useState(false);
 
   useEffect(() => {
     onUnauthorized(() => {
-      setLoggedIn(false);
+      dispatch(setAuthenticated(false));
       clearRegistrationCompleted();
       clearStoredConversation();
+      dispatch(resetConversation());
+      dispatch(resetRegistration());
     });
-  }, []);
+  }, [dispatch]);
 
   // TEMPORARY test route commented out for now
   /*
@@ -58,15 +65,17 @@ function App() {
 
   const handleLanguageContinue = (code) => {
     setLanguageCode(code);
-    setLanguageCodeState(code);
+    dispatch(setLanguage(code));
   };
 
   const handleLogout = async () => {
-    setLoggedIn(false);
+    dispatch(setAuthenticated(false));
     clearLanguageCode();
-    setLanguageCodeState(null);
+    dispatch(clearLanguage());
     clearRegistrationCompleted();
     clearStoredConversation();
+    dispatch(resetConversation());
+    dispatch(resetRegistration());
     try {
       await logout();
     } catch {
@@ -97,7 +106,7 @@ function App() {
   if (!loggedIn) {
     return (
       <Suspense fallback={null}>
-        <Login onContinue={() => setLoggedIn(true)} />
+        <Login onContinue={() => dispatch(setAuthenticated(true))} />
       </Suspense>
     );
   }
