@@ -16,6 +16,15 @@ const Chat = lazy(() => import("./pages/Chat/Chat"));
 // const PaymentCard = lazy(() => import("./components/payment/PaymentCard"));
 // const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
+// Dev-only FaceScan test entry point (?test=facescan) - bypasses splash/
+// language/login entirely so the component can be exercised on its own
+// while it isn't wired into the real registration flow yet. Only ever
+// reachable in a dev build: import.meta.env.DEV is statically false in
+// production, so Vite dead-code-eliminates this branch (and the
+// FaceVerification chunk it lazy-imports) out of the prod bundle - same
+// pattern as the dev mock harness in useBackendConversation.js.
+const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
+
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [languageCode, setLanguageCodeState] = useState(() => getLanguageCode());
@@ -64,6 +73,18 @@ function App() {
       // token is already cleared locally by authService.logout regardless of API outcome
     }
   };
+
+  if (DevFaceScan && typeof window !== "undefined" && window.location.search.includes("test=facescan")) {
+    return (
+      <Suspense fallback={null}>
+        <DevFaceScan
+          onBack={() => {
+            window.location.href = window.location.pathname;
+          }}
+        />
+      </Suspense>
+    );
+  }
 
   if (showSplash) {
     return <Splash onDone={() => setShowSplash(false)} />;

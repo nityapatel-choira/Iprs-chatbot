@@ -93,6 +93,15 @@ export const DEV_MOCK_INPUTS = {
       caption: "Make sure the card is well-lit and all details are visible",
     },
   },
+  passportPhoto: {
+    messages: [botText("Now let's get your passport size photo.")],
+    input: {
+      id: "mock-passport-photo",
+      type: "file input",
+      title: "Passport Size Photo",
+      caption: "Scan your face or upload a clear passport size photo",
+    },
+  },
   aadhaar: {
     messages: [botText("Enter Aadhaar Number")],
     input: { id: "mock-aadhaar", type: "text input", placeholder: "Enter Aadhaar number" },
