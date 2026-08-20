@@ -202,6 +202,13 @@ export const DEV_MOCK_INPUTS = {
       options: { variableId: "vww01qa7jizgywxikfu1yu48x" },
     },
   },
+  // Plain "file input" step (PAN, bank proof, etc.) - none of the other
+  // mocks exercise the base FileUploader path directly (passportPhoto/
+  // profilePhoto both route to the face-scan card instead).
+  panCard: {
+    messages: [botText("Upload your PAN card")],
+    input: { id: "mock-pan-card", type: "file input", title: "Upload PAN Card", caption: "JPEG and PNG up to 2MB" },
+  },
   aadhaar: {
     messages: [botText("Enter Aadhaar Number")],
     input: { id: "mock-aadhaar", type: "text input", placeholder: "Enter Aadhaar number" },
