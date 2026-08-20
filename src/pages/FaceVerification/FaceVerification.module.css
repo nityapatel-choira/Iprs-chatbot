@@ -72,6 +72,33 @@
   }
 }
 
+/* Embedded mode (Document Upload's Passport Size Photo step): no full-page
+   chrome, no forced viewport height - this instance just fills whatever
+   card width the parent gives it (matching FileUploader's own .wrap max-
+   width, which reads the same --card-pct/--card-max the parent defines). */
+.embeddedWrap {
+  width: 100%;
+  max-width: min(var(--card-pct, 88%), var(--card-max, 580px));
+  margin: 12px auto;
+}
+
+.embeddedPanel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: 18px;
+  padding: 24px 20px;
+}
+
+.embeddedContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 /* The live-capture group (ring/status/actions) stays its own, deliberately
    narrower width - a 380-460px circular preview is the right size for a
    face, unrelated to how wide a document-upload card should be. Only the

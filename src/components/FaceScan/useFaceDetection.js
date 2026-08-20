@@ -107,6 +107,26 @@ function useFaceDetection({ onCapture } = {}) {
     }
   }
 
+  async function ensureDetector() {
+    if (!detectorRef.current) {
+      const { FaceDetector, FilesetResolver } = await import("@mediapipe/tasks-vision");
+      const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL);
+      // CPU delegate only, deliberately - MediaPipe's GPU/WebGL delegate
+      // is a well-documented source of instability in Safari (macOS and
+      // iOS) and many Android WebViews, and the old code's fallback only
+      // covered *creation* failures, not the far more common case of it
+      // failing mid-inference. The blaze_face_short_range model is light
+      // enough that CPU WASM inference is comfortably real-time at the
+      // resolution used here, so there's no real tradeoff.
+      detectorRef.current = await FaceDetector.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
+        runningMode: "VIDEO",
+        minDetectionConfidence: MIN_CONFIDENCE,
+      });
+    }
+    return detectorRef.current;
+  }
+
   async function start() {
     if (startingRef.current) return;
     startingRef.current = true;
@@ -119,22 +139,7 @@ function useFaceDetection({ onCapture } = {}) {
         throw Object.assign(new Error("Camera not supported"), { name: "NotSupportedError" });
       }
 
-      if (!detectorRef.current) {
-        const { FaceDetector, FilesetResolver } = await import("@mediapipe/tasks-vision");
-        const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL);
-        // CPU delegate only, deliberately - MediaPipe's GPU/WebGL delegate
-        // is a well-documented source of instability in Safari (macOS and
-        // iOS) and many Android WebViews, and the old code's fallback only
-        // covered *creation* failures, not the far more common case of it
-        // failing mid-inference. The blaze_face_short_range model is light
-        // enough that CPU WASM inference is comfortably real-time at the
-        // resolution used here, so there's no real tradeoff.
-        detectorRef.current = await FaceDetector.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
-          runningMode: "VIDEO",
-          minDetectionConfidence: MIN_CONFIDENCE,
-        });
-      }
+      await ensureDetector();
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 480 }, height: { ideal: 640 } },
@@ -245,6 +250,37 @@ function useFaceDetection({ onCapture } = {}) {
     setAlignment("no-face");
   }
 
+  // Validates a still image (e.g. a file the user picked instead of using
+  // the live camera) with the exact same detector/model as live capture -
+  // just fed a decoded <img> instead of a video frame. detectForVideo
+  // accepts any ImageSource per the MediaPipe API, and reusing the already-
+  // initialized VIDEO-mode detector here (rather than standing up a second
+  // IMAGE-mode one) avoids loading the WASM runtime/model twice.
+  async function detectImageFile(file) {
+    const detector = await ensureDetector();
+
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error || new Error("Couldn't read that file."));
+      reader.readAsDataURL(file);
+    });
+
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Couldn't read that image."));
+      img.src = dataUrl;
+    });
+
+    const result = detector.detectForVideo(image, performance.now());
+    const faceCount = (result.detections || []).filter(
+      (detection) => (detection.categories?.[0]?.score ?? 0) >= MIN_CONFIDENCE
+    ).length;
+
+    return { faceCount, dataUrl };
+  }
+
   return {
     status,
     alignment,
@@ -257,6 +293,7 @@ function useFaceDetection({ onCapture } = {}) {
     capture,
     retake,
     cancel,
+    detectImageFile,
   };
 }
 

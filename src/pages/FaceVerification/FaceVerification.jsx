@@ -22,7 +22,15 @@ import styles from "./FaceVerification.module.css";
 // used for PAN/bank documents elsewhere, sized off the same --card-pct/
 // --card-max variables Chat.module.css defines, so it's not just visually
 // similar but literally the same width logic).
-function FaceVerification({ onBack, onCapture, onContinue, language = "English" }) {
+//
+// `embedded` lets this same component drop into the Document Upload flow
+// (Chat.jsx's Passport Size Photo step) instead of only ever being a
+// full-page screen: it hides the standalone ChatHeader/back-button/trust
+// footer and lets the surrounding card own the width, while every other
+// piece (camera, detection states, capture controls, upload fallback) is
+// untouched. Standalone use (the ?test=facescan route) is unaffected since
+// `embedded` defaults to false.
+function FaceVerification({ onBack, onCapture, onContinue, language = "English", embedded = false, initialMode = "camera" }) {
   const {
     status,
     alignment,
@@ -35,13 +43,14 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English" 
     capture,
     retake,
     cancel,
+    detectImageFile,
   } = useFaceDetection({ onCapture });
 
-  // "camera" (default) or "upload" - an always-available fallback, not a
-  // replacement path: the live camera stays primary, upload is one tap
-  // away below the shutter button (and again in the error state, where
-  // it's the more likely next move).
-  const [mode, setMode] = useState("camera");
+  // "camera" or "upload" - both are always reachable via the fallback
+  // links below regardless of which one this instance starts in; the
+  // Document Upload "Scan Face"/"Upload Photo" choice picks the starting
+  // mode via `initialMode`, standalone use always starts on "camera".
+  const [mode, setMode] = useState(initialMode);
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadErrorMessage, setUploadErrorMessage] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -88,21 +97,28 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English" 
     setMode("camera");
   }
 
-  function handleFileSelected(file) {
+  async function handleFileSelected(file) {
     setUploadStatus("uploading");
     setUploadErrorMessage("");
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
+    try {
+      const { faceCount, dataUrl } = await detectImageFile(file);
+      if (faceCount === 0) {
+        setUploadStatus("error");
+        setUploadErrorMessage("No face detected. Please upload a clear photo of your face.");
+        return;
+      }
+      if (faceCount > 1) {
+        setUploadStatus("error");
+        setUploadErrorMessage("Multiple faces detected. Please upload a photo with only your face.");
+        return;
+      }
       setUploadStatus("success");
       setUploadedImage(dataUrl);
       onCapture?.(dataUrl);
-    };
-    reader.onerror = () => {
+    } catch {
       setUploadStatus("error");
       setUploadErrorMessage("Couldn't read that file. Please try again.");
-    };
-    reader.readAsDataURL(file);
+    }
   }
 
   function handleRetake() {
@@ -116,11 +132,11 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English" 
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.panel}>
-        <ChatHeader title="Capture Now" language={language} onBack={handleBack} />
+    <div className={embedded ? styles.embeddedWrap : styles.page}>
+      <div className={embedded ? styles.embeddedPanel : styles.panel}>
+        {!embedded && <ChatHeader title="Capture Now" language={language} onBack={handleBack} />}
 
-        <div className={styles.content}>
+        <div className={embedded ? styles.embeddedContent : styles.content}>
           {showUploadForm ? (
             <div className={styles.uploadArea}>
               <FileUploader
@@ -218,10 +234,12 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English" 
           )}
         </div>
 
-        <div className={styles.trustBadge}>
-          <ShieldIcon width={14} height={14} />
-          <span>Secured by IPRS</span>
-        </div>
+        {!embedded && (
+          <div className={styles.trustBadge}>
+            <ShieldIcon width={14} height={14} />
+            <span>Secured by IPRS</span>
+          </div>
+        )}
 
         <canvas ref={canvasRef} className={styles.hiddenCanvas} aria-hidden="true" />
       </div>
