@@ -105,6 +105,56 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
     trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
   }
 
+  // The consent step ("Accept the Privacy Notice", "Please Note!" fraud
+  // warning, etc.) is a plain "choice input" on the wire - there is no
+  // dedicated input.type or input.sheet field for it. Its single item's
+  // content is exactly the CTA label the backend actually sends, so
+  // matching that (rather than sniffing the title/body prose) is the most
+  // reliable signal available. See ConsentDialog for how the title/body
+  // themselves are read from the trailing bot messages below instead of
+  // being hardcoded.
+  const isConsentAcceptStep =
+    input?.type === "choice input" && (input.items || []).length === 1 && input.items[0]?.content === "I Accept";
+
+  // Confirmed real turn shape: messages[0] is the document/fee recap,
+  // messages[1] is the consent title+body - both bot messages, both
+  // immediately preceding the same "I Accept" input, with no field
+  // distinguishing them. The consent content is always the single last bot
+  // message right before the gate, never an unbounded run before it - so
+  // only that one message goes to ConsentDialog; anything earlier
+  // (messages[0] included) is left alone and falls through to its normal
+  // chat-bubble rendering. Kept as the full message object (not flattened
+  // text) so ConsentDialog can render the backend's actual richText -
+  // including the Privacy Notice link - instead of copy baked into the
+  // frontend.
+  const lastMessage = history[history.length - 1];
+  const pendingConsentMessages = isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
+
+  // A message hidden only while its own consent step is still the *current*
+  // pending input resurfaces the instant the conversation moves past it
+  // (input changes to the next step, so it's no longer "current" - nothing
+  // was ever recomputed to keep it hidden). Once a consent message is
+  // identified it must stay excluded permanently, for every past consent
+  // step, not just whichever one happens to be pending right now. There's
+  // no stored record of what `input` was at each past point in history, but
+  // there doesn't need to be: the *only* input shape that ever produces a
+  // user reply of exactly "I Accept" is this same isConsentAcceptStep
+  // (see above) - a plain "choice input" that isn't consent could
+  // coincidentally have a single "I Accept"-labeled item too, but that
+  // would itself already satisfy isConsentAcceptStep's definition, so the
+  // equivalence holds regardless. So the bot message immediately preceding
+  // every past "I Accept" reply in history was that turn's consent content,
+  // and belongs on this permanent list alongside whichever one is pending
+  // right now.
+  const resolvedConsentMessageIds = new Set();
+  for (let i = 1; i < history.length; i += 1) {
+    const message = history[i];
+    if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
+      resolvedConsentMessageIds.add(history[i - 1].id);
+    }
+  }
+  const consentMessageIds = new Set([...resolvedConsentMessageIds, ...pendingConsentMessages.map((m) => m.id)]);
+
   const isPassportPhotoStep =
     input?.type === "file input" &&
     (passportPhotoStepPattern.test(`${input.title || ""} ${input.caption || ""}`) ||
@@ -134,13 +184,15 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
         </div>
 
         <div className={styles.messages} ref={messagesRef}>
-          {history.map((message) => (
-            <MessageRow key={message.id} message={message} />
-          ))}
+          {history
+            .filter((message) => !consentMessageIds.has(message.id))
+            .map((message) => (
+              <MessageRow key={message.id} message={message} />
+            ))}
 
           {isTyping && <TypingIndicator />}
 
-          {!isTyping && input?.type === "choice input" && (
+          {!isTyping && input?.type === "choice input" && !isConsentAcceptStep && (
             <QuickReplyCard
               options={(input.items || []).map((item) => ({ label: item.content }))}
               onSelect={(option) => sendAnswer(option.label)}
@@ -257,8 +309,8 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             than dismissed - matching how a required legal consent should
             behave anyway.
           */}
-        {!isTyping && input?.type === "consent input" && (
-          <ConsentDialog sheet={input.sheet} onAccept={() => sendAnswer("I Accept")} />
+        {!isTyping && isConsentAcceptStep && (
+          <ConsentDialog messages={pendingConsentMessages} onAccept={() => sendAnswer("I Accept")} />
         )}
 
         {!isTyping && input?.type === "declaration input" && (

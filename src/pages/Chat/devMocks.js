@@ -10,6 +10,21 @@ function botText(text) {
   return { content: { richText: [{ type: "p", children: [{ text }] }] } };
 }
 
+function linkParagraph(before, linkText, linkHref, after) {
+  return {
+    type: "p",
+    children: [{ text: before }, { type: "a", url: linkHref, children: [{ text: linkText }] }, { text: after }],
+  };
+}
+
+// A single bot message carrying multiple richText paragraph blocks - this
+// is the actual confirmed shape for the consent step's title+body (they
+// arrive as two paragraphs in one message, not two separate messages; see
+// ConsentDialog's block-flattening comment).
+function botParagraphs(paragraphs) {
+  return { content: { richText: paragraphs } };
+}
+
 export const DEV_MOCK_INPUTS = {
   checkbox: {
     messages: [botText("What's your part in the music?")],
@@ -64,13 +79,69 @@ export const DEV_MOCK_INPUTS = {
       },
     },
   },
+  // Confirmed real shape (previously guessed as a dedicated "consent
+  // input"/sheet type - see Chat.jsx's isConsentAcceptStep comment): a
+  // plain "choice input" with a single "I Accept" item, and the title+body
+  // arrive as two paragraphs within one bot message (not two separate
+  // messages - see ConsentDialog's block-flattening), link included as a
+  // real richText "a" node.
   consentPrivacy: {
-    messages: [],
-    input: { id: "mock-consent-privacy", type: "consent input", sheet: "privacy" },
+    messages: [
+      botParagraphs([
+        {
+          type: "p",
+          children: [{ text: "Consent for collection and processing of your personal/sensitive personal data" }],
+        },
+        linkParagraph(
+          "If you agree to our collection and processing of your personal data in accordance with the terms laid out in our ",
+          "Privacy Notice",
+          "https://membership.iprs.org/AppDocs/Privacy_Notice.pdf",
+          ", please indicate your consent by clicking the 'I Accept' button. By clicking this button, you confirm that you have read, understood and consent to the Privacy Notice. You understand that without providing your personal data as required under the Privacy Notice, you will not be able to use/access the IPRS Membership Portal."
+        ),
+      ]),
+    ],
+    input: { id: "mock-consent-privacy", type: "choice input", items: [{ content: "I Accept" }] },
+  },
+  // Reproduces the real bug turn: messages[0] is a document/fee recap
+  // (plain bot text, not structured "summary input" data), messages[1] is
+  // the actual consent - both bot messages ending in one "I Accept" input.
+  // Only messages[1] should end up in the popup; messages[0] should render
+  // as a normal chat bubble, untouched.
+  consentPrivacyWithDocRecap: {
+    messages: [
+      botText(
+        "Requirements for Author/Composer (Individual): Identity Proof (PAN Card), Bank Proof, Permanent Address Proof, Present Address Proof, GST Registration Certificate (if applicable). Application Fee: ₹1,200 (non-refundable)."
+      ),
+      botParagraphs([
+        {
+          type: "p",
+          children: [{ text: "Consent for collection and processing of your personal/sensitive personal data" }],
+        },
+        linkParagraph(
+          "If you agree to our collection and processing of your personal data in accordance with the terms laid out in our ",
+          "Privacy Notice",
+          "https://membership.iprs.org/AppDocs/Privacy_Notice.pdf",
+          ", please indicate your consent by clicking the 'I Accept' button."
+        ),
+      ]),
+    ],
+    input: { id: "mock-consent-privacy-recap", type: "choice input", items: [{ content: "I Accept" }] },
   },
   consentFraud: {
-    messages: [],
-    input: { id: "mock-consent-fraud", type: "consent input", sheet: "fraud" },
+    messages: [
+      botParagraphs([
+        { type: "p", children: [{ text: "Please Note!" }] },
+        {
+          type: "p",
+          children: [
+            {
+              text: "Members are cautioned that submitting fraudulent, falsified or misleading works data or members personal details is strictly prohibited and may result in termination of membership.",
+            },
+          ],
+        },
+      ]),
+    ],
+    input: { id: "mock-consent-fraud", type: "choice input", items: [{ content: "I Accept" }] },
   },
   declaration: {
     messages: [botText("Two more things before we make your profile")],
