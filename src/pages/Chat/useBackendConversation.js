@@ -22,7 +22,7 @@ import {
   selectUploadForInputId,
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
-import { setStoredHistory, setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
+import { setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
 
 // This hook is the one integration point between the conversation/
 // registration Redux slices and Chat.jsx - it reads via useAppSelector and
@@ -56,11 +56,10 @@ function useBackendConversation() {
   // Mirrors the pre-Redux useEffect-based persistence exactly (write on
   // change), just watching the Redux-selected values now instead of local
   // state. Kept out of the slice reducers themselves so reducers stay pure
-  // - see the comments in conversationSlice.js/registrationSlice.js.
-  useEffect(() => {
-    setStoredHistory(history);
-  }, [history]);
-
+  // - see the comments in conversationSlice.js/registrationSlice.js. Chat
+  // history itself is deliberately NOT persisted here - see conversationSlice's
+  // initialState comment for why the backend's resume response is the only
+  // source for it.
   useEffect(() => {
     setStoredProgress(progress);
   }, [progress]);

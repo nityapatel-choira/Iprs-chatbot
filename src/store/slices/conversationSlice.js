@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { sendMessage, uploadFile } from "../../services/conversationService";
 import { getRegistrationCompleted } from "../../services/registrationState";
-import { getStoredHistory, consumeFreshLoginFlag } from "../../services/conversationStorage";
+import { consumeFreshLoginFlag } from "../../services/conversationStorage";
 
 // Same id scheme as before (module-level counter) - exported so the
 // upload path can pre-generate a message id before dispatching (it needs
@@ -170,7 +170,13 @@ export const uploadConversationFile = createAsyncThunk(
 );
 
 const initialState = {
-  history: getStoredHistory(),
+  // Always starts empty rather than being seeded from localStorage: the
+  // mount-time resume call below (sendConversationTurn(undefined)) is the
+  // one and only way history gets populated, on first-ever load and on
+  // every refresh alike. That keeps this the exact same code path both
+  // times - the backend's response is rendered as-is, never merged with a
+  // locally-persisted transcript that could disagree with it.
+  history: [],
   input: null,
   // Restoring a previously-completed registration instantly (see
   // registrationSlice) means this should start "not typing" too, so the

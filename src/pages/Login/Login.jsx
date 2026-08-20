@@ -10,7 +10,7 @@ function isValidPhone(value) {
 }
 
 function isValidOtp(value) {
-  return /^\d{4,6}$/.test(value);
+  return /^\d{4}$/.test(value);
 }
 
 function Login({ onContinue }) {
@@ -31,7 +31,12 @@ function Login({ onContinue }) {
   const otpError = otpTouched && otp.length > 0 && !otpValid ? "Enter the code we texted you" : "";
 
   const handlePhoneChange = (raw) => setPhone(raw.replace(/\D/g, "").slice(0, 10));
-  const handleOtpChange = (raw) => setOtp(raw.replace(/\D/g, "").slice(0, 6));
+  // Clears apiError on every edit so a stale "wrong OTP" error doesn't
+  // outlive the attempt it was for - no timer needed.
+  const handleOtpChange = (raw) => {
+    setOtp(raw.replace(/\D/g, "").slice(0, 4));
+    setApiError("");
+  };
 
   const handleSendOtp = async () => {
     setPhoneTouched(true);
@@ -58,8 +63,10 @@ function Login({ onContinue }) {
     try {
       const data = await verifyOtp(fullPhone, otp);
       onContinue?.(data);
-    } catch (err) {
-      setApiError(err.message || "Invalid or expired code. Please try again.");
+    } catch {
+      // The backend's raw rejection text (e.g. "Do not match OTP") isn't
+      // user-facing copy, so show a fixed, friendly message instead of it.
+      setApiError("Invalid OTP. Please enter the correct OTP.");
     } finally {
       setIsSubmitting(false);
     }
