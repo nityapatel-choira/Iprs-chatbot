@@ -51,6 +51,16 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
   // Document Upload "Scan Face"/"Upload Photo" choice picks the starting
   // mode via `initialMode`, standalone use always starts on "camera".
   const [mode, setMode] = useState(initialMode);
+  // Only the very first entry into upload mode (Document Upload's "Upload
+  // from Device" choice, via initialMode="upload") should skip straight to
+  // the native picker. The in-scan fallback links ("Having trouble?
+  // Upload a photo instead" / the post-error "Upload a photo instead") are
+  // a *manual* switch away from the camera - those should still land on
+  // the upload card so the user can see it's a different mode, not have a
+  // file dialog pop up unannounced. switchToUpload marks this true, which
+  // permanently turns off auto-opening for the rest of this instance's
+  // life (including if they cycle back to upload again later).
+  const [manualUploadSwitch, setManualUploadSwitch] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadErrorMessage, setUploadErrorMessage] = useState("");
   const [uploadedImage, setUploadedImage] = useState(null);
@@ -87,6 +97,7 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
     // Release the camera while the upload card is up (item 22) - there's
     // no reason to keep it running while the user is picking a file.
     cancel();
+    setManualUploadSwitch(true);
     setMode("upload");
     setUploadStatus("idle");
     setUploadErrorMessage("");
@@ -146,6 +157,7 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
                 onFileSelected={handleFileSelected}
                 status={uploadStatus}
                 errorMessage={uploadErrorMessage}
+                autoOpen={initialMode === "upload" && !manualUploadSwitch}
               />
               <button type="button" className={styles.fallbackLink} onClick={switchToCamera}>
                 Use camera instead

@@ -133,6 +133,12 @@
   height: 12px;
 }
 
+.docCheckIcon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
 .docTextCol {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CheckIcon from "../icons/CheckIcon";
+import documentCheckIcon from "../../assets/image 4.svg";
 import styles from "./FeeSummaryCard.module.css";
 
 // Two optional footer variants, matching the two Figma frame families:
@@ -45,7 +46,7 @@ function FeeSummaryCard({
               {docs.map((doc) => (
                 <li key={doc.label} className={styles.docRow}>
                   <span className={styles.docCheck} aria-hidden="true">
-                    <CheckIcon />
+                    <img src={documentCheckIcon} alt="" className={styles.docCheckIcon} />
                   </span>
                   <span className={styles.docTextCol}>
                     <span className={styles.docLabel}>{doc.label}</span>
