@@ -1,19 +1,5 @@
-// Single source of truth for mapping the backend's overall registration
-// `progress` percentage (0-100) onto the 4 stepper stages. To change how
-// progress maps to stages, edit these ranges only - nothing else in the
-// stepper needs to change.
-//
-// The backend sends only a single overall `progress` number, never a
-// step/section identifier, and the flow now spans well past Personal
-// Details (document upload, face scan, consent, payment all happen before
-// registration reaches 100). An earlier version of this file pinned Bank
-// Details/Work Notifications/Document Upload to an unreachable 101-101
-// range on the assumption only Personal Details existed yet - that made
-// `activeIndex` resolve to 0 for every progress value, which is why the
-// tracker visually froze on step 1 regardless of real progress. Until the
-// backend exposes an explicit step identifier, an even split across the 4
-// stages is the only content-driven mapping available that doesn't invent
-// per-stage thresholds the backend never sent.
+// Maps the backend's overall `progress` (0-100) onto the 4 stepper stages.
+// Backend sends no step identifier, so stages split the range evenly.
 export const STEP_RANGES = {
   personalDetails: { min: 0, max: 25, label: "Personal Details" },
   bankDetails: { min: 25, max: 50, label: "Bank Details" },
