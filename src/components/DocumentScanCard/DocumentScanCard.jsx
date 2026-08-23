@@ -4,9 +4,8 @@ import AlertIcon from "../icons/AlertIcon";
 import useCameraCapture from "./useCameraCapture";
 import styles from "./DocumentScanCard.module.css";
 
-// Matches Figma's document_scan screen ("Position your document within the
-// frame"). Dormant: the live backend has no camera/document input.type yet
-// (see plan) - built ready to wire in once it does.
+// Matches Figma's document_scan screen. Dormant: the live backend has no
+// camera/document input.type yet - built ready to wire in once it does.
 function DocumentScanCard({
   title = "Position your document within the frame",
   caption = "Make sure the card is well-lit and all details are visible",

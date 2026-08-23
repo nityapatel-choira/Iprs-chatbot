@@ -12,10 +12,10 @@ function formatRupees(value) {
   return `₹${value.toLocaleString("en-IN")}`;
 }
 
-// Placeholder fee/GST split derived from the total charge amount, purely for
-// display - Fee + GST always sums exactly to Total by construction.
-// TODO: Replace with backend-provided fee + GST fields once the payment
-// step's input payload defines them, instead of deriving this client-side.
+// Placeholder fee/GST split derived from the total, purely for display -
+// Fee + GST always sums exactly to Total by construction.
+// TODO: replace with backend-provided fee + GST fields once the payment
+// step's input payload defines them.
 function computeBreakdown(totalRupees) {
   const gst = Math.round(totalRupees - totalRupees / (1 + GST_RATE));
   const fee = totalRupees - gst;

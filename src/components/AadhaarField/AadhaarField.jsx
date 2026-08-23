@@ -1,10 +1,8 @@
 import { useState } from "react";
 import styles from "./AadhaarField.module.css";
 
-// Styled sibling of PhoneNumberField/OtpField for Aadhaar entry, matching
-// Figma's verify_aadhaar screen (bordered field + DigiLocker helper caption).
 // Wired into Chat.jsx as a progressive enhancement over the generic text
-// composer when the backend's own placeholder/label identifies the step as
+// composer when the backend's placeholder/label identifies the step as
 // Aadhaar - see the "text input" case in Chat.jsx for that heuristic.
 function AadhaarField({
   caption = "DigiLocker verifies your identity with Aadhaar to provide secure document access",

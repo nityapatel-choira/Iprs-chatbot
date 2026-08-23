@@ -18,21 +18,13 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
 
-// Dev-only entry point (?test=payment) for exercising the real Razorpay
-// Standard Checkout flow (open/success/failure/dismiss) without needing the
-// backend's "payment input" conversation step to exist yet - see
-// src/services/paymentService.js. import.meta.env.DEV is statically false in
-// production builds, so Vite dead-code-eliminates this whole branch (and the
-// PaymentCard chunk it lazy-imports) out of the prod bundle - same pattern
-// as useBackendConversation's ?mockInput= dev harness.
+// Dev-only (?test=payment): exercises Razorpay checkout before the backend's
+// payment step exists (see paymentService.js). import.meta.env.DEV is
+// statically false in prod, so Vite dead-code-eliminates this branch and
+// its PaymentCard chunk from the production bundle.
 const DevPaymentTest = import.meta.env.DEV ? lazy(() => import("./components/payment/PaymentCard")) : null;
-// Dev-only FaceScan test entry point (?test=facescan) - bypasses splash/
-// language/login entirely so the component can be exercised on its own
-// while it isn't wired into the real registration flow yet. Only ever
-// reachable in a dev build: import.meta.env.DEV is statically false in
-// production, so Vite dead-code-eliminates this branch (and the
-// FaceVerification chunk it lazy-imports) out of the prod bundle - same
-// pattern as the dev mock harness in useBackendConversation.js.
+// Dev-only (?test=facescan): exercises FaceVerification before it's wired
+// into the real registration flow. Same DCE pattern as DevPaymentTest above.
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 
 function App() {

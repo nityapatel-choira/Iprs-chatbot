@@ -13,11 +13,10 @@ function FileUploader({
   progress = 0,
   errorMessage,
   disabled,
-  // Opt-in only (defaults false, so every other existing caller - PAN, bank
-  // proof, address proof, etc. - is unaffected): opens the native file
-  // picker itself the moment this instance mounts, skipping the extra
-  // "tap the dropzone/Browse File" step. The dropzone still renders
-  // underneath as the fallback if the user cancels that native dialog.
+  // Opt-in only (defaults false, so existing callers - PAN, bank proof,
+  // address proof, etc. - are unaffected): opens the native file picker the
+  // moment this instance mounts, skipping the "tap to browse" step. The
+  // dropzone still renders as a fallback if the user cancels that dialog.
   autoOpen = false,
 }) {
   const inputRef = useRef(null);
@@ -28,8 +27,8 @@ function FileUploader({
     if (autoOpen && !disabled) {
       inputRef.current?.click();
     }
-    // Intentionally mount-only: this is "open the picker for me" once when
-    // this instance first appears, not "reopen every time props change."
+    // Intentionally mount-only: opens the picker once when this instance
+    // first appears, not on every prop change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

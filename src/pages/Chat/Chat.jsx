@@ -29,7 +29,7 @@ const TEXT_INPUT_CONFIG = {
   "phone input": { type: "tel", inputMode: "tel" },
 };
 
-function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
+function Chat({ language = "English", onBack, onLogout }) {
   const {
     history,
     input,
@@ -122,7 +122,6 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   const showComposer = Boolean(textConfig) && !isAadhaarStep;
 
 
-  // when that state was set.
   const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
   const effectiveUploadStatus = isUploadForCurrentInput ? uploadStatus : "idle";
   const effectiveUploadProgress = isUploadForCurrentInput ? uploadProgress : 0;
@@ -233,7 +232,6 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
             </Suspense>
           )}
 
-          {/* Completion summary card when session has ended / registration complete */}
           {sessionEnded && !error && <CompletionCard />}
 
           {error && (

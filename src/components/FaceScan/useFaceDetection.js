@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 // Keep in sync with the installed @mediapipe/tasks-vision version (see
-// package.json) - the CDN path below is versioned and must match exactly,
-// this is Google's own documented way to load the WASM runtime for web.
+// package.json) - the CDN path is versioned and must match exactly.
 const TASKS_VISION_VERSION = "1.0.1";
 const WASM_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`;
 const MODEL_ASSET_URL =
@@ -10,14 +9,13 @@ const MODEL_ASSET_URL =
 
 const MIN_CONFIDENCE = 0.6;
 const GOOD_FRAMES_TO_CAPTURE = 18;
-// Detection cadence, not render cadence: the video keeps playing at full
-// framerate, only the (comparatively expensive) model inference is
-// throttled - real-time alignment feedback doesn't need 60 checks/sec, and
-// running one on every rAF tick was pure wasted CPU/battery.
+// Detection cadence, not render cadence: video keeps playing at full
+// framerate, only the (expensive) model inference is throttled - real-time
+// alignment feedback doesn't need 60 checks/sec.
 const DETECT_INTERVAL_MS = 90;
-// Consecutive in-loop inference failures (a transient WASM/driver hiccup,
-// not a startup failure) before we give up and surface a recoverable error
-// instead of retrying forever or letting an exception escape the loop.
+// Consecutive in-loop inference failures (a transient hiccup, not a startup
+// failure) before giving up and surfacing a recoverable error instead of
+// retrying forever.
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 const TOO_CLOSE_WIDTH_RATIO = 0.85;
@@ -93,10 +91,9 @@ function useFaceDetection({ onCapture } = {}) {
   }
 
   function closeDetector() {
-    // Releases the detector's native WASM heap allocation. The previous
-    // implementation never did this, leaking a full detector instance on
-    // every retake/remount - the most likely reason it eventually started
-    // throwing after normal use (WASM allocation failures).
+    // Releases the detector's native WASM heap allocation - skipping this
+    // leaks a full detector instance on every retake/remount, eventually
+    // causing WASM allocation failures after normal use.
     if (detectorRef.current) {
       try {
         detectorRef.current.close();
@@ -111,13 +108,11 @@ function useFaceDetection({ onCapture } = {}) {
     if (!detectorRef.current) {
       const { FaceDetector, FilesetResolver } = await import("@mediapipe/tasks-vision");
       const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL);
-      // CPU delegate only, deliberately - MediaPipe's GPU/WebGL delegate
-      // is a well-documented source of instability in Safari (macOS and
-      // iOS) and many Android WebViews, and the old code's fallback only
-      // covered *creation* failures, not the far more common case of it
-      // failing mid-inference. The blaze_face_short_range model is light
-      // enough that CPU WASM inference is comfortably real-time at the
-      // resolution used here, so there's no real tradeoff.
+      // CPU delegate only, deliberately - MediaPipe's GPU/WebGL delegate is
+      // a well-documented source of instability in Safari and many Android
+      // WebViews, especially mid-inference. The blaze_face_short_range
+      // model is light enough that CPU WASM inference is comfortably
+      // real-time here.
       detectorRef.current = await FaceDetector.createFromOptions(vision, {
         baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
         runningMode: "VIDEO",
@@ -201,10 +196,8 @@ function useFaceDetection({ onCapture } = {}) {
           return;
         }
       } catch (err) {
-        // A transient per-frame inference error (not a startup failure) -
-        // the old code had no handling here at all, so this would have
-        // been an uncaught exception killing the loop silently. Tolerate a
-        // few in a row (camera hiccup, dropped frame) before giving up.
+        // A transient per-frame inference error (not a startup failure).
+        // Tolerate a few in a row (camera hiccup, dropped frame) before giving up.
         consecutiveErrorsRef.current += 1;
         console.warn("Face detection frame failed:", err);
         if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
@@ -250,12 +243,10 @@ function useFaceDetection({ onCapture } = {}) {
     setAlignment("no-face");
   }
 
-  // Validates a still image (e.g. a file the user picked instead of using
-  // the live camera) with the exact same detector/model as live capture -
-  // just fed a decoded <img> instead of a video frame. detectForVideo
-  // accepts any ImageSource per the MediaPipe API, and reusing the already-
-  // initialized VIDEO-mode detector here (rather than standing up a second
-  // IMAGE-mode one) avoids loading the WASM runtime/model twice.
+  // Validates a still image (e.g. a file the user picked) with the same
+  // detector/model as live capture. detectForVideo accepts any ImageSource
+  // per the MediaPipe API, so reusing the already-initialized VIDEO-mode
+  // detector here avoids loading the WASM runtime/model twice.
   async function detectImageFile(file) {
     const detector = await ensureDetector();
 

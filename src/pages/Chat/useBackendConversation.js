@@ -24,15 +24,12 @@ import {
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
 
-// This hook is the one integration point between the conversation/
-// registration Redux slices and Chat.jsx - it reads via useAppSelector and
-// dispatches actions/thunks, but returns the exact same shape it did as a
-// plain useState-based hook, so Chat.jsx (and every card component it
-// renders) needed zero changes for the Redux migration. See
-// store/slices/conversationSlice.js and registrationSlice.js for where the
-// actual state/logic now lives - this file is just wiring + the imperative
-// bits (refs, scrolling, retry bookkeeping) that never belonged in Redux
-// state to begin with.
+// The one integration point between the conversation/registration Redux
+// slices and Chat.jsx - reads via useAppSelector and dispatches actions/
+// thunks, but returns the same shape Chat.jsx (and its card components)
+// already expect. See conversationSlice.js/registrationSlice.js for the
+// actual state/logic; this file is just wiring + imperative bits (refs,
+// scrolling, retry bookkeeping) that never belonged in Redux state.
 function useBackendConversation() {
   const dispatch = useAppDispatch();
   const history = useAppSelector(selectHistory);
@@ -47,17 +44,15 @@ function useBackendConversation() {
   const uploadForInputId = useAppSelector(selectUploadForInputId);
 
   // Imperative bookkeeping that was never state in the first place - refs
-  // don't belong in Redux, so these stay exactly as they were.
+  // don't belong in Redux.
   const messagesRef = useRef(null);
   const startedRef = useRef(false);
   const lastActionRef = useRef(null);
   const isUploadingRef = useRef(false);
 
-  // Mirrors the pre-Redux useEffect-based persistence exactly (write on
-  // change), just watching the Redux-selected values now instead of local
-  // state. Kept out of the slice reducers themselves so reducers stay pure
-  // - see the comments in conversationSlice.js/registrationSlice.js. Chat
-  // history itself is deliberately NOT persisted here - see conversationSlice's
+  // Write-on-change persistence, kept out of the slice reducers so they stay
+  // pure (see conversationSlice.js/registrationSlice.js). Chat history
+  // itself is deliberately NOT persisted here - see conversationSlice's
   // initialState comment for why the backend's resume response is the only
   // source for it.
   useEffect(() => {
@@ -77,22 +72,17 @@ function useBackendConversation() {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    // Dev-only escape hatch for visually QA-ing cards the live backend
-    // can't trigger yet (see devMocks.js) - e.g. `?mockInput=summary`.
-    // import.meta.env.DEV is statically false in production builds, so
-    // Vite dead-code-eliminates this whole branch (and its devMocks.js
-    // import) out of the prod bundle.
+    // Dev-only escape hatch for QA-ing cards the live backend can't trigger
+    // yet (see devMocks.js), e.g. `?mockInput=summary`. import.meta.env.DEV
+    // is statically false in prod, so Vite dead-code-eliminates this branch.
     if (import.meta.env.DEV) {
       const mockKey = new URLSearchParams(window.location.search).get("mockInput");
       if (mockKey) {
         import("./devMocks").then(({ DEV_MOCK_INPUTS }) => {
-          // `?mockInput=consentSequence` - scripted two-turn sequence for
-          // exercising the exact scenario a single canned response can't:
-          // consent 1 answered (a real "I Accept" user reply lands in
-          // history, same as sendAnswer produces), then consent 2 arrives as
-          // the next turn. Verifies consent 1's message stays suppressed
-          // once the conversation has moved past it, not just while it's
-          // the pending input.
+          // `?mockInput=consentSequence` - scripted two-turn sequence:
+          // consent 1 answered (a real "I Accept" reply lands in history),
+          // then consent 2 arrives as the next turn. Verifies consent 1's
+          // message stays suppressed once the conversation has moved past it.
           if (mockKey === "consentSequence") {
             const { consentPrivacy, consentFraud } = DEV_MOCK_INPUTS;
             dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));

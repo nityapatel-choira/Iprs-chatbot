@@ -1,10 +1,9 @@
-// Dev-only fixtures for visually QA-ing the dormant Figma cards that the
-// live backend doesn't send yet (checkbox/summary/consent/declaration/
-// document input, plus the verified-field chip). Never imported outside
-// useBackendConversation's `import.meta.env.DEV` branch, so this - and the
-// content below, borrowed for copy only from the old mock's STEPS/CONSENT -
-// is stripped from the production bundle. Activate with
-// `?mockInput=<key>` while running `npm run dev`.
+// Dev-only fixtures for visually QA-ing the dormant Figma cards the live
+// backend doesn't send yet (checkbox/summary/consent/declaration/document
+// input, plus the verified-field chip). Never imported outside
+// useBackendConversation's `import.meta.env.DEV` branch, so this is
+// stripped from the production bundle. Activate with `?mockInput=<key>`
+// while running `npm run dev`.
 
 function botText(text) {
   return { content: { richText: [{ type: "p", children: [{ text }] }] } };
@@ -17,20 +16,19 @@ function linkParagraph(before, linkText, linkHref, after) {
   };
 }
 
-// A single bot message carrying multiple richText paragraph blocks - this
-// is the actual confirmed shape for the consent step's title+body (they
-// arrive as two paragraphs in one message, not two separate messages; see
-// ConsentDialog's block-flattening comment).
+// A single bot message carrying multiple richText paragraph blocks - the
+// confirmed shape for the consent step's title+body (two paragraphs in one
+// message, not two separate messages; see ConsentDialog's block-flattening).
 function botParagraphs(paragraphs) {
   return { content: { richText: paragraphs } };
 }
 
 export const DEV_MOCK_INPUTS = {
   // Reproduces the real raw-text document/fee message (see
-  // parseDocumentSummaryText.js) followed by a genuine "Start
-  // Application"/"Change my previous answers" choice-input - the parser
-  // should turn this into the Figma-style card with its buttons folded in,
-  // and the raw paragraph should never also appear as a plain bubble.
+  // parseDocumentSummaryText.js) followed by a real "Start Application"/
+  // "Change my previous answers" choice-input - the parser should fold this
+  // into the Figma-style card, and the raw paragraph should never also
+  // appear as a plain bubble.
   documentSummaryText: {
     messages: [
       botText(
@@ -98,10 +96,9 @@ export const DEV_MOCK_INPUTS = {
   },
   // Confirmed real shape (previously guessed as a dedicated "consent
   // input"/sheet type - see Chat.jsx's isConsentAcceptStep comment): a
-  // plain "choice input" with a single "I Accept" item, and the title+body
-  // arrive as two paragraphs within one bot message (not two separate
-  // messages - see ConsentDialog's block-flattening), link included as a
-  // real richText "a" node.
+  // plain "choice input" with a single "I Accept" item; title+body arrive
+  // as two paragraphs in one bot message (see ConsentDialog's
+  // block-flattening), link included as a real richText "a" node.
   consentPrivacy: {
     messages: [
       botParagraphs([
@@ -119,11 +116,10 @@ export const DEV_MOCK_INPUTS = {
     ],
     input: { id: "mock-consent-privacy", type: "choice input", items: [{ content: "I Accept" }] },
   },
-  // Reproduces the real bug turn: messages[0] is a document/fee recap
-  // (plain bot text, not structured "summary input" data), messages[1] is
-  // the actual consent - both bot messages ending in one "I Accept" input.
-  // Only messages[1] should end up in the popup; messages[0] should render
-  // as a normal chat bubble, untouched.
+  // Reproduces a real bug turn: messages[0] is a document/fee recap (plain
+  // bot text, not "summary input"), messages[1] is the actual consent -
+  // both end in one "I Accept" input. Only messages[1] should end up in the
+  // popup; messages[0] should render as a normal chat bubble, untouched.
   consentPrivacyWithDocRecap: {
     messages: [
       botText(
@@ -190,10 +186,9 @@ export const DEV_MOCK_INPUTS = {
       caption: "Scan your face or upload a clear passport size photo",
     },
   },
-  // Confirmed real shape: no input.title/caption at all (unlike the
-  // passport-photo mock above) - just the bot message text plus
-  // options.variableId, matching how Chat.jsx's isProfilePhotoStep detects
-  // and titles this step.
+  // Confirmed real shape: no input.title/caption (unlike the passport-photo
+  // mock above) - just the bot message text plus options.variableId,
+  // matching Chat.jsx's isProfilePhotoStep detection.
   profilePhoto: {
     messages: [botText("Upload your Profile photo")],
     input: {

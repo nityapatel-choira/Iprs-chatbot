@@ -8,28 +8,23 @@ import ChatHeader from "../Chat/components/ChatHeader/ChatHeader";
 import useFaceDetection from "../../components/FaceScan/useFaceDetection";
 import styles from "./FaceVerification.module.css";
 
-// Full-screen selfie-capture experience. Detection/capture logic all lives
-// in useFaceDetection (untouched here) - this component is purely the UI
-// layer around it, so it stays modular and backend-ready: onCapture already
-// receives the captured data URL the moment a photo is taken (live capture
-// or upload), ready to be POSTed wherever a future integration needs
-// without touching this component.
+// Full-screen selfie-capture experience. Detection/capture logic lives in
+// useFaceDetection - this component is purely the UI layer around it, so
+// onCapture already receives the captured data URL the moment a photo is
+// taken (live capture or upload), ready to be POSTed once a backend
+// integration needs it.
 //
-// Reuses two existing IPRS pieces as-is rather than approximating their
-// look: ChatHeader (same header every other screen already uses - see
-// FaceVerification.module.css's --canvas-bg/--card-border for how it picks
-// up the exact same tint/border here) and FileUploader (same upload card
-// used for PAN/bank documents elsewhere, sized off the same --card-pct/
-// --card-max variables Chat.module.css defines, so it's not just visually
-// similar but literally the same width logic).
+// Reuses two existing IPRS pieces as-is: ChatHeader (same header every
+// other screen uses - see FaceVerification.module.css's --canvas-bg/
+// --card-border for the shared tint/border) and FileUploader (same upload
+// card used for PAN/bank documents, sized off the same --card-pct/
+// --card-max variables Chat.module.css defines).
 //
-// `embedded` lets this same component drop into the Document Upload flow
-// (Chat.jsx's Passport Size Photo step) instead of only ever being a
-// full-page screen: it hides the standalone ChatHeader/back-button/trust
-// footer and lets the surrounding card own the width, while every other
-// piece (camera, detection states, capture controls, upload fallback) is
-// untouched. Standalone use (the ?test=facescan route) is unaffected since
-// `embedded` defaults to false.
+// `embedded` lets this component drop into the Document Upload flow
+// (Chat.jsx's Passport Size Photo step) instead of only being a full-page
+// screen: it hides the standalone ChatHeader/back-button/trust footer and
+// lets the surrounding card own the width. Standalone use (?test=facescan)
+// is unaffected since `embedded` defaults to false.
 function FaceVerification({ onBack, onCapture, onContinue, language = "English", embedded = false, initialMode = "camera" }) {
   const {
     status,
@@ -53,13 +48,11 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
   const [mode, setMode] = useState(initialMode);
   // Only the very first entry into upload mode (Document Upload's "Upload
   // from Device" choice, via initialMode="upload") should skip straight to
-  // the native picker. The in-scan fallback links ("Having trouble?
-  // Upload a photo instead" / the post-error "Upload a photo instead") are
-  // a *manual* switch away from the camera - those should still land on
-  // the upload card so the user can see it's a different mode, not have a
-  // file dialog pop up unannounced. switchToUpload marks this true, which
-  // permanently turns off auto-opening for the rest of this instance's
-  // life (including if they cycle back to upload again later).
+  // the native picker. The in-scan fallback links ("Upload a photo
+  // instead") are a manual switch away from the camera and should land on
+  // the upload card first rather than popping a file dialog unannounced.
+  // switchToUpload sets this true, permanently turning off auto-opening for
+  // the rest of this instance's life.
   const [manualUploadSwitch, setManualUploadSwitch] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("idle");
   const [uploadErrorMessage, setUploadErrorMessage] = useState("");
@@ -94,8 +87,8 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
   }
 
   function switchToUpload() {
-    // Release the camera while the upload card is up (item 22) - there's
-    // no reason to keep it running while the user is picking a file.
+    // Release the camera while the upload card is up - no reason to keep
+    // it running while the user is picking a file.
     cancel();
     setManualUploadSwitch(true);
     setMode("upload");

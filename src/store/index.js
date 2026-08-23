@@ -14,11 +14,9 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // File messages intentionally carry a live File object (rawFile)
-        // and an object URL for in-session preview/thumbnailing (see
-        // FileMessageCard) - both are inherently non-serializable, so this
-        // only silences RTK's dev-only non-serializable-value warning for a
-        // known, intentional case.
+        // File messages intentionally carry a live File object (rawFile) and
+        // an object URL for preview/thumbnailing (see FileMessageCard) - both
+        // are non-serializable by design, so this just silences RTK's dev warning.
         ignoredActions: ["conversation/addUserFileMessage"],
         ignoredPaths: ["conversation.history"],
       },

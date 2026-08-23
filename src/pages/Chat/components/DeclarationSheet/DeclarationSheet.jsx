@@ -3,9 +3,8 @@ import BottomSheet from "../../../../components/BottomSheet/BottomSheet";
 import CheckIcon from "../../../../components/icons/CheckIcon";
 import styles from "./DeclarationSheet.module.css";
 
-// Matches Figma's GST/society declaration bottom sheet ("I have registered
-// GST" / "I am a member of another society"). Dormant: wired to a proposed
-// "declaration input" type the live backend doesn't send yet - see plan.
+// Matches Figma's GST/society declaration bottom sheet. Dormant: wired to
+// a proposed "declaration input" type the live backend doesn't send yet.
 function DeclarationSheet({ open, title = "A couple more things", options, onSubmit, onClose }) {
   const [checked, setChecked] = useState({});
 

@@ -3,10 +3,6 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-/**
- * Generates a Data URL thumbnail of the first page of a PDF file or blob/url.
- * Returns null if generation fails.
- */
 export async function getPdfThumbnailUrl(fileOrUrl) {
   try {
     let source;

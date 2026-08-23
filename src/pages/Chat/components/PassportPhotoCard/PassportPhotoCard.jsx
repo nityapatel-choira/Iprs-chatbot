@@ -18,22 +18,21 @@ function dataUrlToFile(dataUrl, filename) {
 }
 
 // Passport Size Photo step of the Document Upload flow. Reuses
-// FaceVerification/useFaceDetection as-is (embedded mode - see that
-// component) for both paths this offers: "Scan Face" opens it straight
-// into live camera capture, "Upload Photo" opens it straight into its
-// upload fallback (same MediaPipe face-count validation either way). Only
-// once the user taps Continue on FaceVerification's result screen does the
-// image get handed to the existing file-upload flow via onFileSelected.
+// FaceVerification/useFaceDetection as-is (embedded mode) for both paths:
+// "Scan Face" opens straight into live capture, "Upload Photo" opens
+// straight into its upload fallback (same MediaPipe validation either
+// way). The image is handed to the file-upload flow via onFileSelected
+// only once the user taps Continue on FaceVerification's result screen.
 function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
 
-  // Only "Scan Face" gets auto-scrolled - it's the tall, camera-heavy view
-  // that can land below the fold; "Upload Photo" opens the native file
-  // picker itself (see FileUploader's autoOpen) and shouldn't also animate
-  // the page under it. useLayoutEffect (not useEffect) so this runs after
-  // the DOM has the mounted FaceVerification's real height but before the
-  // browser paints, avoiding a visible pre-scroll flash/jump.
+  // Only "Scan Face" gets auto-scrolled - the tall, camera-heavy view can
+  // land below the fold; "Upload Photo" opens the native picker itself (see
+  // FileUploader's autoOpen) and shouldn't also animate the page.
+  // useLayoutEffect (not useEffect) so this runs after the DOM has
+  // FaceVerification's real height but before the browser paints, avoiding
+  // a visible pre-scroll flash.
   useLayoutEffect(() => {
     if (mode === "camera") {
       faceScanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });

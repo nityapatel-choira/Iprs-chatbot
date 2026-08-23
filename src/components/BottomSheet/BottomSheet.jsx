@@ -1,11 +1,10 @@
 import CloseIcon from "../icons/CloseIcon";
 import styles from "./BottomSheet.module.css";
 
-// Generic modal shell: bottom sheet on mobile, centered dialog on desktop
-// (>=768px - see BottomSheet.module.css). Extracted out of ConsentSheet so
-// it can be reused by any Figma bottom-sheet screen (consent, GST/society
-// declaration, etc.) without duplicating the scrim/handle/close plumbing -
-// callers own their own body content and footer actions.
+// Bottom sheet on mobile, centered dialog on desktop (>=768px - see
+// BottomSheet.module.css). Extracted out of ConsentSheet so it can be
+// reused by any bottom-sheet screen without duplicating the scrim/handle/
+// close plumbing - callers own their own body content and footer actions.
 function BottomSheet({ open, title, children, footer, onClose }) {
   if (!open) return null;
 

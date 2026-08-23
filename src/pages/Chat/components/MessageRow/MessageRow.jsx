@@ -6,8 +6,8 @@ import FileMessageCard from "../FileMessageCard/FileMessageCard";
 import styles from "../../Chat.module.css";
 
 // message.verified/verifiedLabel are optional and unset by the live
-// backend today (no per-field verified flag exists yet - see plan). Purely
-// additive: any message without them renders exactly as before.
+// backend today (no per-field verified flag exists yet). Purely additive:
+// any message without them renders unchanged.
 function MessageRow({ message }) {
   const isUser = message.sender === "user";
 

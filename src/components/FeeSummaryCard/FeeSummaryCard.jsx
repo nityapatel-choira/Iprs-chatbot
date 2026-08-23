@@ -8,8 +8,7 @@ import styles from "./FeeSummaryCard.module.css";
 //   "Change my previous answers" stacked buttons).
 // - `confirmLabel`+`onConfirm`: fee_2/fee_4 (checkbox confirmation + single
 //   CTA, gated on the box being ticked).
-// Neither is required - existing callers with none of these props keep
-// rendering exactly as before.
+// Neither is required - callers with none of these props render unchanged.
 function FeeSummaryCard({
   entityLabel,
   fee,

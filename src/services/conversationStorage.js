@@ -45,10 +45,9 @@ function consumeFreshLoginFlag() {
 
 function clearStoredConversation() {
   try {
-    // CHAT_HISTORY_KEY is no longer written (history is never persisted -
-    // see conversationSlice's initialState), but this still purges any
-    // leftover value from before that change so a stale transcript can't
-    // linger in localStorage.
+    // CHAT_HISTORY_KEY is no longer written (see conversationSlice's
+    // initialState) - still purged here so no stale transcript lingers
+    // from before that change.
     localStorage.removeItem(CHAT_HISTORY_KEY);
     localStorage.removeItem(CHAT_PROGRESS_KEY);
     sessionStorage.removeItem(FRESH_LOGIN_KEY);

@@ -26,11 +26,10 @@ function isPdfFile(fileName, mimeType, rawFile) {
   return false;
 }
 
-// Splits off the extension so it can be kept visible while only the base
-// name gets ellipsis-truncated (see .fileNameBase/.fileNameExt in the CSS
-// module) - a plain single-span ellipsis would just as likely clip the
-// extension itself on a long filename, which is the one part that tells
-// the user what kind of file this is.
+// Splits off the extension so it stays visible while only the base name
+// gets ellipsis-truncated (see .fileNameBase/.fileNameExt in the CSS
+// module) - a single-span ellipsis could clip the extension itself, the
+// one part that tells the user what kind of file this is.
 function splitFileName(name) {
   if (!name) return { base: "", ext: "" };
   const dotIndex = name.lastIndexOf(".");
