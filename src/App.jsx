@@ -17,7 +17,6 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
-// const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
 // Dev-only entry point (?test=payment) for exercising the real Razorpay
 // Standard Checkout flow (open/success/failure/dismiss) without needing the
@@ -41,7 +40,6 @@ function App() {
   const languageCode = useAppSelector(selectLanguageCode);
   const loggedIn = useAppSelector(selectIsAuthenticated);
   const [showSplash, setShowSplash] = useState(true);
-  // const [onboardingDone, setOnboardingDone] = useState(false);
 
   useEffect(() => {
     onUnauthorized(() => {
@@ -116,18 +114,10 @@ function App() {
     );
   }
 
-  // if (onboardingDone) {
-  //   return (
-  //     <Suspense fallback={null}>
-  //       <FaceVerification />
-  //     </Suspense>
-  //   );
-  // }
-
   const language = LANGUAGES.find((lang) => lang.code === languageCode)?.name;
   return (
     <Suspense fallback={null}>
-      <Chat language={language} onLogout={handleLogout} /* onFinished={() => setOnboardingDone(true)} */ />
+      <Chat language={language} onLogout={handleLogout} />
     </Suspense>
   );
 }
