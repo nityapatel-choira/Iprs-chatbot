@@ -1,5 +1,4 @@
-// Maps the backend's overall `progress` (0-100) onto the 4 stepper stages.
-// Backend sends no step identifier, so stages split the range evenly.
+// Backend sends no step identifier, so the 0-100 range is split evenly across the 4 stages.
 export const STEP_RANGES = {
   personalDetails: { min: 0, max: 25, label: "Personal Details" },
   bankDetails: { min: 25, max: 50, label: "Bank Details" },

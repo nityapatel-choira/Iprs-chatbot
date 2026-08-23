@@ -4,7 +4,7 @@ import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
 import styles from "./PassportPhotoCard.module.css";
 
-// Converts the data URL FaceVerification returns into a real File, since submitFile expects one.
+// submitFile expects a File, not a data URL.
 function dataUrlToFile(dataUrl, filename) {
   const [header, base64] = dataUrl.split(",");
   const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";

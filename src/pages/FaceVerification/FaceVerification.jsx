@@ -29,8 +29,7 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
     detectImageFile,
   } = useFaceDetection({ onCapture });
 
-  // "camera" or "upload" - initialMode picks the start; both are reachable
-  // via the fallback links either way.
+  // initialMode picks the starting mode; both are reachable via the fallback links either way.
   const [mode, setMode] = useState(initialMode);
   // Only the first entry into upload mode (initialMode="upload") should
   // auto-open the file picker. Manual switches (the fallback links) should

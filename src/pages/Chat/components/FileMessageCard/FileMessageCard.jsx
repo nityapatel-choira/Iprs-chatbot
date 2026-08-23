@@ -26,8 +26,7 @@ function isPdfFile(fileName, mimeType, rawFile) {
   return false;
 }
 
-// Splits off the extension so ellipsis-truncation can't clip it - it's the
-// part that identifies the file type.
+// Keeps the extension past ellipsis-truncation - it's what identifies the file type.
 function splitFileName(name) {
   if (!name) return { base: "", ext: "" };
   const dotIndex = name.lastIndexOf(".");

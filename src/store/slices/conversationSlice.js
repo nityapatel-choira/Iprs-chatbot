@@ -151,12 +151,10 @@ export const uploadConversationFile = createAsyncThunk(
 );
 
 const initialState = {
-  // Starts empty - the mount-time resume call is the only source, never
-  // merged with stale local data.
+  // Only the mount-time resume call populates history - never seeded from stale local data.
   history: [],
   input: null,
-  // "Not typing" when a completed registration is restored, so it paints
-  // immediately instead of flickering through loading.
+  // Avoids flickering through a loading state when a completed registration is restored.
   isTyping: !getRegistrationCompleted(),
   error: null,
   uploadStatus: "idle",
