@@ -3,16 +3,12 @@ import { sendMessage, uploadFile } from "../../services/conversationService";
 import { getRegistrationCompleted } from "../../services/registrationState";
 import { consumeFreshLoginFlag } from "../../services/conversationStorage";
 
-// Exported so the upload path can pre-generate a message id before
-// dispatching - it needs the id up front to correlate the eventual
-// success/error status update with the right history entry (see submitFile
-// in useBackendConversation).
+// Exported so submitFile can pre-generate an id to correlate later status updates.
 let idCounter = 1;
 export const nextId = () => `m${++idCounter}`;
 
-// How long the success checkmark stays visible before advancing to the next
-// question. The backend bundles the next input into the same upload
-// response, so without this pause the success state would never be seen.
+// Backend bundles the next input into the upload response, so pause here
+// or the success state is never seen.
 const UPLOAD_SUCCESS_HOLD_MS = 900;
 
 function toRichTextMessages(messages) {
@@ -25,13 +21,9 @@ function toRichTextMessages(messages) {
   }));
 }
 
-// The backend uses a second response shape for turns outside the normal
-// Typebot relay - notably when registration is already complete, it replies
-// with { engine: "AI", reply: "<text>" } instead of { messages: [...],
-// input: {...} }. Wrapped in the same richText node shape so it renders
-// through the normal message UI. Only produces a message when
-// `data.messages` has items, so a normal Typebot response is never
-// double-rendered.
+// Backend sometimes replies { engine: "AI", reply } instead of { messages,
+// input } (e.g. once registration is complete) - wrapped as richText so it
+// renders normally.
 function replyToRichTextMessage(data) {
   if (Array.isArray(data?.messages) && data.messages.length > 0) return null;
   if (typeof data?.reply !== "string" || !data.reply.trim()) return null;
@@ -80,20 +72,16 @@ function mergeBotMessages(existingHistory, newMessages) {
   return updated;
 }
 
-// A response is "session-ended" if the backend explicitly says so, or if it
-// replied with the terminal AI-reply shape and nothing left to answer.
-// Exported for registrationSlice, which needs the same classification.
+// "Session-ended" = backend says so, or it replied with the terminal AI
+// shape and no input left. Exported for registrationSlice.
 export function classifySessionEnded(data) {
   const replyMessage = replyToRichTextMessage(data);
   const isTerminalReply = Boolean(replyMessage) && !data?.input;
   return Boolean(data?.sessionEnded) || isTerminalReply;
 }
 
-// Shared by both thunks' `fulfilled` reducers and the dev-mock action.
-// Progress/sessionEnded are handled separately by registrationSlice's
-// applyRegistrationFromResponse. Reducers must stay pure, so
-// `data.__isFreshLogin` is computed by the thunk (async, where side effects
-// are expected) rather than this function calling consumeFreshLoginFlag().
+// Shared by both thunks and the dev-mock action. __isFreshLogin is computed
+// by the thunk, not here - reducers must stay pure.
 function applyConversationResponse(state, data) {
   const replyMessage = replyToRichTextMessage(data);
   const incomingMessages = replyMessage ? [replyMessage] : toRichTextMessages(data?.messages);
@@ -130,8 +118,7 @@ function applyConversationResponse(state, data) {
   }
 }
 
-// The mount-time "resume" call and every answer both go through this -
-// same endpoint, `message` omitted for the initial resume.
+// Same endpoint for the initial resume and every answer - message is omitted for resume.
 export const sendConversationTurn = createAsyncThunk("conversation/sendTurn", async (message) => {
   const data = await sendMessage(message);
   return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
@@ -142,8 +129,7 @@ export const uploadConversationFile = createAsyncThunk(
   async ({ file, fileId }, { dispatch, rejectWithValue }) => {
     try {
       const data = await uploadFile(file, (pct) => dispatch(setUploadProgress(pct)));
-      // The backend re-asking for "file input" means it rejected the file
-      // (bad format, failed validation, etc.) rather than accepting it.
+      // Backend re-asking for "file input" means it rejected the file.
       const isRejected = data?.input?.type === "file input";
       dispatch(setFileMessageStatus({ fileId, status: isRejected ? "error" : "success" }));
 
@@ -165,24 +151,18 @@ export const uploadConversationFile = createAsyncThunk(
 );
 
 const initialState = {
-  // Always starts empty rather than seeded from localStorage: the mount-time
-  // resume call below (sendConversationTurn(undefined)) is the only way
-  // history gets populated, on first load and every refresh alike - the
-  // backend's response is rendered as-is, never merged with a stale local copy.
+  // Starts empty - the mount-time resume call is the only source, never
+  // merged with stale local data.
   history: [],
   input: null,
-  // Starts "not typing" when a completed registration is being restored (see
-  // registrationSlice), so the completed screen renders on first paint
-  // instead of flickering through a loading state. The resume call below
-  // still runs and remains authoritative.
+  // "Not typing" when a completed registration is restored, so it paints
+  // immediately instead of flickering through loading.
   isTyping: !getRegistrationCompleted(),
   error: null,
   uploadStatus: "idle",
   uploadProgress: 0,
   uploadError: "",
-  // Which file-input step (by backend input.id) uploadStatus/Progress/Error
-  // belong to - the UI only trusts that state when it still matches the
-  // currently active input.id, treating any mismatch as a fresh uploader.
+  // Ties uploadStatus/Progress/Error to a specific input.id - a mismatch means a fresh uploader.
   uploadForInputId: null,
 };
 
@@ -216,17 +196,14 @@ const conversationSlice = createSlice({
     setUploadError: (state, action) => {
       state.uploadError = action.payload;
     },
-    // Dev-only escape hatch (see devMocks.js) for QA-ing cards the live
-    // backend can't trigger yet - applies a canned response through the
-    // same reducer logic as a real turn, without a thunk/network call.
+    // Dev-only (see devMocks.js): applies a canned response through the
+    // same reducer logic, no network call.
     applyMockResponse: (state, action) => {
       applyConversationResponse(state, action.payload);
       state.isTyping = false;
     },
-    // Redux's store is a singleton that outlives Chat unmounting on logout -
-    // it won't reset itself the way component state would. Dispatched from
-    // App.jsx's handleLogout/onUnauthorized alongside clearStoredConversation(),
-    // so a subsequent login never starts from a stale in-memory conversation.
+    // Redux's store outlives Chat unmounting - dispatched on logout so a
+    // new login doesn't inherit stale state.
     resetConversation: () => ({
       history: [],
       input: null,

@@ -1,10 +1,8 @@
 import CloseIcon from "../icons/CloseIcon";
 import styles from "./BottomSheet.module.css";
 
-// Bottom sheet on mobile, centered dialog on desktop (>=768px - see
-// BottomSheet.module.css). Extracted out of ConsentSheet so it can be
-// reused by any bottom-sheet screen without duplicating the scrim/handle/
-// close plumbing - callers own their own body content and footer actions.
+// Bottom sheet on mobile, centered dialog on desktop (>=768px). Extracted
+// from ConsentSheet so any screen can reuse the scrim/handle/close plumbing.
 function BottomSheet({ open, title, children, footer, onClose }) {
   if (!open) return null;
 

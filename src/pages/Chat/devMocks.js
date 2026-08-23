@@ -1,9 +1,6 @@
-// Dev-only fixtures for visually QA-ing the dormant Figma cards the live
-// backend doesn't send yet (checkbox/summary/consent/declaration/document
-// input, plus the verified-field chip). Never imported outside
-// useBackendConversation's `import.meta.env.DEV` branch, so this is
-// stripped from the production bundle. Activate with `?mockInput=<key>`
-// while running `npm run dev`.
+// Dev-only fixtures for QA-ing cards the live backend doesn't send yet.
+// Stripped from prod (only imported inside the DEV branch). Activate with
+// ?mockInput=<key>.
 
 function botText(text) {
   return { content: { richText: [{ type: "p", children: [{ text }] }] } };
@@ -16,19 +13,15 @@ function linkParagraph(before, linkText, linkHref, after) {
   };
 }
 
-// A single bot message carrying multiple richText paragraph blocks - the
-// confirmed shape for the consent step's title+body (two paragraphs in one
-// message, not two separate messages; see ConsentDialog's block-flattening).
+// Consent step's title+body arrive as two paragraphs in one message, not
+// two - see ConsentDialog's block-flattening.
 function botParagraphs(paragraphs) {
   return { content: { richText: paragraphs } };
 }
 
 export const DEV_MOCK_INPUTS = {
-  // Reproduces the real raw-text document/fee message (see
-  // parseDocumentSummaryText.js) followed by a real "Start Application"/
-  // "Change my previous answers" choice-input - the parser should fold this
-  // into the Figma-style card, and the raw paragraph should never also
-  // appear as a plain bubble.
+  // Reproduces the real raw-text document/fee message plus its choice-input -
+  // the parser should fold this into the card, not also show as a plain bubble.
   documentSummaryText: {
     messages: [
       botText(
@@ -94,11 +87,8 @@ export const DEV_MOCK_INPUTS = {
       },
     },
   },
-  // Confirmed real shape (previously guessed as a dedicated "consent
-  // input"/sheet type - see Chat.jsx's isConsentAcceptStep comment): a
-  // plain "choice input" with a single "I Accept" item; title+body arrive
-  // as two paragraphs in one bot message (see ConsentDialog's
-  // block-flattening), link included as a real richText "a" node.
+  // Real shape: a plain "choice input" with a single "I Accept" item - see
+  // Chat.jsx's isConsentAcceptStep.
   consentPrivacy: {
     messages: [
       botParagraphs([
@@ -116,10 +106,8 @@ export const DEV_MOCK_INPUTS = {
     ],
     input: { id: "mock-consent-privacy", type: "choice input", items: [{ content: "I Accept" }] },
   },
-  // Reproduces a real bug turn: messages[0] is a document/fee recap (plain
-  // bot text, not "summary input"), messages[1] is the actual consent -
-  // both end in one "I Accept" input. Only messages[1] should end up in the
-  // popup; messages[0] should render as a normal chat bubble, untouched.
+  // Reproduces a real bug turn: messages[0] is a doc/fee recap, messages[1]
+  // is the consent - only messages[1] should end up in the popup.
   consentPrivacyWithDocRecap: {
     messages: [
       botText(
@@ -186,9 +174,8 @@ export const DEV_MOCK_INPUTS = {
       caption: "Scan your face or upload a clear passport size photo",
     },
   },
-  // Confirmed real shape: no input.title/caption (unlike the passport-photo
-  // mock above) - just the bot message text plus options.variableId,
-  // matching Chat.jsx's isProfilePhotoStep detection.
+  // No input.title/caption here (unlike passport-photo above) - just
+  // options.variableId, per Chat.jsx's isProfilePhotoStep.
   profilePhoto: {
     messages: [botText("Upload your Profile photo")],
     input: {
@@ -197,9 +184,7 @@ export const DEV_MOCK_INPUTS = {
       options: { variableId: "vww01qa7jizgywxikfu1yu48x" },
     },
   },
-  // Plain "file input" step (PAN, bank proof, etc.) - none of the other
-  // mocks exercise the base FileUploader path directly (passportPhoto/
-  // profilePhoto both route to the face-scan card instead).
+  // Plain "file input" - the other file mocks route to the face-scan card instead.
   panCard: {
     messages: [botText("Upload your PAN card")],
     input: { id: "mock-pan-card", type: "file input", title: "Upload PAN Card", caption: "JPEG and PNG up to 2MB" },
@@ -211,16 +196,5 @@ export const DEV_MOCK_INPUTS = {
   otp: {
     messages: [botText("We have shared an OTP with you for verification. Please share the OTP")],
     input: { id: "mock-otp", type: "otp input" },
-  },
-  payment: {
-    messages: [botText("Last step - pay the membership fee to complete your registration.")],
-    input: {
-      id: "mock-payment",
-      type: "payment input",
-      amount: 120000,
-      prefillName: "Test User",
-      prefillEmail: "test@example.com",
-      prefillContact: "9999999999",
-    },
   },
 };

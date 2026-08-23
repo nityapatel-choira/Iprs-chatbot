@@ -9,8 +9,7 @@ import styles from "./StepTracker.module.css";
    icon/category/music and icon/profile_page_only/agreement components. */
 const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
-// currentFill (0-100) drives the active connector's fill width directly, so
-// the bar reflects the real backend percentage rather than a fixed "halfway" guess.
+// currentFill drives the connector's fill width directly, off the real backend percentage.
 function StepTracker({ stages, activeIndex, currentFill = 0 }) {
   const totalPercent = useMemo(() => {
     if (stages.length <= 1) return 0;

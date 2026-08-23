@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -21,7 +21,6 @@ import { extractMessageText } from "../../store/slices/conversationSlice";
 import { parseDocumentSummaryText } from "./parseDocumentSummaryText";
 import styles from "./Chat.module.css";
 
-const PaymentCard = lazy(() => import("../../components/payment/PaymentCard"));
 const TEXT_INPUT_CONFIG = {
   "text input": { type: "text", inputMode: "text" },
   "email input": { type: "email", inputMode: "email" },
@@ -127,6 +126,85 @@ function Chat({ language = "English", onBack, onLogout }) {
   const effectiveUploadProgress = isUploadForCurrentInput ? uploadProgress : 0;
   const effectiveUploadError = isUploadForCurrentInput ? uploadError : "";
 
+  function renderActiveInputWidget() {
+    if (isTyping) return null;
+
+    if (input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary) {
+      return (
+        <QuickReplyCard
+          options={(input.items || []).map((item) => ({ label: item.content }))}
+          onSelect={(option) => sendAnswer(option.label)}
+        />
+      );
+    }
+
+    if (input?.type === "otp input") {
+      return <PinInput key={input.id} onComplete={sendAnswer} />;
+    }
+
+    if (isAadhaarStep) {
+      return <AadhaarField key={input.id} onSubmit={sendAnswer} />;
+    }
+
+    if (input?.type === "checkbox input") {
+      return (
+        <CheckboxGroup
+          options={input.options || []}
+          caption={input.caption}
+          onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
+        />
+      );
+    }
+
+    if (input?.type === "summary input") {
+      return (
+        <FeeSummaryCard
+          {...input.data}
+          onOptionSelect={(option) => sendAnswer(option.label)}
+          onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}
+        />
+      );
+    }
+
+    if (input?.type === "document input") {
+      return (
+        <DocumentScanCard
+          key={input.id}
+          title={input.title}
+          caption={input.caption}
+          onCapture={() => sendAnswer("Document captured")}
+        />
+      );
+    }
+
+    if (input?.type === "file input" && (isPassportPhotoStep || isProfilePhotoStep)) {
+      return (
+        <PassportPhotoCard
+          key={input.id}
+          title={input.title || (isProfilePhotoStep ? "Upload your Profile photo" : undefined)}
+          caption={input.caption}
+          onFileSelected={submitFile}
+        />
+      );
+    }
+
+    if (input?.type === "file input") {
+      return (
+        <FileUploader
+          key={input.id}
+          title={input.title || "Choose a file or drag & drop it here"}
+          caption={input.caption || "JPEG and PDF formats, up to 2MB"}
+          onFileSelected={submitFile}
+          status={effectiveUploadStatus}
+          progress={effectiveUploadProgress}
+          errorMessage={effectiveUploadError}
+        />
+      );
+    }
+
+    return null;
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.panel}>
@@ -159,78 +237,7 @@ function Chat({ language = "English", onBack, onLogout }) {
 
           {isTyping && <TypingIndicator />}
 
-          {!isTyping && input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary && (
-            <QuickReplyCard
-              options={(input.items || []).map((item) => ({ label: item.content }))}
-              onSelect={(option) => sendAnswer(option.label)}
-            />
-          )}
-
-          {!isTyping && input?.type === "otp input" && (
-            <PinInput key={input.id} onComplete={sendAnswer} />
-          )}
-
-          {!isTyping && isAadhaarStep && <AadhaarField key={input.id} onSubmit={sendAnswer} />}
-
-      
-          {!isTyping && input?.type === "checkbox input" && (
-            <CheckboxGroup
-              options={input.options || []}
-              caption={input.caption}
-              onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
-            />
-          )}
-
-          {!isTyping && input?.type === "summary input" && (
-            <FeeSummaryCard
-              {...input.data}
-              onOptionSelect={(option) => sendAnswer(option.label)}
-              onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}
-            />
-          )}
-
-          {!isTyping && input?.type === "document input" && (
-            <DocumentScanCard
-              key={input.id}
-              title={input.title}
-              caption={input.caption}
-              onCapture={() => sendAnswer("Document captured")}
-            />
-          )}
-
-          {!isTyping && input?.type === "file input" && (isPassportPhotoStep || isProfilePhotoStep) && (
-            <PassportPhotoCard
-              key={input.id}
-              title={input.title || (isProfilePhotoStep ? "Upload your Profile photo" : undefined)}
-              caption={input.caption}
-              onFileSelected={submitFile}
-            />
-          )}
-
-          {!isTyping && input?.type === "file input" && !isPassportPhotoStep && !isProfilePhotoStep && (
-            <FileUploader
-              key={input.id}
-              title={input.title || "Choose a file or drag & drop it here"}
-              caption={input.caption || "JPEG and PDF formats, up to 2MB"}
-              onFileSelected={submitFile}
-              status={effectiveUploadStatus}
-              progress={effectiveUploadProgress}
-              errorMessage={effectiveUploadError}
-            />
-          )}
-
-          {!isTyping && input?.type === "payment input" && (
-            <Suspense fallback={null}>
-              <PaymentCard
-                key={input.id}
-                amountInRupees={input.amount ? input.amount / 100 : undefined}
-                prefill={{ name: input.prefillName, email: input.prefillEmail, contact: input.prefillContact }}
-                onComplete={(result) =>
-                  sendAnswer(result?.paymentId ? `Payment completed (${result.paymentId})` : "Payment completed")
-                }
-              />
-            </Suspense>
-          )}
+          {renderActiveInputWidget()}
 
           {sessionEnded && !error && <CompletionCard />}
 

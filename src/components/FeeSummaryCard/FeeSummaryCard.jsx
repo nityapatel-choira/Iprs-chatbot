@@ -3,12 +3,8 @@ import CheckIcon from "../icons/CheckIcon";
 import documentCheckIcon from "../../assets/image 4.svg";
 import styles from "./FeeSummaryCard.module.css";
 
-// Two optional footer variants, matching the two Figma frame families:
-// - `options`: entity_selected/document_list ("Start Application" /
-//   "Change my previous answers" stacked buttons).
-// - `confirmLabel`+`onConfirm`: fee_2/fee_4 (checkbox confirmation + single
-//   CTA, gated on the box being ticked).
-// Neither is required - callers with none of these props render unchanged.
+// Two optional footer variants: `options` (stacked buttons) or
+// `confirmLabel`+`onConfirm` (checkbox + single CTA). Neither is required.
 function FeeSummaryCard({
   entityLabel,
   fee,

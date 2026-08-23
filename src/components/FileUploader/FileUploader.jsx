@@ -13,10 +13,8 @@ function FileUploader({
   progress = 0,
   errorMessage,
   disabled,
-  // Opt-in only (defaults false, so existing callers - PAN, bank proof,
-  // address proof, etc. - are unaffected): opens the native file picker the
-  // moment this instance mounts, skipping the "tap to browse" step. The
-  // dropzone still renders as a fallback if the user cancels that dialog.
+  // Opt-in: opens the native file picker on mount instead of waiting for a
+  // tap. Defaults false so existing callers are unaffected.
   autoOpen = false,
 }) {
   const inputRef = useRef(null);
@@ -27,8 +25,7 @@ function FileUploader({
     if (autoOpen && !disabled) {
       inputRef.current?.click();
     }
-    // Intentionally mount-only: opens the picker once when this instance
-    // first appears, not on every prop change.
+    // Mount-only: opens the picker once, not on every prop change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,6 +86,67 @@ function FileUploader({
     inputRef.current?.click();
   };
 
+  function renderDropzoneContent() {
+    if (status === "uploading") {
+      return (
+        <div className={styles.spinnerWrap} role="status" aria-live="polite">
+          <span className={styles.spinner} />
+          <span className={styles.title}>Uploading {fileName}...</span>
+          <div className={styles.progressTrack}>
+            <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+          </div>
+          <span className={styles.caption}>{progress}%</span>
+          <span className={styles.hint}>Please wait while we process your document.</span>
+        </div>
+      );
+    }
+
+    if (status === "success") {
+      return (
+        <div className={styles.spinnerWrap} role="status" aria-live="polite">
+          <span className={styles.successIcon}>
+            <CheckIcon />
+          </span>
+          <span className={styles.title}>{fileName} uploaded</span>
+        </div>
+      );
+    }
+
+    if (status === "error") {
+      return (
+        <div className={styles.spinnerWrap} role="alert">
+          <span className={styles.errorIcon}>
+            <AlertIcon />
+          </span>
+          <span className={styles.title}>Upload failed</span>
+          <span className={styles.caption}>{errorMessage || "Something went wrong."}</span>
+          <span className={styles.retryLabel}>Tap to try again</span>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className={styles.iconBox}>
+          <UploadCloudIcon />
+        </div>
+        <span className={styles.title}>{title}</span>
+        <span className={styles.caption}>{caption}</span>
+        <button
+          type="button"
+          className={styles.browseButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
+          disabled={isDisabled}
+        >
+          Browse File
+        </button>
+      </>
+    );
+  }
+
   return (
     <div className={styles.wrap}>
       <div
@@ -103,52 +161,7 @@ function FileUploader({
         role="region"
         aria-label="File upload area"
       >
-        {status === "uploading" ? (
-          <div className={styles.spinnerWrap} role="status" aria-live="polite">
-            <span className={styles.spinner} />
-            <span className={styles.title}>Uploading {fileName}...</span>
-            <div className={styles.progressTrack}>
-              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-            </div>
-            <span className={styles.caption}>{progress}%</span>
-            <span className={styles.hint}>Please wait while we process your document.</span>
-          </div>
-        ) : status === "success" ? (
-          <div className={styles.spinnerWrap} role="status" aria-live="polite">
-            <span className={styles.successIcon}>
-              <CheckIcon />
-            </span>
-            <span className={styles.title}>{fileName} uploaded</span>
-          </div>
-        ) : status === "error" ? (
-          <div className={styles.spinnerWrap} role="alert">
-            <span className={styles.errorIcon}>
-              <AlertIcon />
-            </span>
-            <span className={styles.title}>Upload failed</span>
-            <span className={styles.caption}>{errorMessage || "Something went wrong."}</span>
-            <span className={styles.retryLabel}>Tap to try again</span>
-          </div>
-        ) : (
-          <>
-            <div className={styles.iconBox}>
-              <UploadCloudIcon />
-            </div>
-            <span className={styles.title}>{title}</span>
-            <span className={styles.caption}>{caption}</span>
-            <button
-              type="button"
-              className={styles.browseButton}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClick();
-              }}
-              disabled={isDisabled}
-            >
-              Browse File
-            </button>
-          </>
-        )}
+        {renderDropzoneContent()}
       </div>
       <input
         ref={inputRef}

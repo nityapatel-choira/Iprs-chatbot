@@ -26,10 +26,8 @@ function isPdfFile(fileName, mimeType, rawFile) {
   return false;
 }
 
-// Splits off the extension so it stays visible while only the base name
-// gets ellipsis-truncated (see .fileNameBase/.fileNameExt in the CSS
-// module) - a single-span ellipsis could clip the extension itself, the
-// one part that tells the user what kind of file this is.
+// Splits off the extension so ellipsis-truncation can't clip it - it's the
+// part that identifies the file type.
 function splitFileName(name) {
   if (!name) return { base: "", ext: "" };
   const dotIndex = name.lastIndexOf(".");
@@ -93,48 +91,71 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   const isUploading = status === "uploading";
   const isError = status === "error";
   const activePreviewUrl = initialPreviewUrl || createdUrl;
-  const activeThumbnailUrl = isImage ? activePreviewUrl : (isPdf ? pdfThumbnail : null);
+
+  let activeThumbnailUrl = null;
+  if (isImage) {
+    activeThumbnailUrl = activePreviewUrl;
+  } else if (isPdf) {
+    activeThumbnailUrl = pdfThumbnail;
+  }
   const showThumbnail = Boolean(activeThumbnailUrl);
+
   const formattedSize = formatFileSize(fileSize);
   const { base: fileNameBase, ext: fileNameExt } = splitFileName(fileName);
 
-  return (
-    <a
-      href={isUploading ? undefined : (activePreviewUrl || "#")}
-      target={isUploading ? undefined : (activePreviewUrl ? "_blank" : undefined)}
-      rel="noreferrer"
-      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
-      title={isUploading ? "Uploading..." : (activePreviewUrl ? "Click to view uploaded document" : undefined)}
-      style={isUploading ? { pointerEvents: "none", cursor: "default" } : undefined}
-    >
-      {isUploading ? (
+  let fileDetailText = `${formattedSize} · View Document ↗`;
+  if (isUploading) {
+    fileDetailText = "Uploading...";
+  } else if (isError) {
+    fileDetailText = `${formattedSize} · Verification Failed ⚠️`;
+  }
+
+  const linkHref = isUploading ? undefined : activePreviewUrl || "#";
+  const linkTarget = isUploading ? undefined : activePreviewUrl ? "_blank" : undefined;
+  const linkTitle = isUploading ? "Uploading..." : activePreviewUrl ? "Click to view uploaded document" : undefined;
+  const linkStyle = isUploading ? { pointerEvents: "none", cursor: "default" } : undefined;
+
+  const renderPreview = () => {
+    if (isUploading) {
+      return (
         <div className={styles.spinnerWrap}>
           <span className={styles.spinner} aria-hidden="true" />
         </div>
-      ) : showThumbnail ? (
+      );
+    }
+    if (showThumbnail) {
+      return (
         <img
           src={activeThumbnailUrl}
           alt={fileName || "Document preview"}
           className={styles.thumbnail}
           style={isError ? { borderColor: "#fecaca" } : undefined}
         />
-      ) : (
-        <div className={styles.fileIconBox}>
-          <FileDocIcon />
-        </div>
-      )}
+      );
+    }
+    return (
+      <div className={styles.fileIconBox}>
+        <FileDocIcon />
+      </div>
+    );
+  };
+
+  return (
+    <a
+      href={linkHref}
+      target={linkTarget}
+      rel="noreferrer"
+      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
+      title={linkTitle}
+      style={linkStyle}
+    >
+      {renderPreview()}
       <div className={styles.fileMetaBox}>
         <span className={styles.fileNameText}>
           <span className={styles.fileNameBase}>{fileNameBase}</span>
           {fileNameExt && <span className={styles.fileNameExt}>{fileNameExt}</span>}
         </span>
-        <span className={styles.fileDetailText}>
-          {isUploading
-            ? "Uploading..."
-            : isError
-            ? `${formattedSize} · Verification Failed ⚠️`
-            : `${formattedSize} · View Document ↗`}
-        </span>
+        <span className={styles.fileDetailText}>{fileDetailText}</span>
       </div>
     </a>
   );

@@ -5,23 +5,27 @@ import BotAvatar from "../BotAvatar/BotAvatar";
 import FileMessageCard from "../FileMessageCard/FileMessageCard";
 import styles from "../../Chat.module.css";
 
-// message.verified/verifiedLabel are optional and unset by the live
-// backend today (no per-field verified flag exists yet). Purely additive:
-// any message without them renders unchanged.
+// verified/verifiedLabel are optional and unused by the backend today - purely additive.
 function MessageRow({ message }) {
   const isUser = message.sender === "user";
+  const bubbleClassName = `${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`;
 
-  return (
-    <div className={`${styles.row} ${isUser ? styles.rowUser : styles.rowBot}`}>
-      {!isUser && message.kind !== "summaryCard" && <BotAvatar />}
-      {message.kind === "summaryCard" ? (
-        <FeeSummaryCard {...message.data} />
-      ) : message.verified ? (
+  const renderContent = () => {
+    if (message.kind === "summaryCard") {
+      return <FeeSummaryCard {...message.data} />;
+    }
+
+    if (message.verified) {
+      return (
         <div className={`${styles.verifiedRow} ${isUser ? styles.verifiedRowUser : ""}`}>
-          <div className={`${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`}>{message.text}</div>
+          <div className={bubbleClassName}>{message.text}</div>
           <VerifiedFieldChip label={message.verifiedLabel} />
         </div>
-      ) : message.kind === "file" ? (
+      );
+    }
+
+    if (message.kind === "file") {
+      return (
         <FileMessageCard
           fileName={message.fileName}
           fileSize={message.fileSize}
@@ -30,13 +34,24 @@ function MessageRow({ message }) {
           rawFile={message.rawFile}
           status={message.status}
         />
-      ) : message.kind === "richText" ? (
-        <div className={`${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`}>
+      );
+    }
+
+    if (message.kind === "richText") {
+      return (
+        <div className={bubbleClassName}>
           <RichText nodes={message.richText} />
         </div>
-      ) : (
-        <div className={`${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`}>{message.text}</div>
-      )}
+      );
+    }
+
+    return <div className={bubbleClassName}>{message.text}</div>;
+  };
+
+  return (
+    <div className={`${styles.row} ${isUser ? styles.rowUser : styles.rowBot}`}>
+      {!isUser && message.kind !== "summaryCard" && <BotAvatar />}
+      {renderContent()}
     </div>
   );
 }

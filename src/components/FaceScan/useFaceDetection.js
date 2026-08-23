@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-// Keep in sync with the installed @mediapipe/tasks-vision version (see
-// package.json) - the CDN path is versioned and must match exactly.
+// Must match the installed @mediapipe/tasks-vision version (see package.json).
 const TASKS_VISION_VERSION = "1.0.1";
 const WASM_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`;
 const MODEL_ASSET_URL =
@@ -9,22 +8,17 @@ const MODEL_ASSET_URL =
 
 const MIN_CONFIDENCE = 0.6;
 const GOOD_FRAMES_TO_CAPTURE = 18;
-// Detection cadence, not render cadence: video keeps playing at full
-// framerate, only the (expensive) model inference is throttled - real-time
-// alignment feedback doesn't need 60 checks/sec.
+// Throttles model inference only, not the video framerate - alignment
+// feedback doesn't need 60 checks/sec.
 const DETECT_INTERVAL_MS = 90;
-// Consecutive in-loop inference failures (a transient hiccup, not a startup
-// failure) before giving up and surfacing a recoverable error instead of
-// retrying forever.
+// Consecutive per-frame failures tolerated before surfacing a recoverable error.
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 const TOO_CLOSE_WIDTH_RATIO = 0.85;
 const TOO_FAR_WIDTH_RATIO = 0.22;
 const CENTER_TOLERANCE = 0.18;
 
-// One discriminated status instead of a single aligned/not-aligned boolean,
-// so the UI can show a specific, actionable reason instead of a generic
-// "not aligned" hint.
+// A discriminated status (not just aligned/not) so the UI can show a specific reason.
 export const ALIGNMENT_MESSAGES = {
   "no-face": "Position your face inside the frame",
   "multiple-faces": "Multiple faces detected - make sure it's just you",
@@ -91,9 +85,7 @@ function useFaceDetection({ onCapture } = {}) {
   }
 
   function closeDetector() {
-    // Releases the detector's native WASM heap allocation - skipping this
-    // leaks a full detector instance on every retake/remount, eventually
-    // causing WASM allocation failures after normal use.
+    // Skipping this leaks the detector's WASM allocation on every retake/remount.
     if (detectorRef.current) {
       try {
         detectorRef.current.close();
@@ -108,11 +100,8 @@ function useFaceDetection({ onCapture } = {}) {
     if (!detectorRef.current) {
       const { FaceDetector, FilesetResolver } = await import("@mediapipe/tasks-vision");
       const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL);
-      // CPU delegate only, deliberately - MediaPipe's GPU/WebGL delegate is
-      // a well-documented source of instability in Safari and many Android
-      // WebViews, especially mid-inference. The blaze_face_short_range
-      // model is light enough that CPU WASM inference is comfortably
-      // real-time here.
+      // CPU delegate deliberately - GPU/WebGL is unstable in Safari and many
+      // Android WebViews. The model's light enough that CPU is still real-time.
       detectorRef.current = await FaceDetector.createFromOptions(vision, {
         baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
         runningMode: "VIDEO",
@@ -196,8 +185,7 @@ function useFaceDetection({ onCapture } = {}) {
           return;
         }
       } catch (err) {
-        // A transient per-frame inference error (not a startup failure).
-        // Tolerate a few in a row (camera hiccup, dropped frame) before giving up.
+        // Transient per-frame error - tolerate a few in a row before giving up.
         consecutiveErrorsRef.current += 1;
         console.warn("Face detection frame failed:", err);
         if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
@@ -243,10 +231,8 @@ function useFaceDetection({ onCapture } = {}) {
     setAlignment("no-face");
   }
 
-  // Validates a still image (e.g. a file the user picked) with the same
-  // detector/model as live capture. detectForVideo accepts any ImageSource
-  // per the MediaPipe API, so reusing the already-initialized VIDEO-mode
-  // detector here avoids loading the WASM runtime/model twice.
+  // Reuses the same VIDEO-mode detector for still images too (detectForVideo
+  // accepts any ImageSource) - avoids loading the model twice.
   async function detectImageFile(file) {
     const detector = await ensureDetector();
 

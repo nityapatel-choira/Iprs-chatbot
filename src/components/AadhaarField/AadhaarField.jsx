@@ -1,9 +1,7 @@
 import { useState } from "react";
 import styles from "./AadhaarField.module.css";
 
-// Wired into Chat.jsx as a progressive enhancement over the generic text
-// composer when the backend's placeholder/label identifies the step as
-// Aadhaar - see the "text input" case in Chat.jsx for that heuristic.
+// Wired into Chat.jsx when the backend's placeholder/label identifies the step as Aadhaar.
 function AadhaarField({
   caption = "DigiLocker verifies your identity with Aadhaar to provide secure document access",
   onSubmit,

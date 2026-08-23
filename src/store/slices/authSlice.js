@@ -1,9 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getToken } from "../../services/tokenStorage";
 
-// The JWT itself is never duplicated into Redux state - it stays only in
-// tokenStorage/localStorage (read by apiClient on every request). This
-// slice only tracks the derived boolean the rest of the app gates on.
+// JWT stays in tokenStorage/localStorage only - this slice just tracks the derived boolean.
 const initialState = {
   isAuthenticated: Boolean(getToken()),
 };

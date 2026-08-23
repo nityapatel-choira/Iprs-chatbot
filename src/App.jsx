@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import "./App.css";
 import Splash from "./pages/Splash/Splash";
 import LanguageSelection from "./pages/LanguageSelection/LanguageSelection";
@@ -18,13 +18,7 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
 
-// Dev-only (?test=payment): exercises Razorpay checkout before the backend's
-// payment step exists (see paymentService.js). import.meta.env.DEV is
-// statically false in prod, so Vite dead-code-eliminates this branch and
-// its PaymentCard chunk from the production bundle.
-const DevPaymentTest = import.meta.env.DEV ? lazy(() => import("./components/payment/PaymentCard")) : null;
-// Dev-only (?test=facescan): exercises FaceVerification before it's wired
-// into the real registration flow. Same DCE pattern as DevPaymentTest above.
+// Dev-only (?test=facescan): tests FaceVerification before it's wired into registration.
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 
 function App() {
@@ -33,30 +27,17 @@ function App() {
   const loggedIn = useAppSelector(selectIsAuthenticated);
   const [showSplash, setShowSplash] = useState(true);
 
-  useEffect(() => {
-    onUnauthorized(() => {
-      dispatch(setAuthenticated(false));
-      clearRegistrationCompleted();
-      clearStoredConversation();
-      dispatch(resetConversation());
-      dispatch(resetRegistration());
-    });
+  const resetSession = useCallback(() => {
+    dispatch(setAuthenticated(false));
+    clearRegistrationCompleted();
+    clearStoredConversation();
+    dispatch(resetConversation());
+    dispatch(resetRegistration());
   }, [dispatch]);
 
-  if (DevPaymentTest && typeof window !== "undefined" && window.location.search.includes("test=payment")) {
-    return (
-      <div className="App-devPaymentTest">
-        <div className="App-devPaymentTestPanel">
-          <Suspense fallback={null}>
-            <DevPaymentTest
-              prefill={{ name: "Test User", email: "test@example.com", contact: "9999999999" }}
-              onComplete={(result) => console.log("[DevPaymentTest] payment complete", result)}
-            />
-          </Suspense>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    onUnauthorized(resetSession);
+  }, [resetSession]);
 
   const handleLanguageContinue = (code) => {
     setLanguageCode(code);
@@ -64,13 +45,9 @@ function App() {
   };
 
   const handleLogout = async () => {
-    dispatch(setAuthenticated(false));
+    resetSession();
     clearLanguageCode();
     dispatch(clearLanguage());
-    clearRegistrationCompleted();
-    clearStoredConversation();
-    dispatch(resetConversation());
-    dispatch(resetRegistration());
     try {
       await logout();
     } catch {

@@ -4,10 +4,7 @@ import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
 import styles from "./PassportPhotoCard.module.css";
 
-// Turns the data URL FaceVerification hands back (from either its live
-// capture or its own upload-fallback path) into a real File, since
-// useBackendConversation.submitFile - the same function FileUploader calls
-// elsewhere - expects a File (reads .name/.size, then POSTs it as-is).
+// Converts the data URL FaceVerification returns into a real File, since submitFile expects one.
 function dataUrlToFile(dataUrl, filename) {
   const [header, base64] = dataUrl.split(",");
   const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
@@ -17,22 +14,14 @@ function dataUrlToFile(dataUrl, filename) {
   return new File([bytes], filename, { type: mime });
 }
 
-// Passport Size Photo step of the Document Upload flow. Reuses
-// FaceVerification/useFaceDetection as-is (embedded mode) for both paths:
-// "Scan Face" opens straight into live capture, "Upload Photo" opens
-// straight into its upload fallback (same MediaPipe validation either
-// way). The image is handed to the file-upload flow via onFileSelected
-// only once the user taps Continue on FaceVerification's result screen.
+// Passport Size Photo step. Reuses FaceVerification embedded for both "Scan
+// Face" and "Upload Photo" - onFileSelected only fires once the user taps Continue.
 function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
 
-  // Only "Scan Face" gets auto-scrolled - the tall, camera-heavy view can
-  // land below the fold; "Upload Photo" opens the native picker itself (see
-  // FileUploader's autoOpen) and shouldn't also animate the page.
-  // useLayoutEffect (not useEffect) so this runs after the DOM has
-  // FaceVerification's real height but before the browser paints, avoiding
-  // a visible pre-scroll flash.
+  // Only "Scan Face" auto-scrolls - the camera view can land below the
+  // fold. useLayoutEffect avoids a visible pre-scroll flash.
   useLayoutEffect(() => {
     if (mode === "camera") {
       faceScanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });

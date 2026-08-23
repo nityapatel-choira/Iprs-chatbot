@@ -4,18 +4,3 @@
   min-height: 100vh;
 }
 
-/* Dev-only Razorpay checkout test harness (?test=payment) - see App.jsx.
-   Dead-code-eliminated out of production builds along with the component
-   it wraps, but the CSS itself has no DEV guard, so keep it minimal. */
-.App-devPaymentTest {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.App-devPaymentTestPanel {
-  width: 100%;
-  max-width: 580px;
-}

@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-// Modeled on FaceScan/useFaceDetection's status states and getUserMedia/
-// capture-to-canvas plumbing, but without the mediapipe face-landmark
-// detection - documents don't have a face to align, so capture is a manual
-// shutter tap instead of auto-capture-on-alignment.
+// Modeled on useFaceDetection's plumbing, minus the face-landmark detection -
+// documents don't align, so capture is a manual shutter tap.
 function useCameraCapture({ onCapture } = {}) {
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");

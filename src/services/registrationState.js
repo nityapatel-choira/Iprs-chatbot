@@ -1,8 +1,7 @@
 const REGISTRATION_COMPLETED_KEY = "iprs_registration_completed";
 
-// Persisted so a refresh can show the completed UI instantly instead of
-// waiting on a network round trip. The backend call still runs on refresh
-// and remains the source of truth - this flag only controls the first paint.
+// Lets a refresh show the completed UI instantly - the backend call still
+// runs and remains the source of truth.
 function getRegistrationCompleted() {
   return localStorage.getItem(REGISTRATION_COMPLETED_KEY) === "true";
 }
