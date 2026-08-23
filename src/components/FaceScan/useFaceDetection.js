@@ -49,7 +49,7 @@ function classifyAlignment(detections, videoWidth, videoHeight) {
   return "aligned";
 }
 
-function useFaceDetection({ onCapture } = {}) {
+const useFaceDetection = ({ onCapture } = {}) => {
   const [status, setStatus] = useState("idle"); // idle | loading | scanning | error | success
   const [alignment, setAlignment] = useState("no-face");
   const [errorMessage, setErrorMessage] = useState("");
@@ -272,6 +272,6 @@ function useFaceDetection({ onCapture } = {}) {
     cancel,
     detectImageFile,
   };
-}
+};
 
 export default useFaceDetection;

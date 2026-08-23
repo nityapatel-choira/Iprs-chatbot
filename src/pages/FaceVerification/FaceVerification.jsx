@@ -13,7 +13,14 @@ import styles from "./FaceVerification.module.css";
 //
 // `embedded` drops this into Document Upload's Passport Photo step instead
 // of a full-page screen - hides the header/footer, lets the parent own the width.
-function FaceVerification({ onBack, onCapture, onContinue, language = "English", embedded = false, initialMode = "camera" }) {
+const FaceVerification = ({
+  onBack,
+  onCapture,
+  onContinue,
+  language = "English",
+  embedded = false,
+  initialMode = "camera",
+}) => {
   const {
     status,
     alignment,
@@ -225,6 +232,6 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
       </div>
     </div>
   );
-}
+};
 
 export default FaceVerification;

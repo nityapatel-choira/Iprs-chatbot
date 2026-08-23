@@ -3,7 +3,7 @@ import styles from "./VerifiedFieldChip.module.css";
 
 // Shown once DigiLocker/bank verification succeeds. Dormant - backend has
 // no per-field verified flag yet.
-function VerifiedFieldChip({ label }) {
+const VerifiedFieldChip = ({ label }) => {
   return (
     <span className={styles.chip}>
       <span className={styles.icon}>
@@ -13,6 +13,6 @@ function VerifiedFieldChip({ label }) {
       {label && <span className={styles.label}>{label}</span>}
     </span>
   );
-}
+};
 
 export default VerifiedFieldChip;

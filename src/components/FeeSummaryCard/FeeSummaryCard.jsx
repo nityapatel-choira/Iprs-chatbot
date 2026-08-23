@@ -5,7 +5,7 @@ import styles from "./FeeSummaryCard.module.css";
 
 // Two optional footer variants: `options` (stacked buttons) or
 // `confirmLabel`+`onConfirm` (checkbox + single CTA). Neither is required.
-function FeeSummaryCard({
+const FeeSummaryCard = ({
   entityLabel,
   fee,
   feeCaption,
@@ -17,7 +17,7 @@ function FeeSummaryCard({
   onOptionSelect,
   confirmLabel,
   onConfirm,
-}) {
+}) => {
   const [confirmed, setConfirmed] = useState(false);
 
   return (
@@ -93,6 +93,6 @@ function FeeSummaryCard({
       )}
     </div>
   );
-}
+};
 
 export default FeeSummaryCard;

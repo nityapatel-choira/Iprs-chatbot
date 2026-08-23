@@ -26,7 +26,7 @@ import { setStoredProgress, consumeFreshLoginFlag } from "../../services/convers
 
 // Wires the conversation/registration Redux slices to Chat.jsx, plus the
 // imperative bits (refs, scrolling, retry) that don't belong in Redux state.
-function useBackendConversation() {
+const useBackendConversation = () => {
   const dispatch = useAppDispatch();
   const history = useAppSelector(selectHistory);
   const input = useAppSelector(selectInput);
@@ -173,6 +173,6 @@ function useBackendConversation() {
     submitFile,
     retry,
   };
-}
+};
 
 export default useBackendConversation;

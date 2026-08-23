@@ -48,7 +48,7 @@ function RichTextNode({ node, index }) {
   return <Tag key={index}>{children}</Tag>;
 }
 
-function RichText({ nodes }) {
+const RichText = ({ nodes }) => {
   if (typeof nodes === "string") return <p>{nodes}</p>;
   if (!Array.isArray(nodes)) return null;
 
@@ -59,6 +59,6 @@ function RichText({ nodes }) {
       ))}
     </>
   );
-}
+};
 
 export default RichText;

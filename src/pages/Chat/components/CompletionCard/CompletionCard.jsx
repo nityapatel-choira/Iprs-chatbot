@@ -7,7 +7,7 @@ const TIMELINE_STEPS = [
   { label: "Member ID Activation", status: "pending" },
 ];
 
-function CompletionCard() {
+const CompletionCard = () => {
   return (
     <div className={styles.card}>
       <div className={styles.badge}>
@@ -38,6 +38,6 @@ function CompletionCard() {
       </div>
     </div>
   );
-}
+};
 
 export default CompletionCard;

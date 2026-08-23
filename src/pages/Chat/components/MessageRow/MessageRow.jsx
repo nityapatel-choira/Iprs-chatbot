@@ -6,7 +6,7 @@ import FileMessageCard from "../FileMessageCard/FileMessageCard";
 import styles from "../../Chat.module.css";
 
 // verified/verifiedLabel are optional and unused by the backend today - purely additive.
-function MessageRow({ message }) {
+const MessageRow = ({ message }) => {
   const isUser = message.sender === "user";
   const bubbleClassName = `${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`;
 
@@ -54,6 +54,6 @@ function MessageRow({ message }) {
       {renderContent()}
     </div>
   );
-}
+};
 
 export default MessageRow;

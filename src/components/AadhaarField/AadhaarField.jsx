@@ -2,11 +2,11 @@ import { useState } from "react";
 import styles from "./AadhaarField.module.css";
 
 // Wired into Chat.jsx when the backend's placeholder/label identifies the step as Aadhaar.
-function AadhaarField({
+const AadhaarField = ({
   caption = "DigiLocker verifies your identity with Aadhaar to provide secure document access",
   onSubmit,
   disabled,
-}) {
+}) => {
   const [value, setValue] = useState("");
   const [touched, setTouched] = useState(false);
 
@@ -50,6 +50,6 @@ function AadhaarField({
       </button>
     </div>
   );
-}
+};
 
 export default AadhaarField;

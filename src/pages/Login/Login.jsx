@@ -13,7 +13,7 @@ function isValidOtp(value) {
   return /^\d{4}$/.test(value);
 }
 
-function Login({ onContinue }) {
+const Login = ({ onContinue }) => {
   const [phase, setPhase] = useState("phone");
   const [countryCode, setCountryCode] = useState("+91");
   const [phone, setPhone] = useState("");
@@ -162,6 +162,6 @@ function Login({ onContinue }) {
       </div>
     </div>
   );
-}
+};
 
 export default Login;

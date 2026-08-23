@@ -3,7 +3,7 @@ import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
-export async function getPdfThumbnailUrl(fileOrUrl) {
+const getPdfThumbnailUrl = async (fileOrUrl) => {
   try {
     let source;
     if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
@@ -31,4 +31,6 @@ export async function getPdfThumbnailUrl(fileOrUrl) {
     console.warn("Failed to generate PDF thumbnail:", err);
     return null;
   }
-}
+};
+
+export default getPdfThumbnailUrl;

@@ -1,10 +1,8 @@
 // Normalizes the backend's raw document/fee prose into FeeSummaryCard's
-// props (see Chat.jsx's "summary input" TODO for the structured shape this
-// stands in for).
+// props - stands in for the structured `summary input` shape until the
+// backend sends it directly.
 //
-// Each document is matched by a fixed anchor below - if the backend renames
-// a category, that item just drops out, never fabricated.
-//
+
 // Returns null for anything that doesn't look like this message.
 
 const REQUIREMENTS_MARKER = /requirements for/i;
@@ -41,7 +39,7 @@ function extractRefundNote(text) {
   return match ? match[1].trim() : "";
 }
 
-export function parseDocumentSummaryText(text) {
+const parseDocumentSummaryText = (text) => {
   if (!text || !REQUIREMENTS_MARKER.test(text) || !FEE_MARKER.test(text)) return null;
 
   const docs = [];
@@ -68,4 +66,6 @@ export function parseDocumentSummaryText(text) {
     docsSubtext: "Make sure before you start you have gathered the below mentioned documents.",
     docs,
   };
-}
+};
+
+export default parseDocumentSummaryText;

@@ -10,7 +10,7 @@ import styles from "./StepTracker.module.css";
 const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
 // currentFill drives the connector's fill width directly, off the real backend percentage.
-function StepTracker({ stages, activeIndex, currentFill = 0 }) {
+const StepTracker = ({ stages, activeIndex, currentFill = 0 }) => {
   const totalPercent = useMemo(() => {
     if (stages.length <= 1) return 0;
     const pct = ((activeIndex + currentFill / 100) / (stages.length - 1)) * 100;
@@ -44,6 +44,6 @@ function StepTracker({ stages, activeIndex, currentFill = 0 }) {
       </div>
     </div>
   );
-}
+};
 
 export default StepTracker;

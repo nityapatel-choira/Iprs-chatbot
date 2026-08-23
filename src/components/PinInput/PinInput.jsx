@@ -4,7 +4,7 @@ import styles from "./PinInput.module.css";
 // Boxed OTP entry matching Figma's verify_OTP "pin" component.
 const PLACEHOLDER_DIGITS = "1234";
 
-function PinInput({ length = 4, onComplete, disabled }) {
+const PinInput = ({ length = 4, onComplete, disabled }) => {
   const [digits, setDigits] = useState(() => Array(length).fill(""));
   const inputRefs = useRef([]);
 
@@ -94,6 +94,6 @@ function PinInput({ length = 4, onComplete, disabled }) {
       </button>
     </div>
   );
-}
+};
 
 export default PinInput;

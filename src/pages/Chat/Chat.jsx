@@ -18,7 +18,7 @@ import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
-import { parseDocumentSummaryText } from "./parseDocumentSummaryText";
+import parseDocumentSummaryText from "./parseDocumentSummaryText";
 import styles from "./Chat.module.css";
 
 const TEXT_INPUT_CONFIG = {
@@ -28,7 +28,7 @@ const TEXT_INPUT_CONFIG = {
   "phone input": { type: "tel", inputMode: "tel" },
 };
 
-function Chat({ language = "English", onBack, onLogout }) {
+const Chat = ({ language = "English", onBack, onLogout }) => {
   const {
     history,
     input,
@@ -277,6 +277,6 @@ function Chat({ language = "English", onBack, onLogout }) {
       </div>
     </div>
   );
-}
+};
 
 export default Chat;

@@ -16,7 +16,7 @@ function dataUrlToFile(dataUrl, filename) {
 
 // Passport Size Photo step. Reuses FaceVerification embedded for both "Scan
 // Face" and "Upload Photo" - onFileSelected only fires once the user taps Continue.
-function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
+const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
 
@@ -66,6 +66,6 @@ function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
       </div>
     </div>
   );
-}
+};
 
 export default PassportPhotoCard;

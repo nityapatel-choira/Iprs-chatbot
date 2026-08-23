@@ -4,7 +4,7 @@ import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import styles from "./FileUploader.module.css";
 
-function FileUploader({
+const FileUploader = ({
   title = "Choose a file or drag & drop it here",
   caption = "JPEG and PDF formats, up to 2MB",
   accept = ".jpg,.jpeg,.png,.pdf",
@@ -16,7 +16,7 @@ function FileUploader({
   // Opt-in: opens the native file picker on mount instead of waiting for a
   // tap. Defaults false so existing callers are unaffected.
   autoOpen = false,
-}) {
+}) => {
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -174,6 +174,6 @@ function FileUploader({
       />
     </div>
   );
-}
+};
 
 export default FileUploader;

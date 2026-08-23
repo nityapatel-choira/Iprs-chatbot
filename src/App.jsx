@@ -21,7 +21,7 @@ const Chat = lazy(() => import("./pages/Chat/Chat"));
 // Dev-only (?test=facescan): tests FaceVerification before it's wired into registration.
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 
-function App() {
+const App = () => {
   const dispatch = useAppDispatch();
   const languageCode = useAppSelector(selectLanguageCode);
   const loggedIn = useAppSelector(selectIsAuthenticated);
@@ -89,6 +89,6 @@ function App() {
       <Chat language={language} onLogout={handleLogout} />
     </Suspense>
   );
-}
+};
 
 export default App;

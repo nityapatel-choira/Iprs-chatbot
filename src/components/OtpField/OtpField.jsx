@@ -1,6 +1,6 @@
 import styles from "./OtpField.module.css";
 
-function OtpField({ label = "One-time code", value, onChange, onBlur, error, disabled }) {
+const OtpField = ({ label = "One-time code", value, onChange, onBlur, error, disabled }) => {
   return (
     <div className={styles.wrap}>
       <label className={styles.label} htmlFor="otp-input">
@@ -28,6 +28,6 @@ function OtpField({ label = "One-time code", value, onChange, onBlur, error, dis
       )}
     </div>
   );
-}
+};
 
 export default OtpField;

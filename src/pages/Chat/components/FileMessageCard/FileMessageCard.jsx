@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
-import { getPdfThumbnailUrl } from "../../../../utils/pdfThumbnail";
+import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
@@ -46,7 +46,7 @@ function formatFileSize(size) {
   return String(size);
 }
 
-function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) {
+const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
 
   const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
@@ -158,7 +158,7 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
       </div>
     </a>
   );
-}
+};
 
 export default FileMessageCard;
 

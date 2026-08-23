@@ -2,7 +2,7 @@ import { useState } from "react";
 import CheckIcon from "../icons/CheckIcon";
 import styles from "./CheckboxGroup.module.css";
 
-function CheckboxGroup({ options, caption, onSubmit, disabled }) {
+const CheckboxGroup = ({ options, caption, onSubmit, disabled }) => {
   const [checked, setChecked] = useState({});
 
   const toggle = (key) => {
@@ -45,6 +45,6 @@ function CheckboxGroup({ options, caption, onSubmit, disabled }) {
       </button>
     </div>
   );
-}
+};
 
 export default CheckboxGroup;
