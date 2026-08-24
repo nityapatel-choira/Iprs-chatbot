@@ -24,8 +24,7 @@ import {
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
 
-// Wires the conversation/registration Redux slices to Chat.jsx, plus the
-// imperative bits (refs, scrolling, retry) that don't belong in Redux state.
+// Custom hook managing conversation state and UI interactions.
 const useBackendConversation = () => {
   const dispatch = useAppDispatch();
   const history = useAppSelector(selectHistory);
@@ -39,14 +38,11 @@ const useBackendConversation = () => {
   const uploadError = useAppSelector(selectUploadError);
   const uploadForInputId = useAppSelector(selectUploadForInputId);
 
-  // Refs don't belong in Redux state.
   const messagesRef = useRef(null);
   const startedRef = useRef(false);
   const lastActionRef = useRef(null);
   const isUploadingRef = useRef(false);
 
-  // Write-on-change persistence, kept out of the reducers to stay pure.
-  // History itself isn't persisted here - see conversationSlice's initialState.
   useEffect(() => {
     setStoredProgress(progress);
   }, [progress]);
@@ -60,8 +56,6 @@ const useBackendConversation = () => {
     dispatch(sendConversationTurn(message));
   };
 
-  // ?mockInput=consentSequence - scripted two-turn sequence verifying
-  // consent 1's message stays suppressed once resolved.
   const CONSENT_SEQUENCE_STEP_DELAY_MS = 400;
   const runConsentSequenceMock = ({ consentPrivacy, consentFraud }) => {
     dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));
@@ -90,8 +84,6 @@ const useBackendConversation = () => {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    // Dev-only QA hatch (see devMocks.js) - stripped from prod since
-    // import.meta.env.DEV is statically false there.
     if (import.meta.env.DEV) {
       const mockKey = new URLSearchParams(window.location.search).get("mockInput");
       if (mockKey) {
@@ -118,7 +110,7 @@ const useBackendConversation = () => {
   };
 
   const submitFile = async (file) => {
-    // Guards against a second upload racing the first, regardless of how submitFile gets triggered.
+    // Prevents concurrent upload submissions.
     if (isUploadingRef.current) return;
     isUploadingRef.current = true;
 
@@ -147,7 +139,7 @@ const useBackendConversation = () => {
     try {
       await dispatch(uploadConversationFile({ file, fileId })).unwrap();
     } catch {
-      // Error state is already applied by conversationSlice's rejected reducer.
+      // Ignore upload rejection
     } finally {
       isUploadingRef.current = false;
     }

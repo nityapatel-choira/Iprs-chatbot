@@ -27,7 +27,7 @@ function setFreshLoginFlag() {
   try {
     sessionStorage.setItem(FRESH_LOGIN_KEY, "true");
   } catch {
-    // Ignore
+    // Ignore storage errors
   }
 }
 
@@ -45,12 +45,12 @@ function consumeFreshLoginFlag() {
 
 function clearStoredConversation() {
   try {
-    // CHAT_HISTORY_KEY is no longer written - still purged so no stale transcript lingers from before.
+    // Purges legacy stored chat history.
     localStorage.removeItem(CHAT_HISTORY_KEY);
     localStorage.removeItem(CHAT_PROGRESS_KEY);
     sessionStorage.removeItem(FRESH_LOGIN_KEY);
   } catch {
-    // Ignore
+    // Ignore storage errors
   }
 }
 

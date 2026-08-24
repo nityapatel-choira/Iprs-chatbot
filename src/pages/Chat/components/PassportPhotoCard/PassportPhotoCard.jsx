@@ -4,7 +4,7 @@ import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
 import styles from "./PassportPhotoCard.module.css";
 
-// submitFile expects a File, not a data URL.
+// Converts captured data URL to a File object.
 function dataUrlToFile(dataUrl, filename) {
   const [header, base64] = dataUrl.split(",");
   const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
@@ -14,14 +14,11 @@ function dataUrlToFile(dataUrl, filename) {
   return new File([bytes], filename, { type: mime });
 }
 
-// Passport Size Photo step. Reuses FaceVerification embedded for both "Scan
-// Face" and "Upload Photo" - onFileSelected only fires once the user taps Continue.
 const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
 
-  // Only "Scan Face" auto-scrolls - the camera view can land below the
-  // fold. useLayoutEffect avoids a visible pre-scroll flash.
+  // Auto-scrolls camera into view when activated.
   useLayoutEffect(() => {
     if (mode === "camera") {
       faceScanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });

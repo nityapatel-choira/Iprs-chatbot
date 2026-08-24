@@ -1,7 +1,6 @@
 const REGISTRATION_COMPLETED_KEY = "iprs_registration_completed";
 
-// Lets a refresh show the completed UI instantly - the backend call still
-// runs and remains the source of truth.
+// Enables instant UI render on page refresh.
 function getRegistrationCompleted() {
   return localStorage.getItem(REGISTRATION_COMPLETED_KEY) === "true";
 }

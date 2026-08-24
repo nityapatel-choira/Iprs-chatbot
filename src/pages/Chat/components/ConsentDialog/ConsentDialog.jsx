@@ -2,9 +2,7 @@ import { extractMessageText } from "../../../../store/slices/conversationSlice";
 import RichText from "../../../../components/RichText/RichText";
 import ConsentSheet from "../../../../components/ConsentSheet/ConsentSheet";
 
-// Backend sends consent as trailing bot messages, not fields on `input` -
-// see Chat.jsx's isConsentAcceptStep. Title+body are two richText blocks in
-// one message; the first block is the title, the rest is the body.
+// Formats richText consent blocks into modal title and body.
 const ConsentDialog = ({ messages, onAccept, onBack }) => {
   if (!messages || messages.length === 0) return null;
 

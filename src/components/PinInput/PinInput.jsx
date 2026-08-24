@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import styles from "./PinInput.module.css";
 
-// Boxed OTP entry matching Figma's verify_OTP "pin" component.
 const PLACEHOLDER_DIGITS = "1234";
 
 const PinInput = ({ length = 4, onComplete, disabled }) => {
@@ -29,7 +28,6 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
 
     setDigits((prev) => {
       const next = [...prev];
-      // Spreads multi-digit input/autofill across the following boxes.
       const chars = value.split("");
       for (let i = 0; i < chars.length && index + i < length; i += 1) {
         next[index + i] = chars[i];

@@ -32,8 +32,6 @@
   transform: scale(0.98);
 }
 
-/* Desktop dialog presentation closes via BottomSheet's explicit X instead -
-   only the primary action stays. */
 @media (min-width: 768px) {
   .backButton {
     display: none;

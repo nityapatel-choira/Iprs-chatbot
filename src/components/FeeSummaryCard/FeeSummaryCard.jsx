@@ -3,8 +3,6 @@ import CheckIcon from "../icons/CheckIcon";
 import documentCheckIcon from "../../assets/image 4.svg";
 import styles from "./FeeSummaryCard.module.css";
 
-// Two optional footer variants: `options` (stacked buttons) or
-// `confirmLabel`+`onConfirm` (checkbox + single CTA). Neither is required.
 const FeeSummaryCard = ({
   entityLabel,
   fee,

@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { getToken } from "../../services/tokenStorage";
 
-// JWT stays in tokenStorage/localStorage only - this slice just tracks the derived boolean.
 const initialState = {
   isAuthenticated: Boolean(getToken()),
 };

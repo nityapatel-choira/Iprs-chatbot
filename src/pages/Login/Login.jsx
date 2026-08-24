@@ -31,7 +31,6 @@ const Login = ({ onContinue }) => {
   const otpError = otpTouched && otp.length > 0 && !otpValid ? "Enter the code we texted you" : "";
 
   const handlePhoneChange = (raw) => setPhone(raw.replace(/\D/g, "").slice(0, 10));
-  // Clears apiError on every edit so a stale error doesn't outlive its attempt.
   const handleOtpChange = (raw) => {
     setOtp(raw.replace(/\D/g, "").slice(0, 4));
     setApiError("");
@@ -67,7 +66,7 @@ const Login = ({ onContinue }) => {
       const data = await verifyOtp(fullPhone, otp);
       onContinue?.(data);
     } catch {
-      // Backend's raw rejection text isn't user-facing copy - show a fixed message instead.
+      // Show fixed error message on OTP rejection.
       setApiError("Invalid OTP. Please enter the correct OTP.");
     } finally {
       setIsSubmitting(false);

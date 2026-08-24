@@ -3,12 +3,10 @@ import { sendMessage, uploadFile } from "../../services/conversationService";
 import { getRegistrationCompleted } from "../../services/registrationState";
 import { consumeFreshLoginFlag } from "../../services/conversationStorage";
 
-// Exported so submitFile can pre-generate an id to correlate later status updates.
 let idCounter = 1;
 export const nextId = () => `m${++idCounter}`;
 
-// Backend bundles the next input into the upload response, so pause here
-// or the success state is never seen.
+// Brief delay so user sees upload success before next step.
 const UPLOAD_SUCCESS_HOLD_MS = 900;
 
 function toRichTextMessages(messages) {
@@ -21,9 +19,7 @@ function toRichTextMessages(messages) {
   }));
 }
 
-// Backend sometimes replies { engine: "AI", reply } instead of { messages,
-// input } (e.g. once registration is complete) - wrapped as richText so it
-// renders normally.
+// Wraps terminal AI reply as a richText message.
 function replyToRichTextMessage(data) {
   if (Array.isArray(data?.messages) && data.messages.length > 0) return null;
   if (typeof data?.reply !== "string" || !data.reply.trim()) return null;
@@ -72,16 +68,13 @@ function mergeBotMessages(existingHistory, newMessages) {
   return updated;
 }
 
-// "Session-ended" = backend says so, or it replied with the terminal AI
-// shape and no input left. Exported for registrationSlice.
+// Session ends if backend flags it or returns a terminal reply with no input left.
 export function classifySessionEnded(data) {
   const replyMessage = replyToRichTextMessage(data);
   const isTerminalReply = Boolean(replyMessage) && !data?.input;
   return Boolean(data?.sessionEnded) || isTerminalReply;
 }
 
-// Shared by both thunks and the dev-mock action. __isFreshLogin is computed
-// by the thunk, not here - reducers must stay pure.
 function applyConversationResponse(state, data) {
   const replyMessage = replyToRichTextMessage(data);
   const incomingMessages = replyMessage ? [replyMessage] : toRichTextMessages(data?.messages);
@@ -118,7 +111,6 @@ function applyConversationResponse(state, data) {
   }
 }
 
-// Same endpoint for the initial resume and every answer - message is omitted for resume.
 export const sendConversationTurn = createAsyncThunk("conversation/sendTurn", async (message) => {
   const data = await sendMessage(message);
   return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
@@ -129,7 +121,7 @@ export const uploadConversationFile = createAsyncThunk(
   async ({ file, fileId }, { dispatch, rejectWithValue }) => {
     try {
       const data = await uploadFile(file, (pct) => dispatch(setUploadProgress(pct)));
-      // Backend re-asking for "file input" means it rejected the file.
+      // Backend re-asking for file input indicates rejection.
       const isRejected = data?.input?.type === "file input";
       dispatch(setFileMessageStatus({ fileId, status: isRejected ? "error" : "success" }));
 
@@ -138,7 +130,6 @@ export const uploadConversationFile = createAsyncThunk(
       } else {
         dispatch(setUploadProgress(100));
         dispatch(setUploadStatus("success"));
-        // See UPLOAD_SUCCESS_HOLD_MS above.
         await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
       }
 
@@ -151,16 +142,14 @@ export const uploadConversationFile = createAsyncThunk(
 );
 
 const initialState = {
-  // Only the mount-time resume call populates history - never seeded from stale local data.
   history: [],
   input: null,
-  // Avoids flickering through a loading state when a completed registration is restored.
+  // Prevents typing indicator flicker on restored completed sessions.
   isTyping: !getRegistrationCompleted(),
   error: null,
   uploadStatus: "idle",
   uploadProgress: 0,
   uploadError: "",
-  // Ties uploadStatus/Progress/Error to a specific input.id - a mismatch means a fresh uploader.
   uploadForInputId: null,
 };
 
@@ -194,14 +183,10 @@ const conversationSlice = createSlice({
     setUploadError: (state, action) => {
       state.uploadError = action.payload;
     },
-    // Dev-only (see devMocks.js): applies a canned response through the
-    // same reducer logic, no network call.
     applyMockResponse: (state, action) => {
       applyConversationResponse(state, action.payload);
       state.isTyping = false;
     },
-    // Redux's store outlives Chat unmounting - dispatched on logout so a
-    // new login doesn't inherit stale state.
     resetConversation: () => ({
       history: [],
       input: null,

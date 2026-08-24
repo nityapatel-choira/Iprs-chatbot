@@ -1,8 +1,6 @@
 import CheckIcon from "../icons/CheckIcon";
 import styles from "./VerifiedFieldChip.module.css";
 
-// Shown once DigiLocker/bank verification succeeds. Dormant - backend has
-// no per-field verified flag yet.
 const VerifiedFieldChip = ({ label }) => {
   return (
     <span className={styles.chip}>

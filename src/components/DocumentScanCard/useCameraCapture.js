@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-// Modeled on useFaceDetection's plumbing, minus the face-landmark detection -
-// documents don't align, so capture is a manual shutter tap.
 const useCameraCapture = ({ onCapture } = {}) => {
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");

@@ -8,11 +8,7 @@ import ChatHeader from "../Chat/components/ChatHeader/ChatHeader";
 import useFaceDetection from "../../components/FaceScan/useFaceDetection";
 import styles from "./FaceVerification.module.css";
 
-// Selfie-capture UI around useFaceDetection. Reuses ChatHeader and
-// FileUploader as-is for visual consistency with the rest of the app.
-//
-// `embedded` drops this into Document Upload's Passport Photo step instead
-// of a full-page screen - hides the header/footer, lets the parent own the width.
+// Camera/upload face capture component. Can be embedded inline.
 const FaceVerification = ({
   onBack,
   onCapture,
@@ -36,11 +32,8 @@ const FaceVerification = ({
     detectImageFile,
   } = useFaceDetection({ onCapture });
 
-  // initialMode picks the starting mode; both are reachable via the fallback links either way.
   const [mode, setMode] = useState(initialMode);
-  // Only the first entry into upload mode (initialMode="upload") should
-  // auto-open the file picker. Manual switches (the fallback links) should
-  // land on the upload card first, not pop a dialog unannounced.
+  // Auto-opens file picker only when initialMode is "upload".
   const [manualUploadSwitch, setManualUploadSwitch] = useState(false);
   const [upload, setUpload] = useState({ status: "idle", errorMessage: "", image: null });
 
@@ -59,7 +52,6 @@ const FaceVerification = ({
     ringClass = styles.ringAlert;
   }
 
-  // Camera opens immediately (and again on switching back) - no "tap to start" step.
   useEffect(() => {
     if (mode === "camera") start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -71,7 +63,6 @@ const FaceVerification = ({
   };
 
   const switchToUpload = () => {
-    // Release the camera while the upload card is up.
     cancel();
     setManualUploadSwitch(true);
     setMode("upload");

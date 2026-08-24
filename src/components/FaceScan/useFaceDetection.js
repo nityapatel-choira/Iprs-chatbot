@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-// Must match the installed @mediapipe/tasks-vision version (see package.json).
+// Matches @mediapipe/tasks-vision version in package.json.
 const TASKS_VISION_VERSION = "1.0.1";
 const WASM_BASE_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`;
 const MODEL_ASSET_URL =
@@ -8,17 +8,15 @@ const MODEL_ASSET_URL =
 
 const MIN_CONFIDENCE = 0.6;
 const GOOD_FRAMES_TO_CAPTURE = 18;
-// Throttles model inference only, not the video framerate - alignment
-// feedback doesn't need 60 checks/sec.
+// Throttles model inference interval (ms).
 const DETECT_INTERVAL_MS = 90;
-// Consecutive per-frame failures tolerated before surfacing a recoverable error.
+// Max consecutive frame errors before error state.
 const MAX_CONSECUTIVE_ERRORS = 5;
 
 const TOO_CLOSE_WIDTH_RATIO = 0.85;
 const TOO_FAR_WIDTH_RATIO = 0.22;
 const CENTER_TOLERANCE = 0.18;
 
-// A discriminated status (not just aligned/not) so the UI can show a specific reason.
 export const ALIGNMENT_MESSAGES = {
   "no-face": "Position your face inside the frame",
   "multiple-faces": "Multiple faces detected - make sure it's just you",
@@ -85,12 +83,12 @@ const useFaceDetection = ({ onCapture } = {}) => {
   }
 
   function closeDetector() {
-    // Skipping this leaks the detector's WASM allocation on every retake/remount.
+    // Prevents detector WASM memory leak.
     if (detectorRef.current) {
       try {
         detectorRef.current.close();
       } catch {
-        // Already released - nothing to clean up.
+        // Ignore if already released
       }
       detectorRef.current = null;
     }
@@ -100,8 +98,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
     if (!detectorRef.current) {
       const { FaceDetector, FilesetResolver } = await import("@mediapipe/tasks-vision");
       const vision = await FilesetResolver.forVisionTasks(WASM_BASE_URL);
-      // CPU delegate deliberately - GPU/WebGL is unstable in Safari and many
-      // Android WebViews. The model's light enough that CPU is still real-time.
+      // CPU delegate avoids GPU/WebGL instability in Safari and WebViews.
       detectorRef.current = await FaceDetector.createFromOptions(vision, {
         baseOptions: { modelAssetPath: MODEL_ASSET_URL, delegate: "CPU" },
         runningMode: "VIDEO",
@@ -185,7 +182,6 @@ const useFaceDetection = ({ onCapture } = {}) => {
           return;
         }
       } catch (err) {
-        // Transient per-frame error - tolerate a few in a row before giving up.
         consecutiveErrorsRef.current += 1;
         console.warn("Face detection frame failed:", err);
         if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
@@ -231,8 +227,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
     setAlignment("no-face");
   }
 
-  // Reuses the same VIDEO-mode detector for still images too (detectForVideo
-  // accepts any ImageSource) - avoids loading the model twice.
+  // Reuses VIDEO detector instance for still image detection.
   async function detectImageFile(file) {
     const detector = await ensureDetector();
 

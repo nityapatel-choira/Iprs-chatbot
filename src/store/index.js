@@ -14,8 +14,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // File messages carry a live File object + object URL (see
-        // FileMessageCard) - non-serializable by design, silences RTK's dev warning.
+        // Ignores non-serializable File objects in conversation history.
         ignoredActions: ["conversation/addUserFileMessage"],
         ignoredPaths: ["conversation.history"],
       },

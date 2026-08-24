@@ -25,8 +25,6 @@ function handleUnauthorized(status, code) {
   }
 }
 
-// Shared by the fetch and XHR upload paths below - both get the same error
-// envelope shape, just different transports.
 function buildApiError(status, json, fallbackMessage) {
   const code = json?.error?.code;
   const message = json?.error?.message || fallbackMessage;

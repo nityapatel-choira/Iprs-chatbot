@@ -5,11 +5,8 @@ import MusicNoteIcon from "../icons/MusicNoteIcon";
 import AgreementIcon from "../icons/AgreementIcon";
 import styles from "./StepTracker.module.css";
 
-/* Icon glyphs traced from Figma's icon/essential/profile, icon/payment/netbanking,
-   icon/category/music and icon/profile_page_only/agreement components. */
 const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
-// currentFill drives the connector's fill width directly, off the real backend percentage.
 const StepTracker = ({ stages, activeIndex, currentFill = 0 }) => {
   const totalPercent = useMemo(() => {
     if (stages.length <= 1) return 0;

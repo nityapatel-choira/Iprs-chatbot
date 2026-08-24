@@ -86,8 +86,6 @@
   padding-top: 20px;
 }
 
-/* Tablet/desktop: present as a centered dialog card instead of a bottom
-   sheet — rounded on all corners, closed via an explicit X. */
 @media (min-width: 768px) {
   .scrim {
     align-items: center;

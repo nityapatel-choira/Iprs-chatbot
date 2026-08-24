@@ -26,7 +26,6 @@ function isPdfFile(fileName, mimeType, rawFile) {
   return false;
 }
 
-// Keeps the extension past ellipsis-truncation - it's what identifies the file type.
 function splitFileName(name) {
   if (!name) return { base: "", ext: "" };
   const dotIndex = name.lastIndexOf(".");

@@ -49,9 +49,6 @@
   color: #ffffff;
 }
 
-/* Only the base name shrinks/truncates - .fileNameExt stays fixed so the
-   extension (the part that tells the user what kind of file this is) never
-   gets clipped, however long the name is. */
 .fileNameBase {
   min-width: 0;
   overflow: hidden;

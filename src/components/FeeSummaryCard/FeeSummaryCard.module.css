@@ -26,10 +26,6 @@
   padding: 12px;
 }
 
-/* Placeholder for Figma's "solid/greyscale/g1" - still unconfirmed (Figma
-   access has been rate-limited every attempt this session; asked the user
-   for the hex directly multiple times with no response yet). Swap this for
-   the real value the moment it's available - do not treat #F5F5F5 as final. */
 .feeCard {
   background: #f5f5f5;
   border: 1px solid #e2e8f0;
@@ -72,9 +68,6 @@
   color: #64748b;
 }
 
-/* Placeholder for Figma's "solid/greyscale/g2" - same unconfirmed-hex
-   situation as .feeCard/.docCard's g1 comment above. Swap for the real
-   value once available. */
 .infoPill {
   margin: 10px 0 0;
   padding: 8px 12px;

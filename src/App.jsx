@@ -18,7 +18,6 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
 
-// Dev-only (?test=facescan): tests FaceVerification before it's wired into registration.
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 
 const App = () => {
@@ -51,7 +50,7 @@ const App = () => {
     try {
       await logout();
     } catch {
-      // token is already cleared locally by authService.logout regardless of API outcome
+      // Ignore API error
     }
   };
 

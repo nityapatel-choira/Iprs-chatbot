@@ -1,4 +1,4 @@
-// Backend sends no step identifier, so the 0-100 range is split evenly across the 4 stages.
+// Splits 0-100% progress evenly across 4 registration stages.
 export const STEP_RANGES = {
   personalDetails: { min: 0, max: 25, label: "Personal Details" },
   bankDetails: { min: 25, max: 50, label: "Bank Details" },
@@ -10,8 +10,6 @@ const STAGE_ORDER = Object.keys(STEP_RANGES);
 
 export const STAGE_LABELS = STAGE_ORDER.map((key) => STEP_RANGES[key].label);
 
-// activeIndex is the current stage; currentFill is how far through its
-// range progress is - drives the connector fill instead of a hardcoded 50%.
 export function getStepProgress(progress) {
   const clamped = Math.max(0, Math.min(100, Number(progress) || 0));
 

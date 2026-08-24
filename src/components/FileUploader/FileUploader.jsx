@@ -13,8 +13,7 @@ const FileUploader = ({
   progress = 0,
   errorMessage,
   disabled,
-  // Opt-in: opens the native file picker on mount instead of waiting for a
-  // tap. Defaults false so existing callers are unaffected.
+  // Auto-opens file picker on mount when true.
   autoOpen = false,
 }) => {
   const inputRef = useRef(null);
@@ -25,7 +24,6 @@ const FileUploader = ({
     if (autoOpen && !disabled) {
       inputRef.current?.click();
     }
-    // Mount-only: opens the picker once, not on every prop change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
