@@ -3,17 +3,10 @@ import iprsLogo from "../../assets/iprs-logo.png";
 import PhoneNumberField from "../../components/PhoneNumberField/PhoneNumberField";
 import OtpField from "../../components/OtpField/OtpField";
 import { sendOtp, verifyOtp } from "../../services/authService";
+import { isValidPhone, isValidOtp, sanitizeDigits } from "../../utils/validators";
 import styles from "./Login.module.css";
 
-function isValidPhone(value) {
-  return /^\d{10}$/.test(value);
-}
-
-function isValidOtp(value) {
-  return /^\d{4}$/.test(value);
-}
-
-function Login({ onContinue }) {
+const Login = ({ onContinue }) => {
   const [phase, setPhase] = useState("phone");
   const [countryCode, setCountryCode] = useState("+91");
   const [phone, setPhone] = useState("");
@@ -30,11 +23,9 @@ function Login({ onContinue }) {
   const phoneError = phoneTouched && phone.length > 0 && !phoneValid ? "Enter a valid 10-digit mobile number" : "";
   const otpError = otpTouched && otp.length > 0 && !otpValid ? "Enter the code we texted you" : "";
 
-  const handlePhoneChange = (raw) => setPhone(raw.replace(/\D/g, "").slice(0, 10));
-  // Clears apiError on every edit so a stale "wrong OTP" error doesn't
-  // outlive the attempt it was for - no timer needed.
+  const handlePhoneChange = (raw) => setPhone(sanitizeDigits(raw, 10));
   const handleOtpChange = (raw) => {
-    setOtp(raw.replace(/\D/g, "").slice(0, 4));
+    setOtp(sanitizeDigits(raw, 4));
     setApiError("");
   };
 

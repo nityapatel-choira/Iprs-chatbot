@@ -11,7 +11,6 @@ import {
   setUploadStatus,
   setUploadProgress,
   setUploadError,
-  applyMockResponse,
   selectHistory,
   selectInput,
   selectIsTyping,
@@ -22,7 +21,7 @@ import {
   selectUploadForInputId,
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
-import { setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
+import { setStoredProgress } from "../../services/conversationStorage";
 
 // This hook is the one integration point between the conversation/
 // registration Redux slices and Chat.jsx - it reads via useAppSelector and
@@ -76,45 +75,6 @@ function useBackendConversation() {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-
-    // Dev-only escape hatch for visually QA-ing cards the live backend
-    // can't trigger yet (see devMocks.js) - e.g. `?mockInput=summary`.
-    // import.meta.env.DEV is statically false in production builds, so
-    // Vite dead-code-eliminates this whole branch (and its devMocks.js
-    // import) out of the prod bundle.
-    if (import.meta.env.DEV) {
-      const mockKey = new URLSearchParams(window.location.search).get("mockInput");
-      if (mockKey) {
-        import("./devMocks").then(({ DEV_MOCK_INPUTS }) => {
-          // `?mockInput=consentSequence` - scripted two-turn sequence for
-          // exercising the exact scenario a single canned response can't:
-          // consent 1 answered (a real "I Accept" user reply lands in
-          // history, same as sendAnswer produces), then consent 2 arrives as
-          // the next turn. Verifies consent 1's message stays suppressed
-          // once the conversation has moved past it, not just while it's
-          // the pending input.
-          if (mockKey === "consentSequence") {
-            const { consentPrivacy, consentFraud } = DEV_MOCK_INPUTS;
-            dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));
-            setTimeout(() => {
-              dispatch(addUserMessage("I Accept"));
-              dispatch(applyMockResponse({ ...consentFraud, __isFreshLogin: false }));
-            }, 400);
-            return;
-          }
-
-          const mock = DEV_MOCK_INPUTS[mockKey];
-          if (mock) {
-            dispatch(applyMockResponse({ ...mock, __isFreshLogin: consumeFreshLoginFlag() }));
-          } else {
-            console.warn(`No dev mock registered for mockInput="${mockKey}"`, Object.keys(DEV_MOCK_INPUTS));
-            runMessage(undefined);
-          }
-        });
-        return;
-      }
-    }
-
     runMessage(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
-import AadhaarField from "../../components/AadhaarField/AadhaarField";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
@@ -68,16 +67,6 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
   const displayFill = sessionEnded ? 100 : trackerFill;
 
-  // The backend's "text input" type is generic (mobile number, name, email,
-  // Aadhaar - anything typed) and carries no sub-type of its own, only a
-  // human-readable placeholder/title. Sniffing that label is the only way to
-  // opt a specific known field into a nicer widget (Figma's boxed Aadhaar
-  // field) without inventing a new input.type the backend doesn't send -
-  // the backend still fully owns copy, ordering and progression either way.
-  const isAadhaarStep =
-    input?.type === "text input" && /aadhaar|aadhar/i.test(`${input.placeholder || ""} ${input.title || ""}`);
-
-  // Same label-sniffing approach as isAadhaarStep above: the backend's
   // "file input" type is otherwise generic (PAN, bank proof, address
   // proof, passport photo - anything file-based), so opting the passport
   // photo step into the face-scan/upload choice (instead of the plain
@@ -232,7 +221,7 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig) && !isAadhaarStep;
+  const showComposer = Boolean(textConfig);
 
   // input.id is the source of truth for which file-input step the upload
   // state belongs to: once the backend moves on to a new file-input (a new
@@ -286,8 +275,6 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
           {!isTyping && input?.type === "otp input" && (
             <PinInput key={input.id} onComplete={sendAnswer} />
           )}
-
-          {!isTyping && isAadhaarStep && <AadhaarField key={input.id} onSubmit={sendAnswer} />}
 
           {/*
             TODO: none of the four cases below (checkbox/summary/document/

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { sanitizeDigits } from "../../utils/validators";
 import styles from "./PinInput.module.css";
 
 // Boxed OTP entry matching Figma's verify_OTP "pin" component.
@@ -17,7 +18,7 @@ function PinInput({ length = 4, onComplete, disabled }) {
   };
 
   const handleChange = (index, raw) => {
-    const value = raw.replace(/\D/g, "");
+    const value = sanitizeDigits(raw);
     if (!value) {
       setDigits((prev) => {
         const next = [...prev];
@@ -48,7 +49,7 @@ function PinInput({ length = 4, onComplete, disabled }) {
   };
 
   const handlePaste = (e) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    const pasted = sanitizeDigits(e.clipboardData.getData("text"), length);
     if (!pasted) return;
     e.preventDefault();
     setDigits((prev) => {

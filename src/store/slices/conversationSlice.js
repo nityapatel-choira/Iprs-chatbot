@@ -224,14 +224,6 @@ const conversationSlice = createSlice({
     setUploadError: (state, action) => {
       state.uploadError = action.payload;
     },
-    // Dev-only escape hatch (see useBackendConversation's devMocks.js
-    // branch) for visually QA-ing cards the live backend can't trigger
-    // yet - applies a canned response through the exact same reducer logic
-    // as a real turn, without going through a thunk/network call.
-    applyMockResponse: (state, action) => {
-      applyConversationResponse(state, action.payload);
-      state.isTyping = false;
-    },
     // Unlike the old per-component useState version of this hook, Redux's
     // store is a singleton that outlives Chat unmounting on logout - it
     // won't reset itself for free the way component state used to.
@@ -282,7 +274,6 @@ export const {
   setUploadStatus,
   setUploadForInputId,
   setUploadError,
-  applyMockResponse,
   resetConversation,
 } = conversationSlice.actions;
 
