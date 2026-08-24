@@ -43,24 +43,22 @@ const DOCUMENT_DEFS = [
   { label: "Passport Size Photo", match: /Passport\s*[Ss]ize\s*Photo/i },
 ];
 
+const ENTITY_LABEL_PATTERN = /requirements for\s+(.+?)\s*(?=identity proof)/is;
+const FEE_PATTERN = /application fee\s*:?\s*(₹\s*[\d,]+)/i;
+const REFUND_NOTE_PATTERN = /([^.\n]*refundable[^.\n]*)\.?/i;
+
 function extractEntityLabel(text) {
-  const match = text.match(/requirements for\s+(.+?)\s*(?=identity proof)/is);
+  const match = text.match(ENTITY_LABEL_PATTERN);
   return match ? match[1].trim() : "";
 }
 
 function extractFee(text) {
-  const match = text.match(/application fee\s*:?\s*(₹\s*[\d,]+)/i);
+  const match = text.match(FEE_PATTERN);
   return match ? match[1].replace(/\s+/g, "") : "";
 }
 
 function extractRefundNote(text) {
-  // Bounded by newlines as well as periods so this can't run past a blank
-  // line and swallow unrelated preceding text (e.g. the fee line itself)
-  // when the refund note is its own short line with no punctuation of its
-  // own, as in "APPLICATION FEE: ₹1200\n\nNon Refundable". Uses whatever
-  // fragment the backend actually wrote verbatim, rather than inventing
-  // new copy for either the refundable or non-refundable case.
-  const match = text.match(/([^.\n]*refundable[^.\n]*)\.?/i);
+  const match = text.match(REFUND_NOTE_PATTERN);
   return match ? match[1].trim() : "";
 }
 

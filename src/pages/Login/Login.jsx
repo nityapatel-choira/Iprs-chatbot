@@ -26,7 +26,7 @@ const Login = ({ onContinue }) => {
   const handlePhoneChange = (raw) => setPhone(sanitizeDigits(raw, 10));
   const handleOtpChange = (raw) => {
     setOtp(sanitizeDigits(raw, 4));
-    setApiError("");
+    if (apiError) setApiError("");
   };
 
   const handleSendOtp = async () => {

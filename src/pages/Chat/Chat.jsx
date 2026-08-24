@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -27,6 +27,9 @@ import styles from "./Chat.module.css";
 // step - only fetched the moment input.type === "payment input" actually
 // renders it below.
 const PaymentCard = lazy(() => import("../../components/payment/PaymentCard"));
+
+const PASSPORT_PHOTO_STEP_PATTERN = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
+const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
 
 // Only these input types render the free-text composer. Everything else
 // (choice input, file input, or any future non-text type) must hide it
@@ -69,15 +72,6 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
 
   // "file input" type is otherwise generic (PAN, bank proof, address
   // proof, passport photo - anything file-based), so opting the passport
-  // photo step into the face-scan/upload choice (instead of the plain
-  // FileUploader every other file-input step uses) means matching text
-  // rather than inventing a new input.type the backend doesn't send.
-  // Requires "passport" collocated with "size" or "photo" (not just bare
-  // "passport") - the backend's address-proof step also lists "Passport"
-  // among accepted documents (e.g. "Passport/ Driving License/ Voter
-  // ID/..."), which must NOT be caught here.
-  const passportPhotoStepPattern = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
-
   // input.title/caption turned out NOT to carry this for the real backend
   // (they're empty/generic for this step) - the identifying copy ("Upload
   // your passport size profile") is actually the bot's chat message
@@ -137,15 +131,19 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
   // turn's consent interaction end-to-end - the whole thing happened inside
   // the popup, so neither belongs in the plain chat transcript, only the
   // popup's own "I Accept" button does.
-  const resolvedConsentMessageIds = new Set();
-  for (let i = 1; i < history.length; i += 1) {
-    const message = history[i];
-    if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
-      resolvedConsentMessageIds.add(history[i - 1].id);
-      resolvedConsentMessageIds.add(message.id);
+  const consentMessageIds = useMemo(() => {
+    const resolvedConsentMessageIds = new Set();
+    for (let i = 1; i < history.length; i += 1) {
+      const message = history[i];
+      if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
+        resolvedConsentMessageIds.add(history[i - 1].id);
+        resolvedConsentMessageIds.add(message.id);
+      }
     }
-  }
-  const consentMessageIds = new Set([...resolvedConsentMessageIds, ...pendingConsentMessages.map((m) => m.id)]);
+    const last = history[history.length - 1];
+    const pending = isConsentAcceptStep && last?.sender === "bot" ? [last.id] : [];
+    return new Set([...resolvedConsentMessageIds, ...pending]);
+  }, [history, isConsentAcceptStep]);
 
   // Presentation-only delay: when the backend bundles the document/fee
   // recap and the consent message into the same response, the consent
@@ -203,18 +201,9 @@ function Chat({ language = "English", onBack, onLogout /*, onFinished */ }) {
 
   const isPassportPhotoStep =
     input?.type === "file input" &&
-    (passportPhotoStepPattern.test(`${input.title || ""} ${input.caption || ""}`) ||
-      passportPhotoStepPattern.test(trailingBotText));
+    (PASSPORT_PHOTO_STEP_PATTERN.test(`${input.title || ""} ${input.caption || ""}`) ||
+      PASSPORT_PHOTO_STEP_PATTERN.test(trailingBotText));
 
-  // Profile Photo step: confirmed real shape is { message: "Upload your
-  // Profile photo", input: { type: "file input", options: { variableId:
-  // "vww01qa7jizgywxikfu1yu48x" } } } - a reliable field actually exists
-  // here (unlike passport photo above), so that's checked first; the
-  // message-text match is only a fallback for if the backend ever sends
-  // this step without it. Wants the exact same face-scan/upload choice as
-  // passport photo, so it's folded into isPassportPhotoStep at the two call
-  // sites below rather than duplicating them for a third boolean.
-  const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
   const isProfilePhotoStep =
     input?.type === "file input" &&
     (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID || /profile photo/i.test(trailingBotText));
