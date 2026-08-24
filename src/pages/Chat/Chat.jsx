@@ -3,6 +3,7 @@ import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
 import AadhaarField from "../../components/AadhaarField/AadhaarField";
+import CityPicker from "../../components/CityPicker/CityPicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
@@ -116,9 +117,14 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     input?.type === "file input" &&
     (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID || /profile photo/i.test(trailingBotText));
 
+  const isCityStep =
+    input?.type === "city input" ||
+    (input?.type === "text input" &&
+      /\b(city|place of birth|current city)\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`));
+
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig) && !isAadhaarStep;
+  const showComposer = Boolean(textConfig) && !isAadhaarStep && !isCityStep;
 
 
   const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
@@ -128,6 +134,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   function renderActiveInputWidget() {
     if (isTyping) return null;
+
+    if (isCityStep) {
+      return (
+        <CityPicker
+          key={input.id}
+          placeholder={input.placeholder || "Search or select city..."}
+          onSubmit={sendAnswer}
+          disabled={isTyping}
+        />
+      );
+    }
 
     if (input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary) {
       return (
