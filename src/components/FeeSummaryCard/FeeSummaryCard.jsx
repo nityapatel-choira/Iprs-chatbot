@@ -31,13 +31,13 @@ const FeeSummaryCard = ({
           <p className={styles.infoPill}>{infoText}</p>
         </div>
 
-        {docsHeading && (
+        {docsHeading && Array.isArray(docs) && docs.length > 0 && (
           <div className={styles.docCard}>
             <h3 className={styles.docHeading}>{docsHeading}</h3>
             <p className={styles.docSubtext}>{docsSubtext}</p>
             <ul className={styles.docList}>
-              {docs.map((doc) => (
-                <li key={doc.label} className={styles.docRow}>
+              {docs.map((doc, idx) => (
+                <li key={`${doc.label}-${idx}`} className={styles.docRow}>
                   <span className={styles.docCheck} aria-hidden="true">
                     <img src={documentCheckIcon} alt="" className={styles.docCheckIcon} />
                   </span>
@@ -71,6 +71,8 @@ const FeeSummaryCard = ({
         <div className={styles.confirmRow}>
           <button
             type="button"
+            role="checkbox"
+            aria-checked={confirmed}
             className={styles.confirmCheckboxRow}
             onClick={() => setConfirmed((prev) => !prev)}
           >

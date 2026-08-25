@@ -11,17 +11,21 @@ const CheckboxGroup = ({ options, caption, onSubmit, disabled }) => {
 
   const hasSelection = Object.values(checked).some(Boolean);
 
+  const safeOptions = options || [];
+
   const handleSubmit = () => {
     if (!hasSelection || disabled) return;
-    onSubmit(options.filter((opt) => checked[opt.key]));
+    onSubmit?.(safeOptions.filter((opt) => checked[opt.key]));
   };
 
   return (
-    <div className={styles.card}>
-      {options.map((opt) => (
+    <div className={styles.card} role="group" aria-label="Selection options">
+      {safeOptions.map((opt) => (
         <button
           key={opt.key}
           type="button"
+          role="checkbox"
+          aria-checked={Boolean(checked[opt.key])}
           className={styles.row}
           onClick={() => toggle(opt.key)}
           disabled={disabled}

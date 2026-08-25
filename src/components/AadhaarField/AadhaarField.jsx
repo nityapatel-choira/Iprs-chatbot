@@ -14,14 +14,15 @@ const AadhaarField = ({
 
   const handleChange = (raw) => setValue(raw.replace(/\D/g, "").slice(0, 12));
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     setTouched(true);
     if (!isValid || disabled) return;
     onSubmit?.(value);
   };
 
   return (
-    <div className={styles.card}>
+    <form className={styles.card} onSubmit={handleSubmit}>
       <label className={styles.label} htmlFor="aadhaar-input">
         Aadhaar number
       </label>
@@ -44,10 +45,10 @@ const AadhaarField = ({
         </span>
       )}
       <p className={styles.caption}>{caption}</p>
-      <button type="button" className={styles.submitButton} onClick={handleSubmit} disabled={!isValid || disabled}>
+      <button type="submit" className={styles.submitButton} disabled={!isValid || disabled}>
         Continue
       </button>
-    </div>
+    </form>
   );
 };
 

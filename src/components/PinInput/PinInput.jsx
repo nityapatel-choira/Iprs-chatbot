@@ -59,13 +59,14 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
     focusIndex(Math.min(pasted.length, length - 1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     if (!isComplete || disabled) return;
     onComplete?.(code);
   };
 
   return (
-    <div className={styles.card}>
+    <form className={styles.card} onSubmit={handleSubmit}>
       <div className={styles.boxes} onPaste={handlePaste}>
         {digits.map((digit, index) => (
           <input
@@ -87,10 +88,10 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
           />
         ))}
       </div>
-      <button type="button" className={styles.verifyButton} onClick={handleSubmit} disabled={!isComplete || disabled}>
+      <button type="submit" className={styles.verifyButton} disabled={!isComplete || disabled}>
         Verify
       </button>
-    </div>
+    </form>
   );
 };
 

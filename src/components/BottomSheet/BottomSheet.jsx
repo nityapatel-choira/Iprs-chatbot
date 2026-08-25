@@ -1,7 +1,17 @@
+import { useEffect } from "react";
 import CloseIcon from "../icons/CloseIcon";
 import styles from "./BottomSheet.module.css";
 
 const BottomSheet = ({ open, title, children, footer, onClose }) => {
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
