@@ -1,18 +1,37 @@
 import { useState } from "react";
 import { useCombobox } from "downshift";
-import { INDIAN_CITIES } from "../../constants/cities";
+import { INDIA_CITIES } from "../../constants/indiaCities";
 import SendIcon from "../icons/SendIcon";
 import styles from "./CityPicker.module.css";
 
+const MAX_SUGGESTIONS = 100;
+
 function filterCities(inputValue) {
   const clean = (inputValue || "").toLowerCase().trim();
-  if (!clean) return INDIAN_CITIES;
-  return INDIAN_CITIES.filter((city) => city.toLowerCase().includes(clean));
+  if (!clean) return INDIA_CITIES.slice(0, MAX_SUGGESTIONS);
+  return INDIA_CITIES.filter(
+    (item) =>
+      item.name.toLowerCase().includes(clean) ||
+      item.state.toLowerCase().includes(clean) ||
+      item.label.toLowerCase().includes(clean)
+  ).slice(0, MAX_SUGGESTIONS);
+}
+
+function findCanonicalMatch(inputValue) {
+  const clean = (inputValue || "").toLowerCase().trim();
+  if (!clean) return null;
+  return (
+    INDIA_CITIES.find((item) => item.name.toLowerCase() === clean) ||
+    INDIA_CITIES.find((item) => item.label.toLowerCase() === clean) ||
+    INDIA_CITIES.find((item) => item.name.toLowerCase().startsWith(clean)) ||
+    null
+  );
 }
 
 function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..." }) {
   const [inputValue, setInputValue] = useState("");
   const matchingCities = filterCities(inputValue);
+  const canonicalMatch = findCanonicalMatch(inputValue);
 
   const {
     isOpen,
@@ -28,19 +47,18 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
     },
     onSelectedItemChange({ selectedItem }) {
       if (selectedItem && !disabled) {
-        onSubmit?.(selectedItem);
+        onSubmit?.(selectedItem.name);
       }
     },
     itemToString(item) {
-      return item || "";
+      return item ? item.label : "";
     },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmed = inputValue.trim();
-    if (!trimmed || disabled) return;
-    onSubmit?.(trimmed);
+    if (disabled || !canonicalMatch) return;
+    onSubmit?.(canonicalMatch.name);
   };
 
   return (
@@ -58,7 +76,7 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
           <button
             type="submit"
             className={styles.sendButton}
-            disabled={disabled || !inputValue.trim()}
+            disabled={disabled || !canonicalMatch}
             aria-label="Submit city"
           >
             <SendIcon />
@@ -72,18 +90,18 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
         >
           {isOpen &&
             (matchingCities.length > 0 ? (
-              matchingCities.map((city, index) => (
+              matchingCities.map((item, index) => (
                 <li
-                  key={`${city}-${index}`}
+                  key={`${item.name}-${item.state}-${index}`}
                   {...getItemProps({
-                    item: city,
+                    item,
                     index,
                     className: `${styles.menuItem} ${
                       highlightedIndex === index ? styles.menuItemActive : ""
                     }`,
                   })}
                 >
-                  {city}
+                  {item.label}
                 </li>
               ))
             ) : (
