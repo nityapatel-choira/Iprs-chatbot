@@ -22,6 +22,9 @@ import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
 import styles from "./Chat.module.css";
 
+const PASSPORT_PHOTO_STEP_PATTERN = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
+const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
+
 const TEXT_INPUT_CONFIG = {
   "text input": { type: "text", inputMode: "text" },
   "email input": { type: "email", inputMode: "email" },
@@ -52,7 +55,6 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const displayFill = sessionEnded ? 100 : trackerFill;
   const isAadhaarStep =
     input?.type === "text input" && /aadhaar|aadhar/i.test(`${input.placeholder || ""} ${input.title || ""}`);
-  const passportPhotoStepPattern = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
 
   let trailingBotText = "";
   for (let i = history.length - 1; i >= 0 && history[i]?.sender === "bot"; i -= 1) {
@@ -108,11 +110,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   const isPassportPhotoStep =
     input?.type === "file input" &&
-    (passportPhotoStepPattern.test(`${input.title || ""} ${input.caption || ""}`) ||
-      passportPhotoStepPattern.test(trailingBotText));
+    (PASSPORT_PHOTO_STEP_PATTERN.test(`${input.title || ""} ${input.caption || ""}`) ||
+      PASSPORT_PHOTO_STEP_PATTERN.test(trailingBotText));
 
-
-  const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
   const isProfilePhotoStep =
     input?.type === "file input" &&
     (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID || /profile photo/i.test(trailingBotText));
