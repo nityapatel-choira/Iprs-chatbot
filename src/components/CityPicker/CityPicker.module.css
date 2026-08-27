@@ -1,8 +1,8 @@
 .container {
   position: relative;
   width: 100%;
-  max-width: min(var(--card-pct, 88%), var(--card-max, 580px));
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
 }
 
 .form {
@@ -70,7 +70,7 @@
 
 .menu {
   position: absolute;
-  top: calc(100% + 8px);
+  bottom: calc(100% + 8px);
   left: 0;
   right: 0;
   max-height: 220px;
@@ -132,6 +132,10 @@
   .sendButton {
     width: 40px;
     height: 40px;
+  }
+
+  .menu {
+    max-height: 180px;
   }
 
   .menuItem {
