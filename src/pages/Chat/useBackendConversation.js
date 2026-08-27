@@ -42,6 +42,19 @@ const useBackendConversation = () => {
   const startedRef = useRef(false);
   const lastActionRef = useRef(null);
   const isUploadingRef = useRef(false);
+  const createdUrlsRef = useRef(new Set());
+
+  useEffect(() => {
+    const createdUrls = createdUrlsRef.current;
+    if (history.length === 0 && createdUrls.size > 0) {
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      createdUrls.clear();
+    }
+    return () => {
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      createdUrls.clear();
+    };
+  }, [history.length]);
 
   useEffect(() => {
     setStoredProgress(progress);
@@ -117,6 +130,7 @@ const useBackendConversation = () => {
     const fileId = nextId();
     const targetInputId = input?.id ?? null;
     const previewUrl = URL.createObjectURL(file);
+    createdUrlsRef.current.add(previewUrl);
     const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
     dispatch(
       addUserFileMessage({

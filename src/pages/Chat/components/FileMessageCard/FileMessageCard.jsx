@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
 import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
@@ -47,25 +47,28 @@ function formatFileSize(size) {
 
 const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
+  const [createdUrl, setCreatedUrl] = useState(null);
 
   const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
   const isImage = isImageFile(fileName, mimeType, fileObject);
   const isPdf = isPdfFile(fileName, mimeType, fileObject);
 
-  const createdUrl = useMemo(() => {
-    if (!initialPreviewUrl && fileObject && isImage) {
-      return URL.createObjectURL(fileObject);
-    }
-    return null;
-  }, [initialPreviewUrl, fileObject, isImage]);
-
   useEffect(() => {
+    let url = null;
+    if (!initialPreviewUrl && fileObject && isImage) {
+      url = URL.createObjectURL(fileObject);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCreatedUrl(url);
+    } else {
+      setCreatedUrl(null);
+    }
+
     return () => {
-      if (createdUrl) {
-        URL.revokeObjectURL(createdUrl);
+      if (url) {
+        URL.revokeObjectURL(url);
       }
     };
-  }, [createdUrl]);
+  }, [initialPreviewUrl, fileObject, isImage]);
 
   useEffect(() => {
     let isCancelled = false;
