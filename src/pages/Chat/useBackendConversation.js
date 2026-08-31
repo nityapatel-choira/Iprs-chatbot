@@ -24,16 +24,8 @@ import {
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
 
-// This hook is the one integration point between the conversation/
-// registration Redux slices and Chat.jsx - it reads via useAppSelector and
-// dispatches actions/thunks, but returns the exact same shape it did as a
-// plain useState-based hook, so Chat.jsx (and every card component it
-// renders) needed zero changes for the Redux migration. See
-// store/slices/conversationSlice.js and registrationSlice.js for where the
-// actual state/logic now lives - this file is just wiring + the imperative
-// bits (refs, scrolling, retry bookkeeping) that never belonged in Redux
-// state to begin with.
-function useBackendConversation() {
+// Custom hook managing conversation state and UI interactions.
+const useBackendConversation = () => {
   const dispatch = useAppDispatch();
   const history = useAppSelector(selectHistory);
   const input = useAppSelector(selectInput);
@@ -46,20 +38,24 @@ function useBackendConversation() {
   const uploadError = useAppSelector(selectUploadError);
   const uploadForInputId = useAppSelector(selectUploadForInputId);
 
-  // Imperative bookkeeping that was never state in the first place - refs
-  // don't belong in Redux, so these stay exactly as they were.
   const messagesRef = useRef(null);
   const startedRef = useRef(false);
   const lastActionRef = useRef(null);
   const isUploadingRef = useRef(false);
+  const createdUrlsRef = useRef(new Set());
 
-  // Mirrors the pre-Redux useEffect-based persistence exactly (write on
-  // change), just watching the Redux-selected values now instead of local
-  // state. Kept out of the slice reducers themselves so reducers stay pure
-  // - see the comments in conversationSlice.js/registrationSlice.js. Chat
-  // history itself is deliberately NOT persisted here - see conversationSlice's
-  // initialState comment for why the backend's resume response is the only
-  // source for it.
+  useEffect(() => {
+    const createdUrls = createdUrlsRef.current;
+    if (history.length === 0 && createdUrls.size > 0) {
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      createdUrls.clear();
+    }
+    return () => {
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      createdUrls.clear();
+    };
+  }, [history.length]);
+
   useEffect(() => {
     setStoredProgress(progress);
   }, [progress]);
@@ -73,44 +69,38 @@ function useBackendConversation() {
     dispatch(sendConversationTurn(message));
   };
 
+  const CONSENT_SEQUENCE_STEP_DELAY_MS = 400;
+  const runConsentSequenceMock = ({ consentPrivacy, consentFraud }) => {
+    dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));
+    setTimeout(() => {
+      dispatch(addUserMessage("I Accept"));
+      dispatch(applyMockResponse({ ...consentFraud, __isFreshLogin: false }));
+    }, CONSENT_SEQUENCE_STEP_DELAY_MS);
+  };
+
+  const applyDevMock = (mockKey, DEV_MOCK_INPUTS) => {
+    if (mockKey === "consentSequence") {
+      runConsentSequenceMock(DEV_MOCK_INPUTS);
+      return;
+    }
+
+    const mock = DEV_MOCK_INPUTS[mockKey];
+    if (mock) {
+      dispatch(applyMockResponse({ ...mock, __isFreshLogin: consumeFreshLoginFlag() }));
+    } else {
+      console.warn(`No dev mock registered for mockInput="${mockKey}"`, Object.keys(DEV_MOCK_INPUTS));
+      runMessage(undefined);
+    }
+  };
+
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
 
-    // Dev-only escape hatch for visually QA-ing cards the live backend
-    // can't trigger yet (see devMocks.js) - e.g. `?mockInput=summary`.
-    // import.meta.env.DEV is statically false in production builds, so
-    // Vite dead-code-eliminates this whole branch (and its devMocks.js
-    // import) out of the prod bundle.
     if (import.meta.env.DEV) {
       const mockKey = new URLSearchParams(window.location.search).get("mockInput");
       if (mockKey) {
-        import("./devMocks").then(({ DEV_MOCK_INPUTS }) => {
-          // `?mockInput=consentSequence` - scripted two-turn sequence for
-          // exercising the exact scenario a single canned response can't:
-          // consent 1 answered (a real "I Accept" user reply lands in
-          // history, same as sendAnswer produces), then consent 2 arrives as
-          // the next turn. Verifies consent 1's message stays suppressed
-          // once the conversation has moved past it, not just while it's
-          // the pending input.
-          if (mockKey === "consentSequence") {
-            const { consentPrivacy, consentFraud } = DEV_MOCK_INPUTS;
-            dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));
-            setTimeout(() => {
-              dispatch(addUserMessage("I Accept"));
-              dispatch(applyMockResponse({ ...consentFraud, __isFreshLogin: false }));
-            }, 400);
-            return;
-          }
-
-          const mock = DEV_MOCK_INPUTS[mockKey];
-          if (mock) {
-            dispatch(applyMockResponse({ ...mock, __isFreshLogin: consumeFreshLoginFlag() }));
-          } else {
-            console.warn(`No dev mock registered for mockInput="${mockKey}"`, Object.keys(DEV_MOCK_INPUTS));
-            runMessage(undefined);
-          }
-        });
+        import("./devMocks").then(({ DEV_MOCK_INPUTS }) => applyDevMock(mockKey, DEV_MOCK_INPUTS));
         return;
       }
     }
@@ -133,15 +123,14 @@ function useBackendConversation() {
   };
 
   const submitFile = async (file) => {
-    // Belt-and-suspenders against a second upload racing the first (the UI
-    // already disables the uploader while busy) - this guard makes it
-    // impossible regardless of how submitFile gets triggered.
+    // Prevents concurrent upload submissions.
     if (isUploadingRef.current) return;
     isUploadingRef.current = true;
 
     const fileId = nextId();
     const targetInputId = input?.id ?? null;
     const previewUrl = URL.createObjectURL(file);
+    createdUrlsRef.current.add(previewUrl);
     const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
     dispatch(
       addUserFileMessage({
@@ -164,8 +153,7 @@ function useBackendConversation() {
     try {
       await dispatch(uploadConversationFile({ file, fileId })).unwrap();
     } catch {
-      // Error state is already applied by conversationSlice's rejected
-      // reducer - nothing further to do here.
+      // Ignore upload rejection
     } finally {
       isUploadingRef.current = false;
     }
@@ -191,6 +179,6 @@ function useBackendConversation() {
     submitFile,
     retry,
   };
-}
+};
 
 export default useBackendConversation;

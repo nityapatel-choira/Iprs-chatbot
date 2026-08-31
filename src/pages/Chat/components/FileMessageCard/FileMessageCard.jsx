@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
-import { getPdfThumbnailUrl } from "../../../../utils/pdfThumbnail";
+import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
@@ -26,11 +26,6 @@ function isPdfFile(fileName, mimeType, rawFile) {
   return false;
 }
 
-// Splits off the extension so it can be kept visible while only the base
-// name gets ellipsis-truncated (see .fileNameBase/.fileNameExt in the CSS
-// module) - a plain single-span ellipsis would just as likely clip the
-// extension itself on a long filename, which is the one part that tells
-// the user what kind of file this is.
 function splitFileName(name) {
   if (!name) return { base: "", ext: "" };
   const dotIndex = name.lastIndexOf(".");
@@ -50,27 +45,30 @@ function formatFileSize(size) {
   return String(size);
 }
 
-function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) {
+const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
+  const [createdUrl, setCreatedUrl] = useState(null);
 
   const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
   const isImage = isImageFile(fileName, mimeType, fileObject);
   const isPdf = isPdfFile(fileName, mimeType, fileObject);
 
-  const createdUrl = useMemo(() => {
-    if (!initialPreviewUrl && fileObject && isImage) {
-      return URL.createObjectURL(fileObject);
-    }
-    return null;
-  }, [initialPreviewUrl, fileObject, isImage]);
-
   useEffect(() => {
+    let url = null;
+    if (!initialPreviewUrl && fileObject && isImage) {
+      url = URL.createObjectURL(fileObject);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCreatedUrl(url);
+    } else {
+      setCreatedUrl(null);
+    }
+
     return () => {
-      if (createdUrl) {
-        URL.revokeObjectURL(createdUrl);
+      if (url) {
+        URL.revokeObjectURL(url);
       }
     };
-  }, [createdUrl]);
+  }, [initialPreviewUrl, fileObject, isImage]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -94,52 +92,75 @@ function FileMessageCard({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   const isUploading = status === "uploading";
   const isError = status === "error";
   const activePreviewUrl = initialPreviewUrl || createdUrl;
-  const activeThumbnailUrl = isImage ? activePreviewUrl : (isPdf ? pdfThumbnail : null);
+
+  let activeThumbnailUrl = null;
+  if (isImage) {
+    activeThumbnailUrl = activePreviewUrl;
+  } else if (isPdf) {
+    activeThumbnailUrl = pdfThumbnail;
+  }
   const showThumbnail = Boolean(activeThumbnailUrl);
+
   const formattedSize = formatFileSize(fileSize);
   const { base: fileNameBase, ext: fileNameExt } = splitFileName(fileName);
 
-  return (
-    <a
-      href={isUploading ? undefined : (activePreviewUrl || "#")}
-      target={isUploading ? undefined : (activePreviewUrl ? "_blank" : undefined)}
-      rel="noreferrer"
-      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
-      title={isUploading ? "Uploading..." : (activePreviewUrl ? "Click to view uploaded document" : undefined)}
-      style={isUploading ? { pointerEvents: "none", cursor: "default" } : undefined}
-    >
-      {isUploading ? (
+  let fileDetailText = `${formattedSize} · View Document ↗`;
+  if (isUploading) {
+    fileDetailText = "Uploading...";
+  } else if (isError) {
+    fileDetailText = `${formattedSize} · Verification Failed ⚠️`;
+  }
+
+  const linkHref = isUploading ? undefined : activePreviewUrl || "#";
+  const linkTarget = isUploading ? undefined : activePreviewUrl ? "_blank" : undefined;
+  const linkTitle = isUploading ? "Uploading..." : activePreviewUrl ? "Click to view uploaded document" : undefined;
+  const linkStyle = isUploading ? { pointerEvents: "none", cursor: "default" } : undefined;
+
+  const renderPreview = () => {
+    if (isUploading) {
+      return (
         <div className={styles.spinnerWrap}>
           <span className={styles.spinner} aria-hidden="true" />
         </div>
-      ) : showThumbnail ? (
+      );
+    }
+    if (showThumbnail) {
+      return (
         <img
           src={activeThumbnailUrl}
           alt={fileName || "Document preview"}
           className={styles.thumbnail}
           style={isError ? { borderColor: "#fecaca" } : undefined}
         />
-      ) : (
-        <div className={styles.fileIconBox}>
-          <FileDocIcon />
-        </div>
-      )}
+      );
+    }
+    return (
+      <div className={styles.fileIconBox}>
+        <FileDocIcon />
+      </div>
+    );
+  };
+
+  return (
+    <a
+      href={linkHref}
+      target={linkTarget}
+      rel="noreferrer"
+      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
+      title={linkTitle}
+      style={linkStyle}
+    >
+      {renderPreview()}
       <div className={styles.fileMetaBox}>
         <span className={styles.fileNameText}>
           <span className={styles.fileNameBase}>{fileNameBase}</span>
           {fileNameExt && <span className={styles.fileNameExt}>{fileNameExt}</span>}
         </span>
-        <span className={styles.fileDetailText}>
-          {isUploading
-            ? "Uploading..."
-            : isError
-            ? `${formattedSize} · Verification Failed ⚠️`
-            : `${formattedSize} · View Document ↗`}
-        </span>
+        <span className={styles.fileDetailText}>{fileDetailText}</span>
       </div>
     </a>
   );
-}
+};
 
 export default FileMessageCard;
 

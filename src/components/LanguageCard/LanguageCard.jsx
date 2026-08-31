@@ -1,6 +1,6 @@
 import styles from "./LanguageCard.module.css";
 
-function LanguageCard({ name, native, selected, onSelect, disabled }) {
+const LanguageCard = ({ name, native, selected, onSelect, disabled }) => {
   return (
     <button
       type="button"
@@ -15,6 +15,6 @@ function LanguageCard({ name, native, selected, onSelect, disabled }) {
       <span className={styles.cardNative}>{native}</span>
     </button>
   );
-}
+};
 
 export default LanguageCard;

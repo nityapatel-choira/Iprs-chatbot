@@ -1,5 +1,4 @@
-// Maps the backend's overall `progress` (0-100) onto the 4 stepper stages.
-// Backend sends no step identifier, so stages split the range evenly.
+// Splits 0-100% progress evenly across 4 registration stages.
 export const STEP_RANGES = {
   personalDetails: { min: 0, max: 25, label: "Personal Details" },
   bankDetails: { min: 25, max: 50, label: "Bank Details" },
@@ -11,11 +10,6 @@ const STAGE_ORDER = Object.keys(STEP_RANGES);
 
 export const STAGE_LABELS = STAGE_ORDER.map((key) => STEP_RANGES[key].label);
 
-// Maps a raw progress percentage to { activeIndex, currentFill }.
-// activeIndex is which stage is currently active (0-based); currentFill is
-// how far through that active stage's own range the progress is (0-100),
-// used to size the connector fill directly off the real backend number
-// instead of a hardcoded 50%.
 export function getStepProgress(progress) {
   const clamped = Math.max(0, Math.min(100, Number(progress) || 0));
 

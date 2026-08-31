@@ -6,7 +6,7 @@ import styles from "./LanguageSelection.module.css";
 
 const ENABLED_LANGUAGE_CODE = "en";
 
-function LanguageSelection({ onContinue }) {
+const LanguageSelection = ({ onContinue }) => {
   const [selected, setSelected] = useState(ENABLED_LANGUAGE_CODE);
 
   const handleContinue = () => {
@@ -56,6 +56,6 @@ function LanguageSelection({ onContinue }) {
       </div>
     </div>
   );
-}
+};
 
 export default LanguageSelection;

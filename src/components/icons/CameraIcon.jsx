@@ -1,4 +1,4 @@
-function CameraIcon({ width = 28, height = 28 }) {
+const CameraIcon = ({ width = 28, height = 28 }) => {
   return (
     <svg viewBox="0 0 28 28" width={width} height={height} fill="none" aria-hidden="true">
       <path
@@ -11,6 +11,6 @@ function CameraIcon({ width = 28, height = 28 }) {
       <circle cx="14" cy="15" r="4" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
-}
+};
 
 export default CameraIcon;

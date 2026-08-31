@@ -1,7 +1,7 @@
 import BottomSheet from "../BottomSheet/BottomSheet";
 import styles from "./ConsentSheet.module.css";
 
-function ConsentSheet({ open, title, children, onAccept, onBack }) {
+const ConsentSheet = ({ open, title, children, onAccept, onBack }) => {
   return (
     <BottomSheet
       open={open}
@@ -21,6 +21,6 @@ function ConsentSheet({ open, title, children, onAccept, onBack }) {
       {children}
     </BottomSheet>
   );
-}
+};
 
 export default ConsentSheet;

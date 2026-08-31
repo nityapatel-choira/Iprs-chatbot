@@ -3,14 +3,7 @@ import CheckIcon from "../icons/CheckIcon";
 import documentCheckIcon from "../../assets/image 4.svg";
 import styles from "./FeeSummaryCard.module.css";
 
-// Two optional footer variants, matching the two Figma frame families:
-// - `options`: entity_selected/document_list ("Start Application" /
-//   "Change my previous answers" stacked buttons).
-// - `confirmLabel`+`onConfirm`: fee_2/fee_4 (checkbox confirmation + single
-//   CTA, gated on the box being ticked).
-// Neither is required - existing callers with none of these props keep
-// rendering exactly as before.
-function FeeSummaryCard({
+const FeeSummaryCard = ({
   entityLabel,
   fee,
   feeCaption,
@@ -22,7 +15,7 @@ function FeeSummaryCard({
   onOptionSelect,
   confirmLabel,
   onConfirm,
-}) {
+}) => {
   const [confirmed, setConfirmed] = useState(false);
 
   return (
@@ -38,13 +31,13 @@ function FeeSummaryCard({
           <p className={styles.infoPill}>{infoText}</p>
         </div>
 
-        {docsHeading && (
+        {docsHeading && Array.isArray(docs) && docs.length > 0 && (
           <div className={styles.docCard}>
             <h3 className={styles.docHeading}>{docsHeading}</h3>
             <p className={styles.docSubtext}>{docsSubtext}</p>
             <ul className={styles.docList}>
-              {docs.map((doc) => (
-                <li key={doc.label} className={styles.docRow}>
+              {docs.map((doc, idx) => (
+                <li key={`${doc.label}-${idx}`} className={styles.docRow}>
                   <span className={styles.docCheck} aria-hidden="true">
                     <img src={documentCheckIcon} alt="" className={styles.docCheckIcon} />
                   </span>
@@ -78,6 +71,8 @@ function FeeSummaryCard({
         <div className={styles.confirmRow}>
           <button
             type="button"
+            role="checkbox"
+            aria-checked={confirmed}
             className={styles.confirmCheckboxRow}
             onClick={() => setConfirmed((prev) => !prev)}
           >
@@ -98,6 +93,6 @@ function FeeSummaryCard({
       )}
     </div>
   );
-}
+};
 
 export default FeeSummaryCard;

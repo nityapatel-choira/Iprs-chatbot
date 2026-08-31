@@ -1,15 +1,7 @@
-/* Small breathing room above the Scan Face view when it's scrolled into
-   view (see PassportPhotoCard.jsx's scrollIntoView call) - scroll-margin is
-   the CSS-native way to offset a scrollIntoView target, so it doesn't land
-   flush against .messages' own top padding/the header above it. A plain
-   spacing constant, not a viewport-height hack. */
 .faceScanWrap {
   scroll-margin-top: 16px;
 }
 
-/* Same --card-pct/--card-max width contract as FileUploader's .wrap and
-   DocumentScanCard's .wrap, so this card lines up with every other
-   Document Upload card at every breakpoint. */
 .wrap {
   display: flex;
   flex-direction: column;
@@ -92,11 +84,6 @@
   flex-shrink: 0;
 }
 
-/* UploadCloudIcon hardcodes stroke="#334155" on its paths (unlike
-   CameraIcon's currentColor) - CSS stroke always wins over that
-   presentation attribute, so this keeps both icons matching their
-   button's text color instead of the upload icon staying dark on the
-   solid-blue primary button. */
 .choiceButton svg path {
   stroke: currentColor;
 }

@@ -1,7 +1,7 @@
 import TranslateIcon from "../../../../components/icons/TranslateIcon";
 import styles from "./ChatHeader.module.css";
 
-function ChatHeader({ title, language, onBack, onLogout }) {
+const ChatHeader = ({ title, language, onBack, onLogout }) => {
   return (
     <header className={styles.header}>
       {onBack && (
@@ -21,6 +21,6 @@ function ChatHeader({ title, language, onBack, onLogout }) {
       )}
     </header>
   );
-}
+};
 
 export default ChatHeader;

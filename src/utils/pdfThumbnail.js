@@ -1,13 +1,19 @@
-import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+let pdfjsLibPromise = null;
 
-/**
- * Generates a Data URL thumbnail of the first page of a PDF file or blob/url.
- * Returns null if generation fails.
- */
-export async function getPdfThumbnailUrl(fileOrUrl) {
+const loadPdfJs = async () => {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = (async () => {
+      const pdfjsLib = await import("pdfjs-dist");
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+      return pdfjsLib;
+    })();
+  }
+  return pdfjsLibPromise;
+};
+
+const getPdfThumbnailUrl = async (fileOrUrl) => {
   try {
     let source;
     if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
@@ -19,6 +25,7 @@ export async function getPdfThumbnailUrl(fileOrUrl) {
       return null;
     }
 
+    const pdfjsLib = await loadPdfJs();
     const loadingTask = pdfjsLib.getDocument(source);
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(1);
@@ -35,4 +42,6 @@ export async function getPdfThumbnailUrl(fileOrUrl) {
     console.warn("Failed to generate PDF thumbnail:", err);
     return null;
   }
-}
+};
+
+export default getPdfThumbnailUrl;

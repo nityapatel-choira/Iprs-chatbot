@@ -1,16 +1,11 @@
 import { useState } from "react";
 import styles from "./AadhaarField.module.css";
 
-// Styled sibling of PhoneNumberField/OtpField for Aadhaar entry, matching
-// Figma's verify_aadhaar screen (bordered field + DigiLocker helper caption).
-// Wired into Chat.jsx as a progressive enhancement over the generic text
-// composer when the backend's own placeholder/label identifies the step as
-// Aadhaar - see the "text input" case in Chat.jsx for that heuristic.
-function AadhaarField({
+const AadhaarField = ({
   caption = "DigiLocker verifies your identity with Aadhaar to provide secure document access",
   onSubmit,
   disabled,
-}) {
+}) => {
   const [value, setValue] = useState("");
   const [touched, setTouched] = useState(false);
 
@@ -19,14 +14,15 @@ function AadhaarField({
 
   const handleChange = (raw) => setValue(raw.replace(/\D/g, "").slice(0, 12));
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     setTouched(true);
     if (!isValid || disabled) return;
     onSubmit?.(value);
   };
 
   return (
-    <div className={styles.card}>
+    <form className={styles.card} onSubmit={handleSubmit}>
       <label className={styles.label} htmlFor="aadhaar-input">
         Aadhaar number
       </label>
@@ -49,11 +45,11 @@ function AadhaarField({
         </span>
       )}
       <p className={styles.caption}>{caption}</p>
-      <button type="button" className={styles.submitButton} onClick={handleSubmit} disabled={!isValid || disabled}>
+      <button type="submit" className={styles.submitButton} disabled={!isValid || disabled}>
         Continue
       </button>
-    </div>
+    </form>
   );
-}
+};
 
 export default AadhaarField;
