@@ -179,3 +179,86 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cameraButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.cameraButton:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+@media (min-width: 768px) {
+  .cameraButton {
+    display: none;
+  }
+}
+
+.cropperStage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-height: 55vh;
+  background: #0f172a;
+  border-radius: 12px;
+  overflow: auto;
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.cropImage {
+  max-width: 100%;
+  max-height: 48vh;
+  object-fit: contain;
+  display: block;
+}
+
+.cropActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+}
+
+.cropCancelBtn {
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+}
+
+.cropConfirmBtn {
+  padding: 10px 20px;
+  background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(27, 92, 230, 0.25);
+}
