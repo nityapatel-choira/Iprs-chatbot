@@ -4,6 +4,19 @@ import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import styles from "./FileUploader.module.css";
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+
+function isAllowedFile(file) {
+  if (!file) return false;
+  const name = (file.name || "").toLowerCase();
+  const type = (file.type || "").toLowerCase();
+  const validExt = ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext));
+  const validMime = ALLOWED_MIME_TYPES.includes(type);
+  return validExt || validMime;
+}
+
 const FileUploader = ({
   title = "Choose a file or drag & drop it here",
   caption = "JPEG and PDF formats, up to 2MB",
@@ -19,6 +32,7 @@ const FileUploader = ({
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   useEffect(() => {
     if (autoOpen && !disabled) {
@@ -34,6 +48,18 @@ const FileUploader = ({
 
   const handleFile = (file) => {
     if (!file || busy) return;
+    setValidationError("");
+
+    if (!isAllowedFile(file)) {
+      setValidationError("Invalid file format. Please upload a JPG, PNG, or PDF file.");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setValidationError("File size exceeds 2MB limit. Please upload a smaller file.");
+      return;
+    }
+
     setFileName(file.name);
     onFileSelected?.(file);
   };
@@ -81,11 +107,15 @@ const FileUploader = ({
 
   const handleClick = () => {
     if (isDisabled) return;
+    setValidationError("");
     inputRef.current?.click();
   };
 
+  const effectiveStatus = validationError ? "error" : status;
+  const activeErrorMessage = validationError || errorMessage;
+
   function renderDropzoneContent() {
-    if (status === "uploading") {
+    if (effectiveStatus === "uploading") {
       return (
         <div className={styles.spinnerWrap} role="status" aria-live="polite">
           <span className={styles.spinner} />
@@ -99,7 +129,7 @@ const FileUploader = ({
       );
     }
 
-    if (status === "success") {
+    if (effectiveStatus === "success") {
       return (
         <div className={styles.spinnerWrap} role="status" aria-live="polite">
           <span className={styles.successIcon}>
@@ -110,14 +140,14 @@ const FileUploader = ({
       );
     }
 
-    if (status === "error") {
+    if (effectiveStatus === "error") {
       return (
         <div className={styles.spinnerWrap} role="alert">
           <span className={styles.errorIcon}>
             <AlertIcon />
           </span>
           <span className={styles.title}>Upload failed</span>
-          <span className={styles.caption}>{errorMessage || "Something went wrong."}</span>
+          <span className={styles.caption}>{activeErrorMessage || "Something went wrong."}</span>
           <span className={styles.retryLabel}>Tap to try again</span>
         </div>
       );
@@ -150,7 +180,7 @@ const FileUploader = ({
       <div
         className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""} ${
           busy ? styles.dropzoneUploading : ""
-        } ${status === "error" ? styles.dropzoneError : ""}`}
+        } ${effectiveStatus === "error" ? styles.dropzoneError : ""}`}
         onClick={handleClick}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}

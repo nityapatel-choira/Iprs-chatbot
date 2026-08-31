@@ -159,6 +159,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     if (input?.type === "summary input") {
       return (
         <FeeSummaryCard
+          key={input.id}
           {...input.data}
           onOptionSelect={(option) => sendAnswer(option.label)}
           onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}

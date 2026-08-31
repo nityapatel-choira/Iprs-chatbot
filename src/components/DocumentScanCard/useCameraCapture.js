@@ -50,6 +50,11 @@ const useCameraCapture = ({ onCapture } = {}) => {
 
       streamRef.current = stream;
       const video = videoRef.current;
+      if (!video || !mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        return;
+      }
       video.srcObject = stream;
       await video.play();
 
