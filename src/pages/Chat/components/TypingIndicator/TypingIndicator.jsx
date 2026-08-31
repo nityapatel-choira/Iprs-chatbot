@@ -1,7 +1,7 @@
 import BotAvatar from "../BotAvatar/BotAvatar";
 import styles from "../../Chat.module.css";
 
-function TypingIndicator() {
+const TypingIndicator = () => {
   return (
     <div className={`${styles.row} ${styles.rowBot}`}>
       <BotAvatar />
@@ -12,6 +12,6 @@ function TypingIndicator() {
       </div>
     </div>
   );
-}
+};
 
 export default TypingIndicator;

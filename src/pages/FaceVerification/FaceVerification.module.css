@@ -1,8 +1,3 @@
-/* Same --canvas-bg/--card-border/--card-max/--card-pct contract and .page/
-   .panel structure as Chat.module.css, so ChatHeader (reused as-is below)
-   renders pixel-identical to every other screen, and FileUploader (also
-   reused as-is) computes the exact same width it does in Chat - not just a
-   similar width, the same variables driving the same min(pct, max) logic. */
 .page {
   --canvas-bg: #f3f7f9;
   --card-border: #e2e8f0;
@@ -78,9 +73,6 @@
    width, which reads the same --card-pct/--card-max the parent defines). */
 .embeddedWrap {
   width: 100%;
-  /* Fallback bumped from 580 to 620 so this reads consistently with the
-     other cards in the chat flow even when --card-max isn't inherited from
-     a parent scope. */
   max-width: min(var(--card-pct, 88%), var(--card-max, 620px));
   margin: 12px auto;
 }
@@ -96,8 +88,6 @@
 }
 
 @media (min-width: 768px) {
-  /* Slightly tighter than mobile - the ring/gap growth below is the bigger
-     contributor to excess height, this just trims a little more. */
   .embeddedPanel {
     padding: 20px 24px;
   }
@@ -110,13 +100,6 @@
   width: 100%;
 }
 
-/* The live-capture group (ring/status/actions) stays its own, deliberately
-   narrower width - a 380-430px circular preview is the right size for a
-   face, unrelated to how wide a document-upload card should be. Only the
-   upload card (below) follows the shared --card-pct/--card-max width.
-   Desktop growth (both here and .ring below) is intentionally modest now -
-   letting the ring keep inflating with viewport width just made the whole
-   component taller without the camera needing to be that much bigger. */
 .frameGroup {
   display: flex;
   flex-direction: column;
@@ -149,9 +132,6 @@
   width: 100%;
 }
 
-/* Circular face-guide ring: color is the primary alignment signal - neutral
-   gray by default/adjusting, green once aligned, amber the moment more
-   than one face is detected. */
 .ring {
   width: clamp(220px, 62vw, 300px);
   height: clamp(220px, 62vw, 300px);
@@ -162,13 +142,6 @@
   position: relative;
 }
 
-/* Above ~480px wide the 62vw clamp is already pinned at its 300px mobile
-   ceiling, so it'd stay frozen there all the way up to a 1440px+ desktop
-   viewport - explicit sizes here are what actually give the desktop
-   version its own intentional scale instead of a stretched phone screen.
-   Kept modest on purpose: a face-scan camera doesn't need to keep growing
-   just because the viewport is wider, and the previous 320/360 growth was
-   the main reason the embedded card felt too tall on desktop. */
 @media (min-width: 768px) {
   .ring {
     width: 300px;
@@ -183,9 +156,6 @@
   }
 }
 
-/* Smallest phones (iPhone SE and similar, ~320-375px) - the ring's 220px
-   mobile floor plus .content's side padding can get tight, so it steps
-   down further here rather than risking edge-to-edge clipping. */
 @media (max-width: 340px) {
   .ring {
     width: 200px;
@@ -221,9 +191,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Mirrored so the live preview reads naturally, like a mirror/selfie
-     camera - the captured frame is un-mirrored back in useFaceDetection's
-     capture(), so the saved photo isn't reversed. */
+  /* Mirrored preview for natural selfie framing. */
   transform: translate(-50%, -50%) scaleX(-1);
 }
 
@@ -301,9 +269,6 @@
   color: #b45309;
 }
 
-/* Large circular capture/shutter button, enabled once the camera is
-   actually live - manual tap works alongside the existing auto-capture-
-   on-alignment behavior in useFaceDetection, not instead of it. */
 .shutterButton {
   display: flex;
   align-items: center;
@@ -390,15 +355,10 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  /* Text-only button, so the visible label stays small while the tap
-     target itself still clears the ~44px touch-target guideline. */
   padding: 12px;
   min-height: 44px;
 }
 
-/* Same text-link language as .retakeButton (matching color/weight) - the
-   camera<->upload switch and "retake" are the same kind of secondary,
-   low-emphasis action in this flow. */
 .fallbackLink {
   border: none;
   background: transparent;
@@ -412,8 +372,6 @@
   text-align: center;
 }
 
-/* Small trust label at the bottom - IPRS's own shield mark rather than
-   copying another vendor's "Powered by" badge. */
 .trustBadge {
   flex-shrink: 0;
   display: flex;

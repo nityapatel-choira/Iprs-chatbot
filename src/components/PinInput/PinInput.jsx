@@ -2,10 +2,9 @@ import { useRef, useState } from "react";
 import { sanitizeDigits } from "../../utils/validators";
 import styles from "./PinInput.module.css";
 
-// Boxed OTP entry matching Figma's verify_OTP "pin" component.
 const PLACEHOLDER_DIGITS = "1234";
 
-function PinInput({ length = 4, onComplete, disabled }) {
+const PinInput = ({ length = 4, onComplete, disabled }) => {
   const [digits, setDigits] = useState(() => Array(length).fill(""));
   const inputRefs = useRef([]);
 
@@ -30,7 +29,6 @@ function PinInput({ length = 4, onComplete, disabled }) {
 
     setDigits((prev) => {
       const next = [...prev];
-      // Spreads multi-digit input/autofill across the following boxes.
       const chars = value.split("");
       for (let i = 0; i < chars.length && index + i < length; i += 1) {
         next[index + i] = chars[i];
@@ -62,13 +60,14 @@ function PinInput({ length = 4, onComplete, disabled }) {
     focusIndex(Math.min(pasted.length, length - 1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     if (!isComplete || disabled) return;
     onComplete?.(code);
   };
 
   return (
-    <div className={styles.card}>
+    <form className={styles.card} onSubmit={handleSubmit}>
       <div className={styles.boxes} onPaste={handlePaste}>
         {digits.map((digit, index) => (
           <input
@@ -90,11 +89,11 @@ function PinInput({ length = 4, onComplete, disabled }) {
           />
         ))}
       </div>
-      <button type="button" className={styles.verifyButton} onClick={handleSubmit} disabled={!isComplete || disabled}>
+      <button type="submit" className={styles.verifyButton} disabled={!isComplete || disabled}>
         Verify
       </button>
-    </div>
+    </form>
   );
-}
+};
 
 export default PinInput;

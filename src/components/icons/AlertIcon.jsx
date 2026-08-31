@@ -1,4 +1,4 @@
-function AlertIcon({ width = 24, height = 24 }) {
+const AlertIcon = ({ width = 24, height = 24 }) => {
   return (
     <svg viewBox="0 0 24 24" width={width} height={height} fill="none" aria-hidden="true">
       <path
@@ -12,6 +12,6 @@ function AlertIcon({ width = 24, height = 24 }) {
       <circle cx="12" cy="17.3" r="1" fill="currentColor" />
     </svg>
   );
-}
+};
 
 export default AlertIcon;

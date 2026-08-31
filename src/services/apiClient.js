@@ -25,6 +25,13 @@ function handleUnauthorized(status, code) {
   }
 }
 
+function buildApiError(status, json, fallbackMessage) {
+  const code = json?.error?.code;
+  const message = json?.error?.message || fallbackMessage;
+  handleUnauthorized(status, code);
+  return new ApiError(message, { code, status, details: json?.error?.details });
+}
+
 async function parseEnvelope(res) {
   let json;
   try {
@@ -34,10 +41,7 @@ async function parseEnvelope(res) {
   }
 
   if (!res.ok || json?.success === false) {
-    const code = json?.error?.code;
-    const message = json?.error?.message || "Something went wrong. Please try again.";
-    handleUnauthorized(res.status, code);
-    throw new ApiError(message, { code, status: res.status, details: json?.error?.details });
+    throw buildApiError(res.status, json, "Something went wrong. Please try again.");
   }
 
   return json.data;
@@ -91,10 +95,7 @@ function uploadRequest(path, formData, onProgress) {
         return;
       }
 
-      const code = json?.error?.code;
-      const message = json?.error?.message || "Upload failed. Please try again.";
-      handleUnauthorized(xhr.status, code);
-      reject(new ApiError(message, { code, status: xhr.status, details: json?.error?.details }));
+      reject(buildApiError(xhr.status, json, "Upload failed. Please try again."));
     };
 
     xhr.onerror = () => reject(new ApiError("Network error during upload.", { code: "NETWORK_ERROR" }));

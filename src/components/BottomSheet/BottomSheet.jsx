@@ -1,12 +1,17 @@
+import { useEffect } from "react";
 import CloseIcon from "../icons/CloseIcon";
 import styles from "./BottomSheet.module.css";
 
-// Generic modal shell: bottom sheet on mobile, centered dialog on desktop
-// (>=768px - see BottomSheet.module.css). Extracted out of ConsentSheet so
-// it can be reused by any Figma bottom-sheet screen (consent, GST/society
-// declaration, etc.) without duplicating the scrim/handle/close plumbing -
-// callers own their own body content and footer actions.
-function BottomSheet({ open, title, children, footer, onClose }) {
+const BottomSheet = ({ open, title, children, footer, onClose }) => {
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -35,6 +40,6 @@ function BottomSheet({ open, title, children, footer, onClose }) {
       </div>
     </div>
   );
-}
+};
 
 export default BottomSheet;

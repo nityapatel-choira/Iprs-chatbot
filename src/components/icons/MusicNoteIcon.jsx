@@ -1,4 +1,4 @@
-function MusicNoteIcon() {
+const MusicNoteIcon = () => {
   return (
     <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" aria-hidden="true">
       <path
@@ -15,6 +15,6 @@ function MusicNoteIcon() {
       />
     </svg>
   );
-}
+};
 
 export default MusicNoteIcon;

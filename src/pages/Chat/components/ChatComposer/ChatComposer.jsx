@@ -4,7 +4,7 @@ import SendIcon from "../../../../components/icons/SendIcon";
 import { isValidEmail } from "../../../../utils/validators";
 import styles from "./ChatComposer.module.css";
 
-function ChatComposer({ onSend, disabled, placeholder, inputMode, type = "text" }) {
+const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" }) => {
   const [value, setValue] = useState("");
 
   const isValid = type === "email" ? isValidEmail(value.trim()) : Boolean(value.trim());
@@ -38,6 +38,6 @@ function ChatComposer({ onSend, disabled, placeholder, inputMode, type = "text" 
       </form>
     </div>
   );
-}
+};
 
 export default ChatComposer;
