@@ -30,9 +30,6 @@ function findCanonicalMatch(inputValue) {
 
 function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..." }) {
   const [inputValue, setInputValue] = useState("");
-  const [isManualMode, setIsManualMode] = useState(false);
-  const [manualValue, setManualValue] = useState("");
-
   const matchingCities = filterCities(inputValue);
   const canonicalMatch = findCanonicalMatch(inputValue);
 
@@ -58,64 +55,11 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
     },
   });
 
-  const handleSelectOther = () => {
-    setManualValue(inputValue);
-    setIsManualMode(true);
-  };
-
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    const clean = manualValue.trim();
-    if (disabled || !clean) return;
-    onSubmit?.(clean);
-  };
-
-  const handleBackToSearch = () => {
-    setIsManualMode(false);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (disabled || !canonicalMatch) return;
     onSubmit?.(canonicalMatch.name);
   };
-
-  if (isManualMode) {
-    return (
-      <div className={styles.container}>
-        <form className={styles.form} onSubmit={handleManualSubmit}>
-          <div className={styles.inputContainer}>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="Enter your city or place of birth..."
-              value={manualValue}
-              onChange={(e) => setManualValue(e.target.value)}
-              disabled={disabled}
-              aria-label="Manual city entry"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className={styles.sendButton}
-              disabled={disabled || !manualValue.trim()}
-              aria-label="Submit city"
-            >
-              <SendIcon />
-            </button>
-          </div>
-          <button
-            type="button"
-            className={styles.backLink}
-            onClick={handleBackToSearch}
-            disabled={disabled}
-          >
-            ← Select from city list
-          </button>
-        </form>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.container}>
@@ -161,14 +105,7 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
                 </li>
               ))
             ) : (
-              <li
-                className={`${styles.menuItem} ${styles.otherItem}`}
-                onClick={handleSelectOther}
-                role="option"
-                aria-selected={false}
-              >
-                Other (Enter manually)
-              </li>
+              <li className={styles.noMatches}>No cities found</li>
             ))}
         </ul>
       </form>
