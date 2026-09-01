@@ -11,7 +11,6 @@ import {
   setUploadStatus,
   setUploadProgress,
   setUploadError,
-  applyMockResponse,
   selectHistory,
   selectInput,
   selectIsTyping,
@@ -22,7 +21,7 @@ import {
   selectUploadForInputId,
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
-import { setStoredProgress, consumeFreshLoginFlag } from "../../services/conversationStorage";
+import { setStoredProgress } from "../../services/conversationStorage";
 
 // Custom hook managing conversation state and UI interactions.
 const useBackendConversation = () => {
@@ -69,42 +68,9 @@ const useBackendConversation = () => {
     dispatch(sendConversationTurn(message));
   };
 
-  const CONSENT_SEQUENCE_STEP_DELAY_MS = 400;
-  const runConsentSequenceMock = ({ consentPrivacy, consentFraud }) => {
-    dispatch(applyMockResponse({ ...consentPrivacy, __isFreshLogin: consumeFreshLoginFlag() }));
-    setTimeout(() => {
-      dispatch(addUserMessage("I Accept"));
-      dispatch(applyMockResponse({ ...consentFraud, __isFreshLogin: false }));
-    }, CONSENT_SEQUENCE_STEP_DELAY_MS);
-  };
-
-  const applyDevMock = (mockKey, DEV_MOCK_INPUTS) => {
-    if (mockKey === "consentSequence") {
-      runConsentSequenceMock(DEV_MOCK_INPUTS);
-      return;
-    }
-
-    const mock = DEV_MOCK_INPUTS[mockKey];
-    if (mock) {
-      dispatch(applyMockResponse({ ...mock, __isFreshLogin: consumeFreshLoginFlag() }));
-    } else {
-      console.warn(`No dev mock registered for mockInput="${mockKey}"`, Object.keys(DEV_MOCK_INPUTS));
-      runMessage(undefined);
-    }
-  };
-
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
-
-    if (import.meta.env.DEV) {
-      const mockKey = new URLSearchParams(window.location.search).get("mockInput");
-      if (mockKey) {
-        import("./devMocks").then(({ DEV_MOCK_INPUTS }) => applyDevMock(mockKey, DEV_MOCK_INPUTS));
-        return;
-      }
-    }
-
     runMessage(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

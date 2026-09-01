@@ -2,7 +2,6 @@ import { createSlice } from "@reduxjs/toolkit";
 import { getRegistrationCompleted, setRegistrationCompleted } from "../../services/registrationState";
 import { getStoredProgress } from "../../services/conversationStorage";
 import {
-  applyMockResponse,
   classifySessionEnded,
   sendConversationTurn,
   uploadConversationFile,
@@ -36,8 +35,7 @@ const registrationSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(sendConversationTurn.fulfilled, (state, action) => applyRegistrationFromResponse(state, action.payload))
-      .addCase(uploadConversationFile.fulfilled, (state, action) => applyRegistrationFromResponse(state, action.payload))
-      .addCase(applyMockResponse, (state, action) => applyRegistrationFromResponse(state, action.payload));
+      .addCase(uploadConversationFile.fulfilled, (state, action) => applyRegistrationFromResponse(state, action.payload));
   },
 });
 
