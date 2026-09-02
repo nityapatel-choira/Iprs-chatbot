@@ -1,7 +1,17 @@
-import * as pdfjsLib from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+let pdfjsLibPromise = null;
+
+const loadPdfJs = async () => {
+  if (!pdfjsLibPromise) {
+    pdfjsLibPromise = (async () => {
+      const pdfjsLib = await import("pdfjs-dist");
+      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+      return pdfjsLib;
+    })();
+  }
+  return pdfjsLibPromise;
+};
 
 const getPdfThumbnailUrl = async (fileOrUrl) => {
   try {
@@ -15,6 +25,7 @@ const getPdfThumbnailUrl = async (fileOrUrl) => {
       return null;
     }
 
+    const pdfjsLib = await loadPdfJs();
     const loadingTask = pdfjsLib.getDocument(source);
     const pdf = await loadingTask.promise;
     const page = await pdf.getPage(1);

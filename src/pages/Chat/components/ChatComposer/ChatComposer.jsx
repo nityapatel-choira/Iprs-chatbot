@@ -1,14 +1,17 @@
 import { useState } from "react";
 import MicIcon from "../../../../components/icons/MicIcon";
 import SendIcon from "../../../../components/icons/SendIcon";
+import { isValidEmail } from "../../../../utils/validators";
 import styles from "./ChatComposer.module.css";
 
 const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" }) => {
   const [value, setValue] = useState("");
 
+  const isValid = type === "email" ? isValidEmail(value.trim()) : Boolean(value.trim());
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!value.trim() || disabled) return;
+    if (!isValid || disabled) return;
     onSend(value.trim());
     setValue("");
   };
@@ -29,7 +32,7 @@ const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" 
           disabled={disabled}
           aria-label="Type your message"
         />
-        <button type="submit" className={styles.sendButton} disabled={disabled || !value.trim()} aria-label="Send">
+        <button type="submit" className={styles.sendButton} disabled={disabled || !isValid} aria-label="Send">
           <SendIcon />
         </button>
       </form>

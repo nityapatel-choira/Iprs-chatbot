@@ -183,10 +183,6 @@ const conversationSlice = createSlice({
     setUploadError: (state, action) => {
       state.uploadError = action.payload;
     },
-    applyMockResponse: (state, action) => {
-      applyConversationResponse(state, action.payload);
-      state.isTyping = false;
-    },
     resetConversation: () => ({
       history: [],
       input: null,
@@ -231,7 +227,6 @@ export const {
   setUploadStatus,
   setUploadForInputId,
   setUploadError,
-  applyMockResponse,
   resetConversation,
 } = conversationSlice.actions;
 

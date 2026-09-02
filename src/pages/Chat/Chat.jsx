@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
-import AadhaarField from "../../components/AadhaarField/AadhaarField";
-import CityPicker from "../../components/CityPicker/CityPicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
@@ -25,6 +23,7 @@ import styles from "./Chat.module.css";
 const PASSPORT_PHOTO_STEP_PATTERN = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
 const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
 
+// Only these input types render the free-text composer.
 const TEXT_INPUT_CONFIG = {
   "text input": { type: "text", inputMode: "text" },
   "email input": { type: "email", inputMode: "email" },
@@ -53,9 +52,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
   const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
   const displayFill = sessionEnded ? 100 : trackerFill;
-  const isAadhaarStep =
-    input?.type === "text input" && /aadhaar|aadhar/i.test(`${input.placeholder || ""} ${input.title || ""}`);
 
+  // The passport-photo step is identified from the trailing run of bot
+  // messages: input.title/caption are empty/generic for it on the real
+  // backend.
   let trailingBotText = "";
   for (let i = history.length - 1; i >= 0 && history[i]?.sender === "bot"; i -= 1) {
     trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
@@ -67,16 +67,22 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const lastMessage = history[history.length - 1];
   const pendingConsentMessages = isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
 
-
-  const resolvedConsentMessageIds = new Set();
-  for (let i = 1; i < history.length; i += 1) {
-    const message = history[i];
-    if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
-      resolvedConsentMessageIds.add(history[i - 1].id);
-      resolvedConsentMessageIds.add(message.id);
+  // Consent turns live entirely in the popup, so both the bot prompt and
+  // its "I Accept" reply stay out of the transcript permanently - not just
+  // while that step is the pending input.
+  const consentMessageIds = useMemo(() => {
+    const resolvedConsentMessageIds = new Set();
+    for (let i = 1; i < history.length; i += 1) {
+      const message = history[i];
+      if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
+        resolvedConsentMessageIds.add(history[i - 1].id);
+        resolvedConsentMessageIds.add(message.id);
+      }
     }
-  }
-  const consentMessageIds = new Set([...resolvedConsentMessageIds, ...pendingConsentMessages.map((m) => m.id)]);
+    const last = history[history.length - 1];
+    const pending = isConsentAcceptStep && last?.sender === "bot" ? [last.id] : [];
+    return new Set([...resolvedConsentMessageIds, ...pending]);
+  }, [history, isConsentAcceptStep]);
 
 
   const pendingConsentMessageId = pendingConsentMessages[0]?.id ?? null;
@@ -124,7 +130,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig) && !isAadhaarStep && !isCityStep;
+  const showComposer = Boolean(textConfig);
 
 
   const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
@@ -159,10 +165,6 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       return <PinInput key={input.id} onComplete={sendAnswer} />;
     }
 
-    if (isAadhaarStep) {
-      return <AadhaarField key={input.id} onSubmit={sendAnswer} />;
-    }
-
     if (input?.type === "checkbox input") {
       return (
         <CheckboxGroup
@@ -176,6 +178,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     if (input?.type === "summary input") {
       return (
         <FeeSummaryCard
+          key={input.id}
           {...input.data}
           onOptionSelect={(option) => sendAnswer(option.label)}
           onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}

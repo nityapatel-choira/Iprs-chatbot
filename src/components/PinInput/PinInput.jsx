@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { sanitizeDigits } from "../../utils/validators";
 import styles from "./PinInput.module.css";
 
 const PLACEHOLDER_DIGITS = "1234";
@@ -16,7 +17,7 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
   };
 
   const handleChange = (index, raw) => {
-    const value = raw.replace(/\D/g, "");
+    const value = sanitizeDigits(raw);
     if (!value) {
       setDigits((prev) => {
         const next = [...prev];
@@ -46,7 +47,7 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
   };
 
   const handlePaste = (e) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    const pasted = sanitizeDigits(e.clipboardData.getData("text"), length);
     if (!pasted) return;
     e.preventDefault();
     setDigits((prev) => {
@@ -59,13 +60,14 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
     focusIndex(Math.min(pasted.length, length - 1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     if (!isComplete || disabled) return;
     onComplete?.(code);
   };
 
   return (
-    <div className={styles.card}>
+    <form className={styles.card} onSubmit={handleSubmit}>
       <div className={styles.boxes} onPaste={handlePaste}>
         {digits.map((digit, index) => (
           <input
@@ -87,10 +89,10 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
           />
         ))}
       </div>
-      <button type="button" className={styles.verifyButton} onClick={handleSubmit} disabled={!isComplete || disabled}>
+      <button type="submit" className={styles.verifyButton} disabled={!isComplete || disabled}>
         Verify
       </button>
-    </div>
+    </form>
   );
 };
 
