@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
+import CityPicker from "../../components/CityPicker/CityPicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
@@ -178,7 +179,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig);
+  const showComposer = Boolean(textConfig) && !isCityStep;
 
 
   const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
