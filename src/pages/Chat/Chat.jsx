@@ -262,7 +262,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <FileUploader
           key={input.id}
           title={input.title || "Choose a file or drag & drop it here"}
-          caption={input.caption || "JPEG and PDF formats, up to 2MB"}
+          caption={input.caption || "PNG, JPG/JPEG, PDF"}
           onFileSelected={submitFile}
           status={effectiveUploadStatus}
           progress={effectiveUploadProgress}
