@@ -121,17 +121,10 @@ export const uploadConversationFile = createAsyncThunk(
   async ({ file, fileId }, { dispatch, rejectWithValue }) => {
     try {
       const data = await uploadFile(file, (pct) => dispatch(setUploadProgress(pct)));
-      // Backend re-asking for file input indicates rejection.
-      const isRejected = data?.input?.type === "file input";
-      dispatch(setFileMessageStatus({ fileId, status: isRejected ? "error" : "success" }));
-
-      if (isRejected) {
-        dispatch(setUploadStatus("error"));
-      } else {
-        dispatch(setUploadProgress(100));
-        dispatch(setUploadStatus("success"));
-        await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
-      }
+      dispatch(setFileMessageStatus({ fileId, status: "success" }));
+      dispatch(setUploadProgress(100));
+      dispatch(setUploadStatus("success"));
+      await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
 
       return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
     } catch (err) {

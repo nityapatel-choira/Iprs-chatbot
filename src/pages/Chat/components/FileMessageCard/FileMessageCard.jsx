@@ -108,7 +108,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   if (isUploading) {
     fileDetailText = "Uploading...";
   } else if (isError) {
-    fileDetailText = `${formattedSize} · Verification Failed ⚠️`;
+    fileDetailText = `${formattedSize} · Upload Failed ⚠️`;
   }
 
   const linkHref = isUploading ? undefined : activePreviewUrl || "#";
