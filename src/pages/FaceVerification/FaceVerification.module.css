@@ -5,8 +5,9 @@
 
   display: flex;
   justify-content: center;
-  min-height: 100dvh;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: #ffffff;
 }
 
@@ -14,8 +15,9 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 100dvh;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: #ffffff;
 }
 
@@ -160,6 +162,22 @@
   .ring {
     width: 200px;
     height: 200px;
+  }
+}
+
+@media (max-height: 667px) {
+  .frameGroup {
+    gap: clamp(12px, 2.5vh, 18px);
+  }
+
+  .ring {
+    width: clamp(180px, 35vh, 240px);
+    height: clamp(180px, 35vh, 240px);
+  }
+
+  .shutterButton {
+    width: 68px;
+    height: 68px;
   }
 }
 

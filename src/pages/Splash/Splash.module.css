@@ -4,8 +4,9 @@
   align-items: center;
   justify-content: center;
   gap: 24px;
-  min-height: 100dvh;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   padding: 2rem;
   background: #ffffff;
   animation: fadeIn 0.3s var(--ease, ease);

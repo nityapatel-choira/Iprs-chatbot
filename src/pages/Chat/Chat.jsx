@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -32,6 +32,8 @@ const TEXT_INPUT_CONFIG = {
 };
 
 const Chat = ({ language = "English", onBack, onLogout }) => {
+  const panelRef = useRef(null);
+
   const {
     history,
     input,
@@ -48,6 +50,44 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     submitFile,
     retry,
   } = useBackendConversation();
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const el = panelRef.current;
+    if (!vv || !el) return undefined;
+
+    let rafId = null;
+    let lastHeight = 0;
+
+    const updateVisualHeight = () => {
+      const isKeyboardOpen = vv.height < window.innerHeight - 100;
+      if (isKeyboardOpen) {
+        const nextHeight = Math.round(vv.height);
+        if (Math.abs(nextHeight - lastHeight) > 2) {
+          lastHeight = nextHeight;
+          el.style.setProperty("--visual-height", `${nextHeight}px`);
+        }
+      } else if (lastHeight !== 0) {
+        lastHeight = 0;
+        el.style.removeProperty("--visual-height");
+      }
+    };
+
+    const handleViewportChange = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(updateVisualHeight);
+    };
+
+    vv.addEventListener("resize", handleViewportChange);
+    vv.addEventListener("scroll", handleViewportChange);
+
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      vv.removeEventListener("resize", handleViewportChange);
+      vv.removeEventListener("scroll", handleViewportChange);
+      el.style.removeProperty("--visual-height");
+    };
+  }, []);
 
   const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
   const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
@@ -211,7 +251,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.panel}>
+      <div className={styles.panel} ref={panelRef}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
         <div className={styles.trackerSlot}>
