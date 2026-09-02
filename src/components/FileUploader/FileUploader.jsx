@@ -4,7 +4,6 @@ import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import styles from "./FileUploader.module.css";
 
-const MAX_FILE_SIZE = 2 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
 
@@ -19,7 +18,7 @@ function isAllowedFile(file) {
 
 const FileUploader = ({
   title = "Choose a file or drag & drop it here",
-  caption = "JPEG and PDF formats, up to 2MB",
+  caption = "PNG, JPG/JPEG, PDF",
   accept = ".jpg,.jpeg,.png,.pdf",
   onFileSelected,
   status = "idle",
@@ -51,11 +50,6 @@ const FileUploader = ({
 
     if (!isAllowedFile(file)) {
       setValidationError("Invalid file format. Please upload a JPG, PNG, or PDF file.");
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setValidationError("File size exceeds 2MB limit. Please upload a smaller file.");
       return;
     }
 

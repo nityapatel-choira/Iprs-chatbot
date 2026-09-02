@@ -15,8 +15,9 @@ function dataUrlToFile(dataUrl, filename) {
 }
 
 const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
-  const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
+  const [mode, setMode] = useState(null); // null (choice) | "camera"
   const faceScanRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Auto-scrolls camera into view when activated.
   useLayoutEffect(() => {
@@ -29,10 +30,27 @@ const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
     onFileSelected?.(dataUrlToFile(dataUrl, `passport-photo-${Date.now()}.jpg`));
   }
 
-  if (mode) {
+  function handleUploadClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) {
+      onFileSelected?.(file);
+    }
+  }
+
+  if (mode === "camera") {
     return (
       <div ref={faceScanRef} className={styles.faceScanWrap}>
-        <FaceVerification embedded initialMode={mode} onContinue={handleContinue} />
+        <FaceVerification
+          embedded
+          initialMode="camera"
+          onContinue={handleContinue}
+          onFileSelected={onFileSelected}
+        />
       </div>
     );
   }
@@ -54,13 +72,20 @@ const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
         <button
           type="button"
           className={`${styles.choiceButton} ${styles.choiceButtonSecondary}`}
-          onClick={() => setMode("upload")}
+          onClick={handleUploadClick}
           disabled={disabled}
         >
           <UploadCloudIcon />
           Upload Photo
         </button>
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
     </div>
   );
 };
