@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
-import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
+import getPdfThumbnailUrl, { getPdfFullPreviewUrl } from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
@@ -47,6 +47,7 @@ function formatFileSize(size) {
 
 const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
+  const [pdfFullPreview, setPdfFullPreview] = useState(null);
   const [createdUrl, setCreatedUrl] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -80,6 +81,11 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         getPdfThumbnailUrl(target).then((url) => {
           if (!isCancelled && url) {
             setPdfThumbnail(url);
+          }
+        });
+        getPdfFullPreviewUrl(target, 1.8).then((url) => {
+          if (!isCancelled && url) {
+            setPdfFullPreview(url);
           }
         });
       }
@@ -118,7 +124,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   const linkStyle = isUploading ? { pointerEvents: "none", cursor: "default" } : undefined;
 
   const handleCardClick = (e) => {
-    if (isUploading || !activePreviewUrl) return;
+    if (isUploading) return;
     e.preventDefault();
     setIsPreviewOpen(true);
   };
@@ -169,7 +175,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         </div>
       </a>
 
-      {isPreviewOpen && activePreviewUrl && (
+      {isPreviewOpen && (
         <div className={styles.previewModalOverlay} onClick={() => setIsPreviewOpen(false)}>
           <div className={styles.previewModalHeader} onClick={(e) => e.stopPropagation()}>
             <span className={styles.previewModalTitle}>{fileName}</span>
@@ -190,10 +196,10 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                 className={styles.previewModalImage}
               />
             ) : (
-              <iframe
-                src={activePreviewUrl}
-                title={fileName || "Document Preview"}
-                className={styles.previewModalFrame}
+              <img
+                src={pdfFullPreview || pdfThumbnail || activePreviewUrl}
+                alt={fileName || "Document Preview"}
+                className={styles.previewModalImage}
               />
             )}
           </div>
