@@ -16,17 +16,20 @@
   display: flex;
   align-items: stretch;
   gap: 8px;
+  width: 100%;
 }
 
 .codeSelect {
+  -webkit-appearance: none;
+  appearance: none;
   flex-shrink: 0;
-  width: 92px;
+  width: clamp(76px, 22vw, 86px);
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 0 8px;
   background: #ffffff;
   font-family: inherit;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   color: #0f172a;
   cursor: pointer;
@@ -41,7 +44,7 @@
   padding: 0 14px;
   background: #ffffff;
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   color: #0f172a;
   transition: border-color 0.15s var(--ease, ease), box-shadow 0.15s var(--ease, ease);
 }

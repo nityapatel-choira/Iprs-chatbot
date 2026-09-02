@@ -5,15 +5,9 @@ import MusicNoteIcon from "../icons/MusicNoteIcon";
 import AgreementIcon from "../icons/AgreementIcon";
 import styles from "./StepTracker.module.css";
 
-/* Icon glyphs traced from Figma's icon/essential/profile, icon/payment/netbanking,
-   icon/category/music and icon/profile_page_only/agreement components. */
 const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
-// currentFill (0-100) is how far progress has advanced through the active
-// stage's own range - it drives the active connector's fill width directly,
-// so the bar always reflects the real backend percentage rather than a
-// fixed "halfway" guess.
-function StepTracker({ stages, activeIndex, currentFill = 0 }) {
+const StepTracker = ({ stages, activeIndex, currentFill = 0 }) => {
   const totalPercent = useMemo(() => {
     if (stages.length <= 1) return 0;
     const pct = ((activeIndex + currentFill / 100) / (stages.length - 1)) * 100;
@@ -23,7 +17,6 @@ function StepTracker({ stages, activeIndex, currentFill = 0 }) {
   return (
     <div className={styles.wrap}>
       <div className={styles.trackContainer}>
-        {/* Horizontal progress bar line behind the circles */}
         <div className={styles.progressBarBg}>
           <div className={styles.progressBarFill} style={{ width: `${totalPercent}%` }} />
         </div>
@@ -39,7 +32,6 @@ function StepTracker({ stages, activeIndex, currentFill = 0 }) {
                 </span>
                 <div className={styles.textCol}>
                   <span className={styles.stepNum}>{`STEP ${i + 1}`}</span>
-                  <span className={styles.stageName}>{stage}</span>
                 </div>
               </div>
             );
@@ -48,6 +40,6 @@ function StepTracker({ stages, activeIndex, currentFill = 0 }) {
       </div>
     </div>
   );
-}
+};
 
 export default StepTracker;

@@ -68,6 +68,8 @@
 }
 
 .body {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   font-size: 0.875rem;
   line-height: 1.5;
@@ -86,8 +88,6 @@
   padding-top: 20px;
 }
 
-/* Tablet/desktop: present as a centered dialog card instead of a bottom
-   sheet — rounded on all corners, closed via an explicit X. */
 @media (min-width: 768px) {
   .scrim {
     align-items: center;

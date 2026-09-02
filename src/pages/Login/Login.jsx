@@ -3,17 +3,10 @@ import iprsLogo from "../../assets/iprs-logo.png";
 import PhoneNumberField from "../../components/PhoneNumberField/PhoneNumberField";
 import OtpField from "../../components/OtpField/OtpField";
 import { sendOtp, verifyOtp } from "../../services/authService";
+import { isValidPhone, isValidOtp, sanitizeDigits } from "../../utils/validators";
 import styles from "./Login.module.css";
 
-function isValidPhone(value) {
-  return /^\d{10}$/.test(value);
-}
-
-function isValidOtp(value) {
-  return /^\d{4}$/.test(value);
-}
-
-function Login({ onContinue }) {
+const Login = ({ onContinue }) => {
   const [phase, setPhase] = useState("phone");
   const [countryCode, setCountryCode] = useState("+91");
   const [phone, setPhone] = useState("");
@@ -30,28 +23,30 @@ function Login({ onContinue }) {
   const phoneError = phoneTouched && phone.length > 0 && !phoneValid ? "Enter a valid 10-digit mobile number" : "";
   const otpError = otpTouched && otp.length > 0 && !otpValid ? "Enter the code we texted you" : "";
 
-  const handlePhoneChange = (raw) => setPhone(raw.replace(/\D/g, "").slice(0, 10));
-  // Clears apiError on every edit so a stale "wrong OTP" error doesn't
-  // outlive the attempt it was for - no timer needed.
+  const handlePhoneChange = (raw) => setPhone(sanitizeDigits(raw, 10));
   const handleOtpChange = (raw) => {
-    setOtp(raw.replace(/\D/g, "").slice(0, 4));
-    setApiError("");
+    setOtp(sanitizeDigits(raw, 4));
+    if (apiError) setApiError("");
   };
 
-  const handleSendOtp = async () => {
-    setPhoneTouched(true);
-    if (!phoneValid || isSubmitting) return;
-
+  const requestOtp = async (onSuccess, failureMessage) => {
+    if (isSubmitting) return;
     setApiError("");
     setIsSubmitting(true);
     try {
       await sendOtp(fullPhone);
-      setPhase("otp");
+      onSuccess?.();
     } catch (err) {
-      setApiError(err.message || "Couldn't send the code. Please try again.");
+      setApiError(err.message || failureMessage);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSendOtp = () => {
+    setPhoneTouched(true);
+    if (!phoneValid) return;
+    requestOtp(() => setPhase("otp"), "Couldn't send the code. Please try again.");
   };
 
   const handleVerifyOtp = async () => {
@@ -64,8 +59,7 @@ function Login({ onContinue }) {
       const data = await verifyOtp(fullPhone, otp);
       onContinue?.(data);
     } catch {
-      // The backend's raw rejection text (e.g. "Do not match OTP") isn't
-      // user-facing copy, so show a fixed, friendly message instead of it.
+      // Show fixed error message on OTP rejection.
       setApiError("Invalid OTP. Please enter the correct OTP.");
     } finally {
       setIsSubmitting(false);
@@ -79,23 +73,19 @@ function Login({ onContinue }) {
     setApiError("");
   };
 
-  const handleResend = async () => {
-    if (isSubmitting) return;
-    setApiError("");
-    setIsSubmitting(true);
-    try {
-      await sendOtp(fullPhone);
-    } catch (err) {
-      setApiError(err.message || "Couldn't resend the code. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleResend = () => {
+    requestOtp(undefined, "Couldn't resend the code. Please try again.");
   };
 
   const handleFooterClick = phase === "phone" ? handleSendOtp : handleVerifyOtp;
   const footerDisabled = phase === "phone" ? !phoneValid || isSubmitting : !otpValid || isSubmitting;
-  const footerLabel =
-    phase === "phone" ? (isSubmitting ? "Sending..." : "Continue") : isSubmitting ? "Verifying..." : "Verify & Continue";
+
+  let footerLabel;
+  if (phase === "phone") {
+    footerLabel = isSubmitting ? "Sending..." : "Continue";
+  } else {
+    footerLabel = isSubmitting ? "Verifying..." : "Verify & Continue";
+  }
 
   return (
     <div className={styles.page}>
@@ -164,6 +154,6 @@ function Login({ onContinue }) {
       </div>
     </div>
   );
-}
+};
 
 export default Login;

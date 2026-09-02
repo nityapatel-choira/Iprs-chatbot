@@ -35,6 +35,10 @@
   transition: border-color 0.15s var(--ease, ease), box-shadow 0.15s var(--ease, ease);
 }
 
+.box::placeholder {
+  color: #94a3b8;
+}
+
 .box:focus-visible {
   outline: none;
   border-color: #0066ff;

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import "./App.css";
 import Splash from "./pages/Splash/Splash";
 import LanguageSelection from "./pages/LanguageSelection/LanguageSelection";
@@ -17,56 +17,27 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
-// const FaceVerification = lazy(() => import("./pages/FaceVerification/FaceVerification"));
 
-// Dev-only entry point (?test=payment) for exercising the real Razorpay
-// Standard Checkout flow (open/success/failure/dismiss) without needing the
-// backend's "payment input" conversation step to exist yet - see
-// src/services/paymentService.js. import.meta.env.DEV is statically false in
-// production builds, so Vite dead-code-eliminates this whole branch (and the
-// PaymentCard chunk it lazy-imports) out of the prod bundle - same pattern
-// as useBackendConversation's ?mockInput= dev harness.
-const DevPaymentTest = import.meta.env.DEV ? lazy(() => import("./components/payment/PaymentCard")) : null;
-// Dev-only FaceScan test entry point (?test=facescan) - bypasses splash/
-// language/login entirely so the component can be exercised on its own
-// while it isn't wired into the real registration flow yet. Only ever
-// reachable in a dev build: import.meta.env.DEV is statically false in
-// production, so Vite dead-code-eliminates this branch (and the
-// FaceVerification chunk it lazy-imports) out of the prod bundle - same
-// pattern as the dev mock harness in useBackendConversation.js.
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
+const DevCityTest = import.meta.env.DEV ? lazy(() => import("./components/CityPicker/CityPicker")) : null;
 
-function App() {
+const App = () => {
   const dispatch = useAppDispatch();
   const languageCode = useAppSelector(selectLanguageCode);
   const loggedIn = useAppSelector(selectIsAuthenticated);
   const [showSplash, setShowSplash] = useState(true);
-  // const [onboardingDone, setOnboardingDone] = useState(false);
 
-  useEffect(() => {
-    onUnauthorized(() => {
-      dispatch(setAuthenticated(false));
-      clearRegistrationCompleted();
-      clearStoredConversation();
-      dispatch(resetConversation());
-      dispatch(resetRegistration());
-    });
+  const resetSession = useCallback(() => {
+    dispatch(setAuthenticated(false));
+    clearRegistrationCompleted();
+    clearStoredConversation();
+    dispatch(resetConversation());
+    dispatch(resetRegistration());
   }, [dispatch]);
 
-  if (DevPaymentTest && typeof window !== "undefined" && window.location.search.includes("test=payment")) {
-    return (
-      <div className="App-devPaymentTest">
-        <div className="App-devPaymentTestPanel">
-          <Suspense fallback={null}>
-            <DevPaymentTest
-              prefill={{ name: "Test User", email: "test@example.com", contact: "9999999999" }}
-              onComplete={(result) => console.log("[DevPaymentTest] payment complete", result)}
-            />
-          </Suspense>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    onUnauthorized(resetSession);
+  }, [resetSession]);
 
   const handleLanguageContinue = (code) => {
     setLanguageCode(code);
@@ -74,17 +45,13 @@ function App() {
   };
 
   const handleLogout = async () => {
-    dispatch(setAuthenticated(false));
+    resetSession();
     clearLanguageCode();
     dispatch(clearLanguage());
-    clearRegistrationCompleted();
-    clearStoredConversation();
-    dispatch(resetConversation());
-    dispatch(resetRegistration());
     try {
       await logout();
     } catch {
-      // token is already cleared locally by authService.logout regardless of API outcome
+      // Ignore API error
     }
   };
 
@@ -97,6 +64,21 @@ function App() {
           }}
         />
       </Suspense>
+    );
+  }
+
+  if (DevCityTest && typeof window !== "undefined" && window.location.search.includes("test=city")) {
+    return (
+      <div style={{ padding: "40px 20px", background: "#f8fafc", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: "580px" }}>
+          <h3 style={{ marginBottom: "16px", textAlign: "center", fontFamily: "sans-serif", color: "#0f172a" }}>
+            CityPicker Test Harness (?test=city)
+          </h3>
+          <Suspense fallback={null}>
+            <DevCityTest onSubmit={(city) => alert(`City selected: ${city}`)} />
+          </Suspense>
+        </div>
+      </div>
     );
   }
 
@@ -116,20 +98,12 @@ function App() {
     );
   }
 
-  // if (onboardingDone) {
-  //   return (
-  //     <Suspense fallback={null}>
-  //       <FaceVerification />
-  //     </Suspense>
-  //   );
-  // }
-
   const language = LANGUAGES.find((lang) => lang.code === languageCode)?.name;
   return (
     <Suspense fallback={null}>
-      <Chat language={language} onLogout={handleLogout} /* onFinished={() => setOnboardingDone(true)} */ />
+      <Chat language={language} onLogout={handleLogout} />
     </Suspense>
   );
-}
+};
 
 export default App;

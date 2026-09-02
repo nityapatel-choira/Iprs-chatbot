@@ -1,4 +1,4 @@
-function ProfileIcon() {
+const ProfileIcon = () => {
   return (
     <svg viewBox="0 0 25 25" width="1em" height="1em" fill="none" aria-hidden="true">
       <path
@@ -11,6 +11,6 @@ function ProfileIcon() {
       />
     </svg>
   );
-}
+};
 
 export default ProfileIcon;

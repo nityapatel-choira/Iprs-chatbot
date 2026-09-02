@@ -6,7 +6,7 @@ const COUNTRY_CODES = [
   { code: "+44", flag: "🇬🇧", label: "United Kingdom" },
 ];
 
-function PhoneNumberField({
+const PhoneNumberField = ({
   label = "Mobile number",
   countryCode,
   onCountryCodeChange,
@@ -16,7 +16,7 @@ function PhoneNumberField({
   placeholder = "98765 43210",
   error,
   disabled,
-}) {
+}) => {
   return (
     <div className={styles.wrap}>
       <label className={styles.label} htmlFor="phone-number-input">
@@ -58,6 +58,6 @@ function PhoneNumberField({
       )}
     </div>
   );
-}
+};
 
 export default PhoneNumberField;

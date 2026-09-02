@@ -2,7 +2,7 @@ import { useState } from "react";
 import CheckIcon from "../icons/CheckIcon";
 import styles from "./CheckboxGroup.module.css";
 
-function CheckboxGroup({ options, caption, onSubmit, disabled }) {
+const CheckboxGroup = ({ options, caption, onSubmit, disabled }) => {
   const [checked, setChecked] = useState({});
 
   const toggle = (key) => {
@@ -11,17 +11,21 @@ function CheckboxGroup({ options, caption, onSubmit, disabled }) {
 
   const hasSelection = Object.values(checked).some(Boolean);
 
+  const safeOptions = options || [];
+
   const handleSubmit = () => {
     if (!hasSelection || disabled) return;
-    onSubmit(options.filter((opt) => checked[opt.key]));
+    onSubmit?.(safeOptions.filter((opt) => checked[opt.key]));
   };
 
   return (
-    <div className={styles.card}>
-      {options.map((opt) => (
+    <div className={styles.card} role="group" aria-label="Selection options">
+      {safeOptions.map((opt) => (
         <button
           key={opt.key}
           type="button"
+          role="checkbox"
+          aria-checked={Boolean(checked[opt.key])}
           className={styles.row}
           onClick={() => toggle(opt.key)}
           disabled={disabled}
@@ -45,6 +49,6 @@ function CheckboxGroup({ options, caption, onSubmit, disabled }) {
       </button>
     </div>
   );
-}
+};
 
 export default CheckboxGroup;

@@ -8,29 +8,15 @@ import ChatHeader from "../Chat/components/ChatHeader/ChatHeader";
 import useFaceDetection from "../../components/FaceScan/useFaceDetection";
 import styles from "./FaceVerification.module.css";
 
-// Full-screen selfie-capture experience. Detection/capture logic all lives
-// in useFaceDetection (untouched here) - this component is purely the UI
-// layer around it, so it stays modular and backend-ready: onCapture already
-// receives the captured data URL the moment a photo is taken (live capture
-// or upload), ready to be POSTed wherever a future integration needs
-// without touching this component.
-//
-// Reuses two existing IPRS pieces as-is rather than approximating their
-// look: ChatHeader (same header every other screen already uses - see
-// FaceVerification.module.css's --canvas-bg/--card-border for how it picks
-// up the exact same tint/border here) and FileUploader (same upload card
-// used for PAN/bank documents elsewhere, sized off the same --card-pct/
-// --card-max variables Chat.module.css defines, so it's not just visually
-// similar but literally the same width logic).
-//
-// `embedded` lets this same component drop into the Document Upload flow
-// (Chat.jsx's Passport Size Photo step) instead of only ever being a
-// full-page screen: it hides the standalone ChatHeader/back-button/trust
-// footer and lets the surrounding card own the width, while every other
-// piece (camera, detection states, capture controls, upload fallback) is
-// untouched. Standalone use (the ?test=facescan route) is unaffected since
-// `embedded` defaults to false.
-function FaceVerification({ onBack, onCapture, onContinue, language = "English", embedded = false, initialMode = "camera" }) {
+// Camera/upload face capture component. Can be embedded inline.
+const FaceVerification = ({
+  onBack,
+  onCapture,
+  onContinue,
+  language = "English",
+  embedded = false,
+  initialMode = "camera",
+}) => {
   const {
     status,
     alignment,
@@ -46,101 +32,81 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
     detectImageFile,
   } = useFaceDetection({ onCapture });
 
-  // "camera" or "upload" - both are always reachable via the fallback
-  // links below regardless of which one this instance starts in; the
-  // Document Upload "Scan Face"/"Upload Photo" choice picks the starting
-  // mode via `initialMode`, standalone use always starts on "camera".
   const [mode, setMode] = useState(initialMode);
-  // Only the very first entry into upload mode (Document Upload's "Upload
-  // from Device" choice, via initialMode="upload") should skip straight to
-  // the native picker. The in-scan fallback links ("Having trouble?
-  // Upload a photo instead" / the post-error "Upload a photo instead") are
-  // a *manual* switch away from the camera - those should still land on
-  // the upload card so the user can see it's a different mode, not have a
-  // file dialog pop up unannounced. switchToUpload marks this true, which
-  // permanently turns off auto-opening for the rest of this instance's
-  // life (including if they cycle back to upload again later).
+  // Auto-opens file picker only when initialMode is "upload".
   const [manualUploadSwitch, setManualUploadSwitch] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState("idle");
-  const [uploadErrorMessage, setUploadErrorMessage] = useState("");
-  const [uploadedImage, setUploadedImage] = useState(null);
+  const [upload, setUpload] = useState({ status: "idle", errorMessage: "", image: null });
 
   const isUploadMode = mode === "upload";
-  const showSuccess = isUploadMode ? Boolean(uploadedImage) : status === "success";
-  const displayImage = isUploadMode ? uploadedImage : capturedImage;
+  const showSuccess = isUploadMode ? Boolean(upload.image) : status === "success";
+  const displayImage = isUploadMode ? upload.image : capturedImage;
   const showUploadForm = isUploadMode && !showSuccess;
 
   const isAligned = !isUploadMode && alignment === "aligned";
   const hasAlert = !isUploadMode && alignment === "multiple-faces";
-  const ringClass = showSuccess
-    ? styles.ringAligned
-    : isAligned
-      ? styles.ringAligned
-      : hasAlert
-        ? styles.ringAlert
-        : styles.ringNeutral;
 
-  // Camera opens the moment this screen is reached (and again whenever the
-  // user switches back from upload mode) - matching a real mobile
-  // selfie-capture flow, no separate "tap to start" interstitial.
+  let ringClass = styles.ringNeutral;
+  if (showSuccess || isAligned) {
+    ringClass = styles.ringAligned;
+  } else if (hasAlert) {
+    ringClass = styles.ringAlert;
+  }
+
   useEffect(() => {
     if (mode === "camera") start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
-  function handleBack() {
+  const handleBack = () => {
     cancel();
     onBack?.();
-  }
+  };
 
-  function switchToUpload() {
-    // Release the camera while the upload card is up (item 22) - there's
-    // no reason to keep it running while the user is picking a file.
+  const switchToUpload = () => {
     cancel();
     setManualUploadSwitch(true);
     setMode("upload");
-    setUploadStatus("idle");
-    setUploadErrorMessage("");
-    setUploadedImage(null);
-  }
+    setUpload({ status: "idle", errorMessage: "", image: null });
+  };
 
-  function switchToCamera() {
+  const switchToCamera = () => {
     setMode("camera");
-  }
+  };
 
-  async function handleFileSelected(file) {
-    setUploadStatus("uploading");
-    setUploadErrorMessage("");
+  const handleFileSelected = async (file) => {
+    setUpload({ status: "uploading", errorMessage: "", image: null });
     try {
       const { faceCount, dataUrl } = await detectImageFile(file);
       if (faceCount === 0) {
-        setUploadStatus("error");
-        setUploadErrorMessage("No face detected. Please upload a clear photo of your face.");
+        setUpload({
+          status: "error",
+          errorMessage: "No face detected. Please upload a clear photo of your face.",
+          image: null,
+        });
         return;
       }
       if (faceCount > 1) {
-        setUploadStatus("error");
-        setUploadErrorMessage("Multiple faces detected. Please upload a photo with only your face.");
+        setUpload({
+          status: "error",
+          errorMessage: "Multiple faces detected. Please upload a photo with only your face.",
+          image: null,
+        });
         return;
       }
-      setUploadStatus("success");
-      setUploadedImage(dataUrl);
+      setUpload({ status: "success", errorMessage: "", image: dataUrl });
       onCapture?.(dataUrl);
     } catch {
-      setUploadStatus("error");
-      setUploadErrorMessage("Couldn't read that file. Please try again.");
+      setUpload({ status: "error", errorMessage: "Couldn't read that file. Please try again.", image: null });
     }
-  }
+  };
 
-  function handleRetake() {
+  const handleRetake = () => {
     if (isUploadMode) {
-      setUploadStatus("idle");
-      setUploadedImage(null);
-      setUploadErrorMessage("");
+      setUpload({ status: "idle", errorMessage: "", image: null });
     } else {
       retake();
     }
-  }
+  };
 
   return (
     <div className={embedded ? styles.embeddedWrap : styles.page}>
@@ -155,8 +121,8 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
                 caption="JPEG or PNG, up to 5MB"
                 accept=".jpg,.jpeg,.png"
                 onFileSelected={handleFileSelected}
-                status={uploadStatus}
-                errorMessage={uploadErrorMessage}
+                status={upload.status}
+                errorMessage={upload.errorMessage}
                 autoOpen={initialMode === "upload" && !manualUploadSwitch}
               />
               <button type="button" className={styles.fallbackLink} onClick={switchToCamera}>
@@ -257,6 +223,6 @@ function FaceVerification({ onBack, onCapture, onContinue, language = "English",
       </div>
     </div>
   );
-}
+};
 
 export default FaceVerification;

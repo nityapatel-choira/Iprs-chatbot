@@ -4,10 +4,7 @@ import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
 import styles from "./PassportPhotoCard.module.css";
 
-// Turns the data URL FaceVerification hands back (from either its live
-// capture or its own upload-fallback path) into a real File, since
-// useBackendConversation.submitFile - the same function FileUploader calls
-// elsewhere - expects a File (reads .name/.size, then POSTs it as-is).
+// Converts captured data URL to a File object.
 function dataUrlToFile(dataUrl, filename) {
   const [header, base64] = dataUrl.split(",");
   const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
@@ -17,23 +14,11 @@ function dataUrlToFile(dataUrl, filename) {
   return new File([bytes], filename, { type: mime });
 }
 
-// Passport Size Photo step of the Document Upload flow. Reuses
-// FaceVerification/useFaceDetection as-is (embedded mode - see that
-// component) for both paths this offers: "Scan Face" opens it straight
-// into live camera capture, "Upload Photo" opens it straight into its
-// upload fallback (same MediaPipe face-count validation either way). Only
-// once the user taps Continue on FaceVerification's result screen does the
-// image get handed to the existing file-upload flow via onFileSelected.
-function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
+const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
 
-  // Only "Scan Face" gets auto-scrolled - it's the tall, camera-heavy view
-  // that can land below the fold; "Upload Photo" opens the native file
-  // picker itself (see FileUploader's autoOpen) and shouldn't also animate
-  // the page under it. useLayoutEffect (not useEffect) so this runs after
-  // the DOM has the mounted FaceVerification's real height but before the
-  // browser paints, avoiding a visible pre-scroll flash/jump.
+  // Auto-scrolls camera into view when activated.
   useLayoutEffect(() => {
     if (mode === "camera") {
       faceScanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -78,6 +63,6 @@ function PassportPhotoCard({ title, caption, onFileSelected, disabled }) {
       </div>
     </div>
   );
-}
+};
 
 export default PassportPhotoCard;

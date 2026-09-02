@@ -1,12 +1,10 @@
 import { useRef, useState } from "react";
+import { sanitizeDigits } from "../../utils/validators";
 import styles from "./PinInput.module.css";
 
-// Boxed OTP entry matching Figma's verify_OTP "pin" component. Kept as a
-// standalone widget (rather than folding into OtpField) because OtpField's
-// single-line input is already live in Login.jsx and works - this only
-// replaces the chat's generic composer for the "otp input" step, matching
-// Figma without touching the already-working login OTP flow.
-function PinInput({ length = 4, onComplete, disabled }) {
+const PLACEHOLDER_DIGITS = "1234";
+
+const PinInput = ({ length = 4, onComplete, disabled }) => {
   const [digits, setDigits] = useState(() => Array(length).fill(""));
   const inputRefs = useRef([]);
 
@@ -19,7 +17,7 @@ function PinInput({ length = 4, onComplete, disabled }) {
   };
 
   const handleChange = (index, raw) => {
-    const value = raw.replace(/\D/g, "");
+    const value = sanitizeDigits(raw);
     if (!value) {
       setDigits((prev) => {
         const next = [...prev];
@@ -31,9 +29,6 @@ function PinInput({ length = 4, onComplete, disabled }) {
 
     setDigits((prev) => {
       const next = [...prev];
-      // Handles fast typing/autofill placing more than one digit into a
-      // single box by spreading the extra characters into the following
-      // boxes, so paste and native OTP autofill both work naturally.
       const chars = value.split("");
       for (let i = 0; i < chars.length && index + i < length; i += 1) {
         next[index + i] = chars[i];
@@ -52,7 +47,7 @@ function PinInput({ length = 4, onComplete, disabled }) {
   };
 
   const handlePaste = (e) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    const pasted = sanitizeDigits(e.clipboardData.getData("text"), length);
     if (!pasted) return;
     e.preventDefault();
     setDigits((prev) => {
@@ -65,13 +60,14 @@ function PinInput({ length = 4, onComplete, disabled }) {
     focusIndex(Math.min(pasted.length, length - 1));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+    e?.preventDefault();
     if (!isComplete || disabled) return;
     onComplete?.(code);
   };
 
   return (
-    <div className={styles.card}>
+    <form className={styles.card} onSubmit={handleSubmit}>
       <div className={styles.boxes} onPaste={handlePaste}>
         {digits.map((digit, index) => (
           <input
@@ -82,7 +78,9 @@ function PinInput({ length = 4, onComplete, disabled }) {
             className={styles.box}
             type="text"
             inputMode="numeric"
-            maxLength={length}
+            autoComplete="one-time-code"
+            maxLength={1}
+            placeholder={PLACEHOLDER_DIGITS[index] || ""}
             value={digit}
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
@@ -91,11 +89,11 @@ function PinInput({ length = 4, onComplete, disabled }) {
           />
         ))}
       </div>
-      <button type="button" className={styles.verifyButton} onClick={handleSubmit} disabled={!isComplete || disabled}>
+      <button type="submit" className={styles.verifyButton} disabled={!isComplete || disabled}>
         Verify
       </button>
-    </div>
+    </form>
   );
-}
+};
 
 export default PinInput;

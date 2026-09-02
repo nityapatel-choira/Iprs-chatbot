@@ -6,8 +6,7 @@
 
   display: flex;
   justify-content: center;
-  height: 100dvh;
-  height: 100vh;
+  height: var(--visual-height, 100dvh);
   overflow: hidden;
   background: var(--canvas-bg);
 }
@@ -116,6 +115,8 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
   width: 100%;
@@ -136,6 +137,8 @@
   align-items: flex-end;
   gap: 0.5rem;
   animation: rise 0.25s var(--ease, ease);
+  width: 100%;
+  max-width: 100%;
 }
 
 @keyframes rise {
@@ -226,6 +229,11 @@
   line-height: 1.45;
   letter-spacing: 0.01em;
   white-space: pre-line;
+  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .bubble p,
@@ -253,6 +261,10 @@
 .bubble a {
   color: inherit;
   text-decoration: underline;
+  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  word-break: break-word;
 }
 
 .verifiedRow {
