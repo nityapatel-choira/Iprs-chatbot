@@ -1,40 +1,106 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCombobox } from "downshift";
 import { INDIA_CITIES } from "../../constants/indiaCities";
 import SendIcon from "../icons/SendIcon";
 import styles from "./CityPicker.module.css";
 
-const MAX_SUGGESTIONS = 100;
+const MAX_SUGGESTIONS = 20;
 
 function filterCities(inputValue) {
   const clean = (inputValue || "").toLowerCase().trim();
-  if (!clean) return INDIA_CITIES.slice(0, MAX_SUGGESTIONS);
-  return INDIA_CITIES.filter(
-    (item) =>
-      item.name.toLowerCase().includes(clean) ||
-      item.state.toLowerCase().includes(clean) ||
-      item.label.toLowerCase().includes(clean)
-  ).slice(0, MAX_SUGGESTIONS);
+  if (!clean) return [];
+
+  const results = [];
+  for (let i = 0; i < INDIA_CITIES.length; i++) {
+    const item = INDIA_CITIES[i];
+    const nameLower = item.name.toLowerCase();
+    const stateLower = (item.state || "").toLowerCase();
+
+    let score = -1;
+
+    if (nameLower === clean) {
+      score = 100;
+    } else if (nameLower.startsWith(clean)) {
+      score = 80;
+    } else if (nameLower.includes(clean)) {
+      score = 60;
+    } else if (stateLower === clean) {
+      score = 40;
+    } else if (stateLower.startsWith(clean)) {
+      score = 20;
+    } else if (stateLower.includes(clean)) {
+      score = 10;
+    }
+
+    if (score > 0) {
+      results.push({ item, score });
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+
+  return results.map((r) => r.item).slice(0, MAX_SUGGESTIONS);
 }
 
-function findCanonicalMatch(inputValue) {
-  const clean = (inputValue || "").toLowerCase().trim();
-  if (!clean) return null;
-  return (
-    INDIA_CITIES.find((item) => item.name.toLowerCase() === clean) ||
-    INDIA_CITIES.find((item) => item.label.toLowerCase() === clean) ||
-    INDIA_CITIES.find((item) => item.name.toLowerCase().startsWith(clean)) ||
-    null
-  );
+function getEstimatedPillWidth(item, isMobile) {
+  const showState = !isMobile && Boolean(item.state);
+  const text = showState ? `${item.name}, ${item.state}` : item.name;
+  const charWidth = 8.2;
+  const padding = 35;
+  return Math.ceil(text.length * charWidth + padding);
+}
+
+function getFittingSuggestions(candidates, containerWidth, isMobile) {
+  if (!candidates || candidates.length === 0) return [];
+  const maxW = containerWidth || 360;
+  const gap = isMobile ? 6 : 8;
+  const selected = [];
+  let currentUsedW = 0;
+
+  for (let i = 0; i < candidates.length; i++) {
+    const item = candidates[i];
+    const w = getEstimatedPillWidth(item, isMobile);
+
+    if (selected.length === 0) {
+      selected.push(item);
+      currentUsedW = w;
+    } else if (selected.length < 3) {
+      if (currentUsedW + gap + w <= maxW) {
+        selected.push(item);
+        currentUsedW += gap + w;
+      }
+    }
+
+    if (selected.length === 3) break;
+  }
+
+  return selected;
 }
 
 function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..." }) {
   const [inputValue, setInputValue] = useState("");
+  const [containerWidth, setContainerWidth] = useState(360);
+  const [isMobile, setIsMobile] = useState(false);
+  const formRef = useRef(null);
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (formRef.current) {
+        setContainerWidth(formRef.current.clientWidth);
+      }
+      setIsMobile(window.innerWidth <= 480);
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
 
   const trimmed = (inputValue || "").trim();
   const isMinLength = trimmed.length >= 3;
   const matchingCities = isMinLength ? filterCities(trimmed) : [];
-  const canonicalMatch = isMinLength ? findCanonicalMatch(trimmed) : null;
+  const suggestions = getFittingSuggestions(matchingCities, containerWidth, isMobile);
+  const canonicalMatch = matchingCities.length > 0 ? matchingCities[0] : null;
 
   const {
     isOpen,
@@ -43,7 +109,7 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
     highlightedIndex,
     getItemProps,
   } = useCombobox({
-    items: matchingCities,
+    items: suggestions,
     inputValue,
     onInputValueChange({ inputValue: nextVal }) {
       setInputValue(nextVal || "");
@@ -68,7 +134,34 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
 
   return (
     <div className={styles.container}>
-      <form className={styles.form} onSubmit={handleSubmit}>
+      <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
+        <ul
+          {...getMenuProps({
+            className: `${styles.suggestionsRow} ${showMenu ? styles.suggestionsRowVisible : ""}`,
+          })}
+        >
+          {showMenu &&
+            (suggestions.length > 0 ? (
+              suggestions.map((item, index) => (
+                <li
+                  key={`${item.name}-${item.state}-${index}`}
+                  {...getItemProps({
+                    item,
+                    index,
+                    className: `${styles.pill} ${
+                      highlightedIndex === index ? styles.pillActive : ""
+                    }`,
+                  })}
+                >
+                  <span className={styles.cityName}>{item.name}</span>
+                  {!isMobile && item.state && <span className={styles.stateName}>, {item.state}</span>}
+                </li>
+              ))
+            ) : (
+              <li className={styles.noMatchesPill}>No cities found</li>
+            ))}
+        </ul>
+
         <div className={styles.inputContainer}>
           <input
             {...getInputProps({
@@ -87,32 +180,6 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
             <SendIcon />
           </button>
         </div>
-
-        <ul
-          {...getMenuProps({
-            className: `${styles.menu} ${showMenu ? styles.menuOpen : ""}`,
-          })}
-        >
-          {showMenu &&
-            (matchingCities.length > 0 ? (
-              matchingCities.map((item, index) => (
-                <li
-                  key={`${item.name}-${item.state}-${index}`}
-                  {...getItemProps({
-                    item,
-                    index,
-                    className: `${styles.menuItem} ${
-                      highlightedIndex === index ? styles.menuItemActive : ""
-                    }`,
-                  })}
-                >
-                  {item.label}
-                </li>
-              ))
-            ) : (
-              <li className={styles.noMatches}>No cities found</li>
-            ))}
-        </ul>
       </form>
     </div>
   );
