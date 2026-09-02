@@ -30,8 +30,11 @@ function findCanonicalMatch(inputValue) {
 
 function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..." }) {
   const [inputValue, setInputValue] = useState("");
-  const matchingCities = filterCities(inputValue);
-  const canonicalMatch = findCanonicalMatch(inputValue);
+
+  const trimmed = (inputValue || "").trim();
+  const isMinLength = trimmed.length >= 3;
+  const matchingCities = isMinLength ? filterCities(trimmed) : [];
+  const canonicalMatch = isMinLength ? findCanonicalMatch(trimmed) : null;
 
   const {
     isOpen,
@@ -54,6 +57,8 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
       return item ? item.label : "";
     },
   });
+
+  const showMenu = isOpen && isMinLength;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -85,10 +90,10 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
 
         <ul
           {...getMenuProps({
-            className: `${styles.menu} ${isOpen ? styles.menuOpen : ""}`,
+            className: `${styles.menu} ${showMenu ? styles.menuOpen : ""}`,
           })}
         >
-          {isOpen &&
+          {showMenu &&
             (matchingCities.length > 0 ? (
               matchingCities.map((item, index) => (
                 <li

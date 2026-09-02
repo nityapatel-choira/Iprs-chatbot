@@ -3,6 +3,7 @@ import UploadCloudIcon from "../icons/UploadCloudIcon";
 import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import CameraIcon from "../icons/CameraIcon";
+import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
 import styles from "./FileUploader.module.css";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
@@ -42,6 +43,9 @@ const FileUploader = ({
   const [isCropping, setIsCropping] = useState(false);
   const [cropRect, setCropRect] = useState({ x: 5, y: 5, width: 90, height: 90 });
 
+  const [isPdfPreviewing, setIsPdfPreviewing] = useState(false);
+  const [pdfPreviewRenderUrl, setPdfPreviewRenderUrl] = useState(null);
+
   const isDraggingHandle = useRef(false);
   const dragHandleType = useRef(null);
   const dragStartCoords = useRef({ x: 0, y: 0, rect: { x: 5, y: 5, width: 90, height: 90 } });
@@ -66,6 +70,22 @@ const FileUploader = ({
   }, [selectedFile]);
 
   useEffect(() => {
+    let isCancelled = false;
+    if (isPdfPreviewing && pendingFile) {
+      getPdfFullPreviewUrl(pendingFile, 1.8).then((url) => {
+        if (!isCancelled && url) {
+          setPdfPreviewRenderUrl(url);
+        }
+      });
+    } else {
+      Promise.resolve().then(() => setPdfPreviewRenderUrl(null));
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPdfPreviewing, pendingFile]);
+
+  useEffect(() => {
     if (autoOpen && !disabled) {
       inputRef.current?.click();
     }
@@ -87,12 +107,19 @@ const FileUploader = ({
     }
 
     const isImg = file.type?.startsWith("image/") || /\.(jpe?g|png)$/i.test(file.name);
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+
     if (isImg) {
       const url = URL.createObjectURL(file);
       setPendingFile(file);
       setPendingPreviewUrl(url);
       setCropRect({ x: 5, y: 5, width: 90, height: 90 });
       setIsCropping(true);
+    } else if (isPdf) {
+      const url = URL.createObjectURL(file);
+      setPendingFile(file);
+      setPendingPreviewUrl(url);
+      setIsPdfPreviewing(true);
     } else {
       setSelectedFile(file);
       setFileName(file.name);
@@ -107,6 +134,24 @@ const FileUploader = ({
     setPendingFile(null);
     setPendingPreviewUrl(null);
     setIsCropping(false);
+  };
+
+  const handleCancelPdfPreview = () => {
+    if (pendingPreviewUrl) {
+      URL.revokeObjectURL(pendingPreviewUrl);
+    }
+    setPendingFile(null);
+    setPendingPreviewUrl(null);
+    setIsPdfPreviewing(false);
+  };
+
+  const handleConfirmPdfUpload = () => {
+    if (!pendingFile) return;
+    const activeFile = pendingFile;
+    setSelectedFile(activeFile);
+    setFileName(activeFile.name);
+    handleCancelPdfPreview();
+    onFileSelected?.(activeFile);
   };
 
   const handleConfirmCrop = () => {
@@ -461,6 +506,48 @@ const FileUploader = ({
               Cancel
             </button>
             <button type="button" className={styles.cropConfirmBtn} onClick={handleConfirmCrop}>
+              Use Document
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isPdfPreviewing && pendingFile && (
+        <div className={styles.cropModalOverlay} onClick={handleCancelPdfPreview}>
+          <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
+            <span className={styles.cropModalTitle}>Preview PDF Document</span>
+            <button
+              type="button"
+              className={styles.cropModalClose}
+              onClick={handleCancelPdfPreview}
+              aria-label="Cancel preview"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.cropImageWrapper}>
+              {pdfPreviewRenderUrl ? (
+                <img
+                  src={pdfPreviewRenderUrl}
+                  alt={pendingFile.name || "PDF preview"}
+                  className={styles.cropImage}
+                />
+              ) : (
+                <div className={styles.spinnerWrap} role="status" aria-live="polite">
+                  <span className={styles.spinner} />
+                  <span className={styles.hint}>Loading PDF preview...</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className={styles.cropCancelBtn} onClick={handleCancelPdfPreview}>
+              Cancel
+            </button>
+            <button type="button" className={styles.cropConfirmBtn} onClick={handleConfirmPdfUpload}>
               Use Document
             </button>
           </div>
