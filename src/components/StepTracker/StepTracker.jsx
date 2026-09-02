@@ -32,7 +32,6 @@ const StepTracker = ({ stages, activeIndex, currentFill = 0 }) => {
                 </span>
                 <div className={styles.textCol}>
                   <span className={styles.stepNum}>{`STEP ${i + 1}`}</span>
-                  <span className={styles.stageName}>{stage}</span>
                 </div>
               </div>
             );

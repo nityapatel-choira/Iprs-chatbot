@@ -26,7 +26,6 @@ const FileUploader = ({
   progress = 0,
   errorMessage,
   disabled,
-  // Auto-opens file picker on mount when true.
   autoOpen = false,
 }) => {
   const inputRef = useRef(null);

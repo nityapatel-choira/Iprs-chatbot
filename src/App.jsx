@@ -19,6 +19,7 @@ const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
 
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
+const DevCityTest = import.meta.env.DEV ? lazy(() => import("./components/CityPicker/CityPicker")) : null;
 
 const App = () => {
   const dispatch = useAppDispatch();
@@ -63,6 +64,21 @@ const App = () => {
           }}
         />
       </Suspense>
+    );
+  }
+
+  if (DevCityTest && typeof window !== "undefined" && window.location.search.includes("test=city")) {
+    return (
+      <div style={{ padding: "40px 20px", background: "#f8fafc", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: "580px" }}>
+          <h3 style={{ marginBottom: "16px", textAlign: "center", fontFamily: "sans-serif", color: "#0f172a" }}>
+            CityPicker Test Harness (?test=city)
+          </h3>
+          <Suspense fallback={null}>
+            <DevCityTest onSubmit={(city) => alert(`City selected: ${city}`)} />
+          </Suspense>
+        </div>
+      </div>
     );
   }
 

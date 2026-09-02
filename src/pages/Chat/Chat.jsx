@@ -123,6 +123,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     input?.type === "file input" &&
     (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID || /profile photo/i.test(trailingBotText));
 
+  const isCityStep =
+    input?.type === "city input" ||
+    (input?.type === "text input" &&
+      /\b(city|place of birth|current city)\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`));
+
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
   const showComposer = Boolean(textConfig);
@@ -135,6 +140,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   function renderActiveInputWidget() {
     if (isTyping) return null;
+
+    if (isCityStep) {
+      return (
+        <CityPicker
+          key={input.id}
+          placeholder={input.placeholder || "Search or select city..."}
+          onSubmit={sendAnswer}
+          disabled={isTyping}
+        />
+      );
+    }
 
     if (input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary) {
       return (
