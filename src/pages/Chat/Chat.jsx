@@ -32,7 +32,7 @@ const TEXT_INPUT_CONFIG = {
 };
 
 const Chat = ({ language = "English", onBack, onLogout }) => {
-  const panelRef = useRef(null);
+  const pageRef = useRef(null);
 
   const {
     history,
@@ -53,15 +53,23 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   useEffect(() => {
     const vv = window.visualViewport;
-    const el = panelRef.current;
+    const el = pageRef.current;
     if (!vv || !el) return undefined;
 
     let rafId = null;
     let lastHeight = 0;
+    let layoutViewportHeight = document.documentElement.clientHeight || window.innerHeight;
 
     const updateVisualHeight = () => {
-      const isKeyboardOpen = vv.height < window.innerHeight - 100;
+      if (vv.height >= layoutViewportHeight - 100) {
+        layoutViewportHeight = document.documentElement.clientHeight || window.innerHeight;
+      }
+
+      const isKeyboardOpen = vv.height < layoutViewportHeight - 100;
       if (isKeyboardOpen) {
+        if (window.scrollY !== 0) {
+          window.scrollTo(0, 0);
+        }
         const nextHeight = Math.round(vv.height);
         if (Math.abs(nextHeight - lastHeight) > 2) {
           lastHeight = nextHeight;
@@ -250,8 +258,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.panel} ref={panelRef}>
+    <div className={styles.page} ref={pageRef}>
+      <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
         <div className={styles.trackerSlot}>
