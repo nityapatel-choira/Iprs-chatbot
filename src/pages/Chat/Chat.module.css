@@ -229,7 +229,9 @@
   line-height: 1.45;
   letter-spacing: 0.01em;
   white-space: pre-line;
+  overflow-wrap: anywhere;
   overflow-wrap: break-word;
+  word-break: break-all;
   word-break: break-word;
   min-width: 0;
 }
@@ -259,6 +261,10 @@
 .bubble a {
   color: inherit;
   text-decoration: underline;
+  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  word-break: break-word;
 }
 
 .verifiedRow {
