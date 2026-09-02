@@ -69,9 +69,44 @@
   margin-bottom: 8px;
 }
 
+.buttonGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cameraButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #3b82f6;
+  border: 1px solid #2563eb;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
+  transition: all 0.15s ease;
+}
+
+.cameraButton:hover:not(:disabled) {
+  background: #2563eb;
+  border-color: #1d4ed8;
+}
+
+.cameraButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .browseButton {
-  margin-top: 4px;
-  padding: 8px 20px;
+  padding: 8px 16px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
@@ -93,6 +128,153 @@
 .browseButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.cropModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 16px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.cropModalHeader {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 4px;
+  color: #ffffff;
+}
+
+.cropModalTitle {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cropModalClose {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cropStage {
+  flex: 1;
+  width: 100%;
+  max-width: 600px;
+  max-height: 55vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 12px;
+}
+
+.cropImageWrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.cropImage {
+  display: block;
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  border-radius: 8px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.cropSelectionBox {
+  position: absolute;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  cursor: move;
+  pointer-events: none;
+}
+
+.cropHandle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border: 2px solid #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.handleNw {
+  top: -6px;
+  left: -6px;
+}
+
+.handleNe {
+  top: -6px;
+  right: -6px;
+}
+
+.handleSw {
+  bottom: -6px;
+  left: -6px;
+}
+
+.handleSe {
+  bottom: -6px;
+  right: -6px;
+}
+
+.cropFooter {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 4px;
+}
+
+.cropCancelBtn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cropConfirmBtn {
+  padding: 10px 22px;
+  border-radius: 12px;
+  border: none;
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
 }
 
 .spinnerWrap {

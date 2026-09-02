@@ -19,7 +19,7 @@ function isAllowedFile(file) {
 const FileUploader = ({
   title = "Choose a file or drag & drop it here",
   caption = "PNG, JPG/JPEG, PDF",
-  accept = ".jpg,.jpeg,.png,.pdf",
+  accept = "image/*,application/pdf,.jpg,.jpeg,.png,.pdf",
   onFileSelected,
   status = "idle",
   progress = 0,
@@ -28,9 +28,36 @@ const FileUploader = ({
   autoOpen = false,
 }) => {
   const inputRef = useRef(null);
+  const imgRef = useRef(null);
+
   const [fileName, setFileName] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [validationError, setValidationError] = useState("");
+
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropRect] = useState({ x: 5, y: 5, width: 90, height: 90 });
+
+  const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
+
+  useEffect(() => {
+    let url = null;
+    if (selectedFile && (selectedFile.type?.startsWith("image/") || /\.(jpe?g|png)$/i.test(selectedFile.name))) {
+      url = URL.createObjectURL(selectedFile);
+      const activeUrl = url;
+      Promise.resolve().then(() => setLocalPreviewUrl(activeUrl));
+    } else {
+      Promise.resolve().then(() => setLocalPreviewUrl(null));
+    }
+
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [selectedFile]);
 
   useEffect(() => {
     if (autoOpen && !disabled) {
@@ -53,8 +80,63 @@ const FileUploader = ({
       return;
     }
 
-    setFileName(file.name);
-    onFileSelected?.(file);
+    const isImg = file.type?.startsWith("image/") || /\.(jpe?g|png)$/i.test(file.name);
+    if (isImg) {
+      const url = URL.createObjectURL(file);
+      setPendingFile(file);
+      setPendingPreviewUrl(url);
+      setIsCropping(true);
+    } else {
+      setSelectedFile(file);
+      setFileName(file.name);
+      onFileSelected?.(file);
+    }
+  };
+
+  const handleCancelCrop = () => {
+    if (pendingPreviewUrl) {
+      URL.revokeObjectURL(pendingPreviewUrl);
+    }
+    setPendingFile(null);
+    setPendingPreviewUrl(null);
+    setIsCropping(false);
+  };
+
+  const handleConfirmCrop = () => {
+    if (!pendingFile || !pendingPreviewUrl || !imgRef.current) return;
+
+    const img = imgRef.current;
+    const canvas = document.createElement("canvas");
+    const naturalWidth = img.naturalWidth || img.width;
+    const naturalHeight = img.naturalHeight || img.height;
+
+    const cropX = (cropRect.x / 100) * naturalWidth;
+    const cropY = (cropRect.y / 100) * naturalHeight;
+    const cropW = (cropRect.width / 100) * naturalWidth;
+    const cropH = (cropRect.height / 100) * naturalHeight;
+
+    canvas.width = Math.max(1, Math.round(cropW));
+    canvas.height = Math.max(1, Math.round(cropH));
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const croppedFile = new File([blob], pendingFile.name, {
+            type: pendingFile.type || "image/jpeg",
+            lastModified: Date.now(),
+          });
+          setSelectedFile(croppedFile);
+          setFileName(croppedFile.name);
+          onFileSelected?.(croppedFile);
+        }
+        handleCancelCrop();
+      },
+      pendingFile.type || "image/jpeg",
+      0.92
+    );
   };
 
   const handleChange = (e) => {
@@ -111,7 +193,11 @@ const FileUploader = ({
     if (effectiveStatus === "uploading") {
       return (
         <div className={styles.spinnerWrap} role="status" aria-live="polite">
-          <span className={styles.spinner} />
+          {localPreviewUrl ? (
+            <img src={localPreviewUrl} alt={fileName || "Uploading"} className={styles.thumbnail} />
+          ) : (
+            <span className={styles.spinner} />
+          )}
           <span className={styles.title}>Uploading {fileName}...</span>
           <div className={styles.progressTrack}>
             <div className={styles.progressFill} style={{ width: `${progress}%` }} />
@@ -193,6 +279,56 @@ const FileUploader = ({
         disabled={isDisabled}
         aria-label={title}
       />
+
+      {isCropping && pendingPreviewUrl && (
+        <div className={styles.cropModalOverlay} onClick={handleCancelCrop}>
+          <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
+            <span className={styles.cropModalTitle}>Crop & Adjust Document</span>
+            <button
+              type="button"
+              className={styles.cropModalClose}
+              onClick={handleCancelCrop}
+              aria-label="Cancel crop"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.cropImageWrapper}>
+              <img
+                ref={imgRef}
+                src={pendingPreviewUrl}
+                alt="Document preview"
+                className={styles.cropImage}
+              />
+              <div
+                className={styles.cropSelectionBox}
+                style={{
+                  left: `${cropRect.x}%`,
+                  top: `${cropRect.y}%`,
+                  width: `${cropRect.width}%`,
+                  height: `${cropRect.height}%`,
+                }}
+              >
+                <span className={`${styles.cropHandle} ${styles.handleNw}`} />
+                <span className={`${styles.cropHandle} ${styles.handleNe}`} />
+                <span className={`${styles.cropHandle} ${styles.handleSw}`} />
+                <span className={`${styles.cropHandle} ${styles.handleSe}`} />
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className={styles.cropCancelBtn} onClick={handleCancelCrop}>
+              Cancel
+            </button>
+            <button type="button" className={styles.cropConfirmBtn} onClick={handleConfirmCrop}>
+              Use Document
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

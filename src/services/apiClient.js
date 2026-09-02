@@ -91,7 +91,7 @@ function uploadRequest(path, formData, onProgress) {
       }
 
       if (xhr.status >= 200 && xhr.status < 300 && json?.success !== false) {
-        resolve(json.data);
+        resolve(json?.data !== undefined ? json.data : json);
         return;
       }
 

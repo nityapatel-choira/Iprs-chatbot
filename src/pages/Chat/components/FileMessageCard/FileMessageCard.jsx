@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
-import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
+import getPdfThumbnailUrl, { getPdfFullPreviewUrl } from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
@@ -47,7 +47,9 @@ function formatFileSize(size) {
 
 const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
+  const [pdfFullPreview, setPdfFullPreview] = useState(null);
   const [createdUrl, setCreatedUrl] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
   const isImage = isImageFile(fileName, mimeType, fileObject);
@@ -57,10 +59,10 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
     let url = null;
     if (!initialPreviewUrl && fileObject && isImage) {
       url = URL.createObjectURL(fileObject);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCreatedUrl(url);
+      const activeUrl = url;
+      Promise.resolve().then(() => setCreatedUrl(activeUrl));
     } else {
-      setCreatedUrl(null);
+      Promise.resolve().then(() => setCreatedUrl(null));
     }
 
     return () => {
@@ -79,6 +81,11 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         getPdfThumbnailUrl(target).then((url) => {
           if (!isCancelled && url) {
             setPdfThumbnail(url);
+          }
+        });
+        getPdfFullPreviewUrl(target, 1.8).then((url) => {
+          if (!isCancelled && url) {
+            setPdfFullPreview(url);
           }
         });
       }
@@ -108,13 +115,19 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   if (isUploading) {
     fileDetailText = "Uploading...";
   } else if (isError) {
-    fileDetailText = `${formattedSize} · Verification Failed ⚠️`;
+    fileDetailText = `${formattedSize} · Upload Failed ⚠️`;
   }
 
   const linkHref = isUploading ? undefined : activePreviewUrl || "#";
   const linkTarget = isUploading ? undefined : activePreviewUrl ? "_blank" : undefined;
   const linkTitle = isUploading ? "Uploading..." : activePreviewUrl ? "Click to view uploaded document" : undefined;
   const linkStyle = isUploading ? { pointerEvents: "none", cursor: "default" } : undefined;
+
+  const handleCardClick = (e) => {
+    if (isUploading) return;
+    e.preventDefault();
+    setIsPreviewOpen(true);
+  };
 
   const renderPreview = () => {
     if (isUploading) {
@@ -142,23 +155,57 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   };
 
   return (
-    <a
-      href={linkHref}
-      target={linkTarget}
-      rel="noreferrer"
-      className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
-      title={linkTitle}
-      style={linkStyle}
-    >
-      {renderPreview()}
-      <div className={styles.fileMetaBox}>
-        <span className={styles.fileNameText}>
-          <span className={styles.fileNameBase}>{fileNameBase}</span>
-          {fileNameExt && <span className={styles.fileNameExt}>{fileNameExt}</span>}
-        </span>
-        <span className={styles.fileDetailText}>{fileDetailText}</span>
-      </div>
-    </a>
+    <>
+      <a
+        href={linkHref}
+        target={linkTarget}
+        rel="noreferrer"
+        className={`${styles.fileBubbleUser} ${isError ? styles.fileBubbleError : ""}`}
+        title={linkTitle}
+        style={linkStyle}
+        onClick={handleCardClick}
+      >
+        {renderPreview()}
+        <div className={styles.fileMetaBox}>
+          <span className={styles.fileNameText}>
+            <span className={styles.fileNameBase}>{fileNameBase}</span>
+            {fileNameExt && <span className={styles.fileNameExt}>{fileNameExt}</span>}
+          </span>
+          <span className={styles.fileDetailText}>{fileDetailText}</span>
+        </div>
+      </a>
+
+      {isPreviewOpen && (
+        <div className={styles.previewModalOverlay} onClick={() => setIsPreviewOpen(false)}>
+          <div className={styles.previewModalHeader} onClick={(e) => e.stopPropagation()}>
+            <span className={styles.previewModalTitle}>{fileName}</span>
+            <button
+              type="button"
+              className={styles.previewModalClose}
+              onClick={() => setIsPreviewOpen(false)}
+              aria-label="Close preview"
+            >
+              ✕
+            </button>
+          </div>
+          <div className={styles.previewModalContent} onClick={(e) => e.stopPropagation()}>
+            {isImage ? (
+              <img
+                src={activePreviewUrl}
+                alt={fileName || "Document Preview"}
+                className={styles.previewModalImage}
+              />
+            ) : (
+              <img
+                src={pdfFullPreview || pdfThumbnail || activePreviewUrl}
+                alt={fileName || "Document Preview"}
+                className={styles.previewModalImage}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
