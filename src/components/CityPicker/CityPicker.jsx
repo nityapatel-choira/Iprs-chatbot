@@ -135,13 +135,13 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
   return (
     <div className={styles.container}>
       <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
-        <ul
-          {...getMenuProps({
-            className: `${styles.suggestionsRow} ${showMenu ? styles.suggestionsRowVisible : ""}`,
-          })}
-        >
-          {showMenu &&
-            (suggestions.length > 0 ? (
+        {showMenu && (
+          <ul
+            {...getMenuProps({
+              className: styles.suggestionsRow,
+            })}
+          >
+            {suggestions.length > 0 ? (
               suggestions.map((item, index) => (
                 <li
                   key={`${item.name}-${item.state}-${index}`}
@@ -159,8 +159,9 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
               ))
             ) : (
               <li className={styles.noMatchesPill}>No cities found</li>
-            ))}
-        </ul>
+            )}
+          </ul>
+        )}
 
         <div className={styles.inputContainer}>
           <input
