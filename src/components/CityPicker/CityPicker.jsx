@@ -89,6 +89,17 @@ function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..
 
   const showMenu = isOpen && isMinLength;
 
+  useEffect(() => {
+    if (showMenu && formRef.current) {
+      const messagesContainer = document.querySelector("[class*='messages']");
+      if (messagesContainer) {
+        requestAnimationFrame(() => {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+      }
+    }
+  }, [showMenu]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (disabled || !canonicalMatch) return;

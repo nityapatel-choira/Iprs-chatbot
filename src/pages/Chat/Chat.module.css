@@ -334,6 +334,12 @@
   padding: 0.5rem clamp(1.25rem, 4vw, 2.5rem) calc(0.5rem + env(safe-area-inset-bottom));
 }
 
+.cityComposerWrap {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0.5rem clamp(1.25rem, 4vw, 2.5rem) calc(0.5rem + env(safe-area-inset-bottom));
+}
+
 .composer {
   display: flex;
   align-items: center;
