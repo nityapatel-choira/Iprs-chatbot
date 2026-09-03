@@ -44,7 +44,7 @@
 }
 
 .headerPill {
-  background: #cbd5e1;
+  background: var(--color-g2, #f1f3f5);
   border-radius: 8px;
   padding: 8px 16px;
   font-size: 0.95rem;

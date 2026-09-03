@@ -1,6 +1,8 @@
 // Parses backend document requirement text into FeeSummaryCard props dynamically.
 
-const HAS_DOC_SIGNATURE = /(?:requirements|identity proof|bank proof|address proof|application fee|registration fee|document)/i;
+const IS_UPLOAD_PROMPT = /\b(?:please\s+)?upload\b|\bshowing\s+your\b|\bselect\s+(?:a|any|one)\b/i;
+const IS_REVIEW_PAYLOAD = /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i;
+const HAS_REQUIREMENTS_HEADER = /requirements/i;
 
 function extractEntityLabel(text) {
   const match = text.match(/requirements\s+(?:for|of|-|:)?\s*([^\n:]+)/i);
@@ -73,7 +75,9 @@ function extractDocs(text) {
 }
 
 const parseDocumentSummaryText = (text) => {
-  if (!text || !HAS_DOC_SIGNATURE.test(text)) return null;
+  if (!text || IS_UPLOAD_PROMPT.test(text) || IS_REVIEW_PAYLOAD.test(text) || !HAS_REQUIREMENTS_HEADER.test(text)) {
+    return null;
+  }
 
   const docs = extractDocs(text);
   if (docs.length === 0) return null;
