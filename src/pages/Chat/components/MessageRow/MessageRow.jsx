@@ -3,11 +3,16 @@ import RichText from "../../../../components/RichText/RichText";
 import VerifiedFieldChip from "../../../../components/VerifiedFieldChip/VerifiedFieldChip";
 import BotAvatar from "../BotAvatar/BotAvatar";
 import FileMessageCard from "../FileMessageCard/FileMessageCard";
+import { extractMessageText } from "../../../../store/slices/conversationSlice";
 import styles from "../../Chat.module.css";
 
 const MessageRow = ({ message }) => {
   const isUser = message.sender === "user";
   const bubbleClassName = `${styles.bubble} ${isUser ? styles.bubbleUser : styles.bubbleBot}`;
+
+  if (!isUser && message.kind === "richText" && !extractMessageText(message)) {
+    return null;
+  }
 
   const renderContent = () => {
     if (message.kind === "summaryCard") {

@@ -10,6 +10,7 @@ import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard
 import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
+import PaymentReview from "../../components/PaymentReview/PaymentReview";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
@@ -177,9 +178,18 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     (input?.type === "text input" &&
       /\b(city|place of birth|current city)\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`));
 
+  const isPaymentReviewStep =
+    input?.id === "payment-review" ||
+    input?.type === "payment-review" ||
+    input?.type === "review input" ||
+    input?.data?.type === "payment-review" ||
+    lastMessage?.id === "payment-review" ||
+    lastMessage?.type === "payment-review" ||
+    /payment-review/i.test(`${input?.id || ""} ${input?.type || ""} ${lastMessage?.id || ""}`);
+
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig) && !isCityStep;
+  const showComposer = Boolean(textConfig) && !isCityStep && !isPaymentReviewStep;
 
 
   const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
@@ -190,15 +200,19 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   function renderActiveInputWidget() {
     if (isTyping) return null;
 
-    if (isCityStep) {
+    if (isPaymentReviewStep) {
       return (
-        <CityPicker
-          key={input.id}
-          placeholder={input.placeholder || "Search or select city..."}
-          onSubmit={sendAnswer}
-          disabled={isTyping}
+        <PaymentReview
+          key={input?.id || "payment-review"}
+          data={input?.data || lastMessage?.data}
+          input={input}
+          onAction={(actionLabel) => sendAnswer(actionLabel)}
         />
       );
+    }
+
+    if (isCityStep) {
+      return null;
     }
 
     if (input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary) {
@@ -331,6 +345,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             options={input.options || []}
             onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")}
           />
+        )}
+
+        {!isTyping && isCityStep && (
+          <div className={styles.cityComposerWrap}>
+            <CityPicker
+              key={input.id}
+              placeholder={input.placeholder || "Search or select city..."}
+              onSubmit={sendAnswer}
+              disabled={isTyping}
+            />
+          </div>
         )}
 
         {showComposer && (

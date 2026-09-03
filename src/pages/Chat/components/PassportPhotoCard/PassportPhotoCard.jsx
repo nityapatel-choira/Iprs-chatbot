@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import CameraIcon from "../../../../components/icons/CameraIcon";
 import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
+import FileUploader from "../../../../components/FileUploader/FileUploader";
 import styles from "./PassportPhotoCard.module.css";
 
 // Converts captured data URL to a File object.
@@ -14,10 +15,17 @@ function dataUrlToFile(dataUrl, filename) {
   return new File([bytes], filename, { type: mime });
 }
 
-const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
-  const [mode, setMode] = useState(null); // null (choice) | "camera"
+const PassportPhotoCard = ({
+  title,
+  caption,
+  onFileSelected,
+  disabled,
+  status = "idle",
+  progress = 0,
+  errorMessage,
+}) => {
+  const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   // Auto-scrolls camera into view when activated.
   useLayoutEffect(() => {
@@ -30,18 +38,6 @@ const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
     onFileSelected?.(dataUrlToFile(dataUrl, `passport-photo-${Date.now()}.jpg`));
   }
 
-  function handleUploadClick() {
-    fileInputRef.current?.click();
-  }
-
-  function handleFileChange(e) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (file) {
-      onFileSelected?.(file);
-    }
-  }
-
   if (mode === "camera") {
     return (
       <div ref={faceScanRef} className={styles.faceScanWrap}>
@@ -50,6 +46,24 @@ const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
           initialMode="camera"
           onContinue={handleContinue}
           onFileSelected={onFileSelected}
+        />
+      </div>
+    );
+  }
+
+  if (mode === "upload") {
+    return (
+      <div className={styles.wrap}>
+        <FileUploader
+          title={title || "Upload your Passport photo"}
+          caption="PNG, JPG/JPEG"
+          accept="image/*,.jpg,.jpeg,.png"
+          onFileSelected={onFileSelected}
+          status={status}
+          progress={progress}
+          errorMessage={errorMessage}
+          disabled={disabled}
+          autoOpen
         />
       </div>
     );
@@ -72,20 +86,13 @@ const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
         <button
           type="button"
           className={`${styles.choiceButton} ${styles.choiceButtonSecondary}`}
-          onClick={handleUploadClick}
+          onClick={() => setMode("upload")}
           disabled={disabled}
         >
           <UploadCloudIcon />
           Upload Photo
         </button>
       </div>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={handleFileChange}
-      />
     </div>
   );
 };
