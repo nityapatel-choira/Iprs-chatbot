@@ -7,14 +7,23 @@ import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
 import styles from "./FileUploader.module.css";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
-const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/x-png",
+  "application/pdf",
+]);
 
 function isAllowedFile(file) {
   if (!file) return false;
   const name = (file.name || "").toLowerCase();
   const type = (file.type || "").toLowerCase();
   const validExt = ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext));
-  const validMime = ALLOWED_MIME_TYPES.includes(type);
+  const validMime =
+    ALLOWED_MIME_TYPES.has(type) ||
+    (type.startsWith("image/") && (type.includes("png") || type.includes("jpeg") || type.includes("jpg")));
   return validExt || validMime;
 }
 
@@ -173,11 +182,14 @@ const FileUploader = ({
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
 
+    const fileMime =
+      pendingFile.type && pendingFile.type.startsWith("image/") ? pendingFile.type : "image/jpeg";
+
     canvas.toBlob(
       (blob) => {
         if (blob) {
           const croppedFile = new File([blob], pendingFile.name, {
-            type: pendingFile.type || "image/jpeg",
+            type: fileMime,
             lastModified: Date.now(),
           });
           setSelectedFile(croppedFile);
@@ -186,7 +198,7 @@ const FileUploader = ({
         }
         handleCancelCrop();
       },
-      pendingFile.type || "image/jpeg",
+      fileMime,
       0.92
     );
   };
