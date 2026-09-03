@@ -11,12 +11,19 @@ const UPLOAD_SUCCESS_HOLD_MS = 900;
 
 function toRichTextMessages(messages) {
   if (!Array.isArray(messages)) return [];
-  return messages.map((msg) => ({
-    id: nextId(),
-    sender: "bot",
-    kind: "richText",
-    richText: msg?.content?.richText,
-  }));
+  const result = [];
+  for (const msg of messages) {
+    const converted = {
+      id: nextId(),
+      sender: "bot",
+      kind: "richText",
+      richText: msg?.content?.richText,
+    };
+    if (extractMessageText(converted)) {
+      result.push(converted);
+    }
+  }
+  return result;
 }
 
 // Wraps terminal AI reply as a richText message.
@@ -56,6 +63,9 @@ function mergeBotMessages(existingHistory, newMessages) {
   const updated = [...existingHistory];
   for (const msg of newMessages) {
     const newText = extractMessageText(msg);
+    if (!newText && msg.kind !== "file" && msg.kind !== "summaryCard") {
+      continue;
+    }
     const lastMsg = updated[updated.length - 1];
     const lastText = extractMessageText(lastMsg);
 

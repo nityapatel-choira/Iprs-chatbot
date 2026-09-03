@@ -6,6 +6,53 @@ import styles from "./CityPicker.module.css";
 
 const MAX_SUGGESTIONS = 20;
 
+const ADMINISTRATIVE_MODIFIERS = new Set([
+  "suburban",
+  "district",
+  "city",
+  "rural",
+  "cantonment",
+  "central",
+  "north",
+  "south",
+  "east",
+  "west",
+  "town",
+  "subdivision",
+]);
+
+function removeDuplicateVariants(candidates) {
+  const selected = [];
+  const selectedBaseNames = [];
+
+  for (let i = 0; i < candidates.length; i++) {
+    const item = candidates[i];
+    const nameLower = item.name.toLowerCase();
+
+    const isDuplicateOrVariant = selectedBaseNames.some((base) => {
+      if (nameLower === base) return true;
+
+      if (nameLower.startsWith(`${base} `) || nameLower.startsWith(`${base}-`)) {
+        return true;
+      }
+
+      if (nameLower.endsWith(` ${base}`)) {
+        const prefix = nameLower.slice(0, nameLower.length - base.length - 1).trim();
+        if (ADMINISTRATIVE_MODIFIERS.has(prefix)) return true;
+      }
+
+      return false;
+    });
+
+    if (!isDuplicateOrVariant) {
+      selected.push(item);
+      selectedBaseNames.push(nameLower);
+    }
+  }
+
+  return selected;
+}
+
 function filterCities(inputValue) {
   const clean = (inputValue || "").toLowerCase().trim();
   if (!clean) return [];
@@ -39,7 +86,10 @@ function filterCities(inputValue) {
 
   results.sort((a, b) => b.score - a.score);
 
-  return results.map((r) => r.item).slice(0, MAX_SUGGESTIONS);
+  const candidates = results.map((r) => r.item);
+  const deduplicated = removeDuplicateVariants(candidates);
+
+  return deduplicated.slice(0, MAX_SUGGESTIONS);
 }
 
 function getEstimatedPillWidth(item, isMobile) {
