@@ -178,14 +178,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     (input?.type === "text input" &&
       /\b(city|place of birth|current city)\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`));
 
+  const lastMessageText = extractMessageText(lastMessage);
   const isPaymentReviewStep =
-    input?.id === "payment-review" ||
-    input?.type === "payment-review" ||
-    input?.type === "review input" ||
-    input?.data?.type === "payment-review" ||
-    lastMessage?.id === "payment-review" ||
-    lastMessage?.type === "payment-review" ||
-    /payment-review/i.test(`${input?.id || ""} ${input?.type || ""} ${lastMessage?.id || ""}`);
+    (input?.id === "payment-review" ||
+      input?.type === "payment-review" ||
+      input?.type === "review input" ||
+      input?.data?.type === "payment-review" ||
+      lastMessage?.id === "payment-review" ||
+      lastMessage?.type === "payment-review" ||
+      /check\s+your\s+details|review\s+your\s+details/i.test(lastMessageText)) &&
+    input?.id !== "payment-review-correction" &&
+    lastMessage?.id !== "payment-review-correction";
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -201,14 +204,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     if (isTyping) return null;
 
     if (isPaymentReviewStep) {
-      return (
-        <PaymentReview
-          key={input?.id || "payment-review"}
-          data={input?.data || lastMessage?.data}
-          input={input}
-          onAction={(actionLabel) => sendAnswer(actionLabel)}
-        />
-      );
+      return null;
     }
 
     if (isCityStep) {
@@ -302,9 +298,30 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             .filter((message) => !consentMessageIds.has(message.id))
             .map((message) => {
               const isLast = message.id === lastMessage?.id;
+              const msgText = extractMessageText(message);
+              const isReview =
+                message.sender === "bot" &&
+                (message.id === "payment-review" ||
+                  message.type === "payment-review" ||
+                  message.kind === "payment-review" ||
+                  /check\s+your\s+details|review\s+your\s+details/i.test(msgText)) &&
+                message.id !== "payment-review-correction";
+
+              if (isReview) {
+                return (
+                  <PaymentReview
+                    key={message.id}
+                    data={message.data || (isLast ? input?.data : undefined)}
+                    input={isLast ? input : undefined}
+                    message={message}
+                    onAction={isLast ? (actionLabel) => sendAnswer(actionLabel) : undefined}
+                  />
+                );
+              }
+
               const parsedSummary = isLast
                 ? lastMessageDocSummary
-                : message.sender === "bot" && parseDocumentSummaryText(extractMessageText(message));
+                : message.sender === "bot" && parseDocumentSummaryText(msgText);
               if (parsedSummary) {
                 return (
                   <FeeSummaryCard
