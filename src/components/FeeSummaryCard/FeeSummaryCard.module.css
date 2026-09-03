@@ -144,12 +144,18 @@
   line-height: 1.35;
   font-weight: 600;
   color: #0f172a;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .docSub {
   font-size: 0.78125rem;
   line-height: 1.35;
   color: #64748b;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .optionList {

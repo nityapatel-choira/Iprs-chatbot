@@ -1,20 +1,16 @@
-// Parses unformatted document/fee prose into FeeSummaryCard props.
+// Parses backend document requirement text into FeeSummaryCard props dynamically.
 
-const HAS_DOC_SIGNATURE = /(?:requirements|identity proof|bank proof|address proof|application fee|registration fee)/i;
-
-const DOCUMENT_DEFS = [
-  { label: "Identity Proof", match: /Identity Proof\s*(\(([^)]*)\))?/i, foldParenIntoLabel: true },
-  { label: "Bank Proof", match: /Bank Proof\s*(\(([^)]*)\))?/i },
-  { label: "Permanent Address Proof", match: /Permanent Address Proof\s*(\(([^)]*)\))?/i },
-  { label: "Present Address Proof", match: /Present Address Proof\s*(\(([^)]*)\))?/i },
-  { label: "GST Registration Certificate", match: /GST Registration Certificate\s*(\(([^)]*)\))?/i },
-  { label: "Copy of the NOC from another society", match: /\bNOC\b/i },
-  { label: "Passport Size Photo", match: /Passport\s*[Ss]ize\s*Photo/i },
-];
+const HAS_DOC_SIGNATURE = /(?:requirements|identity proof|bank proof|address proof|application fee|registration fee|document)/i;
 
 function extractEntityLabel(text) {
-  const match = text.match(/requirements\s+(?:for|of)\s+([^:\n\-()]+)/i) || text.match(/requirements\s+([^:\n]+)/i);
-  return match ? match[1].trim() : "";
+  const match = text.match(/requirements\s+(?:for|of|-|:)?\s*([^\n:]+)/i);
+  if (!match) return "";
+  const raw = match[1].trim();
+  const parenEndMatch = raw.match(/^([^(]+\([^)]+\))/);
+  if (parenEndMatch) {
+    return parenEndMatch[1].trim();
+  }
+  return raw.replace(/\.+$/, "");
 }
 
 function extractFee(text) {
@@ -23,72 +19,54 @@ function extractFee(text) {
 }
 
 function extractRefundNote(text) {
-  const match = text.match(/([^.\n]*refundable[^.\n]*)\.?/i);
-  return match ? match[1].trim() : "";
+  const match = text.match(/\b(non-?refundable)\b/i);
+  return match ? match[1].toUpperCase() : "";
 }
 
 function extractDocs(text) {
   const docs = [];
-  const seenLabels = new Set();
+  const seenKeys = new Set();
 
-  function addDoc(rawText, explicitSubtext) {
+  function addDoc(rawText) {
     if (!rawText) return;
-    let label = rawText.trim();
-    let subtext = explicitSubtext;
+    let cleanText = rawText.trim().replace(/^[-*•]\s*/, "").replace(/^\d+[.)]\s*/, "");
+    cleanText = cleanText.replace(/\.+$/, "").trim();
 
-    if (!subtext) {
-      const parenMatch = label.match(/^([^(]+)\s*\(([^)]+)\)$/);
-      if (parenMatch) {
-        label = parenMatch[1].trim();
-        subtext = parenMatch[2].trim();
-      }
+    if (!cleanText || cleanText.length < 3) return;
+
+    // Exclude entity title headers, fee lines, and refund notes from document list
+    if (/^requirements\s+(?:for|of|-|:)/i.test(cleanText) || /^requirements$/i.test(cleanText)) return;
+    if (/(?:application|registration)?\s*fee\s*:/i.test(cleanText) || /^₹\s*[\d,]+/i.test(cleanText)) return;
+    if (/^non-?refundable$/i.test(cleanText) || (cleanText.length < 25 && /refundable/i.test(cleanText))) return;
+
+    let label = cleanText;
+    let subtext;
+
+    // Extract title (group 1), inside-parenthesis (group 2), and remaining after-parenthesis (group 3)
+    const parenMatch = cleanText.match(/^([^(]+)\s*\(([^)]+)\)\s*(.*)$/);
+    if (parenMatch) {
+      label = parenMatch[1].trim();
+      const insideParen = parenMatch[2].trim();
+      const afterParen = parenMatch[3].trim().replace(/\)+$/, "").trim();
+      subtext = afterParen ? `${insideParen} ${afterParen}` : insideParen;
     }
 
-    if (!label || label.length < 3 || /application fee|non refundable|requirements for/i.test(label)) {
-      return;
-    }
-
-    const lower = label.toLowerCase();
-    if (seenLabels.has(lower)) return;
-    seenLabels.add(lower);
+    const key = `${label.toLowerCase()}::${(subtext || "").toLowerCase()}`;
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
 
     docs.push(subtext ? { label, subtext } : { label });
   }
 
-  // 1. Dynamic list/item extraction (handles \n list items like "1. item", "- item")
-  const lines = text.split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    const itemMatch = trimmed.match(/^(?:[-*•]|\d+[.)])\s*(.+)$/);
-    if (!itemMatch) continue;
+  // Pre-split text by:
+  // 1. Newlines \n
+  // 2. Position after closing parenthesis followed by Capital letter: (?<=\))\s*\.?\s*(?=[A-Z])
+  // 3. Position after period followed by Capital letter: (?<=\.)\s*(?=[A-Z])
+  // 4. Word boundary between lowercase letter and a Capitalized Word (2+ chars): (?<=[a-z0-9])(?=[A-Z][a-z]{2,})
+  const rawChunks = text.split(/\n|(?<=\))\s*\.?\s*(?=[A-Z])|(?<=\.)\s*(?=[A-Z])|(?<=[a-z0-9])(?=[A-Z][a-z]{2,})/);
 
-    const content = itemMatch[1].trim();
-    if (/fee|refundable|requirements/i.test(content)) continue;
-    addDoc(content);
-  }
-
-  // 2. Period-separated sentence extraction (handles single-paragraph backend payloads)
-  if (docs.length === 0) {
-    const chunks = text.split(/\.(?=\s*[A-Z1-9-]|$)/);
-    for (const chunk of chunks) {
-      const trimmed = chunk.trim();
-      if (trimmed && trimmed.length < 250) {
-        addDoc(trimmed);
-      }
-    }
-  }
-
-  // 3. Known DOCUMENT_DEFS fallback
-  if (docs.length === 0) {
-    for (const def of DOCUMENT_DEFS) {
-      const defMatch = text.match(def.match);
-      if (!defMatch) continue;
-      const parenContent = defMatch[2]?.trim();
-      addDoc(
-        def.foldParenIntoLabel && parenContent ? `${def.label} (${parenContent})` : def.label,
-        parenContent && !def.foldParenIntoLabel ? parenContent : undefined
-      );
-    }
+  for (const chunk of rawChunks) {
+    addDoc(chunk);
   }
 
   return docs;

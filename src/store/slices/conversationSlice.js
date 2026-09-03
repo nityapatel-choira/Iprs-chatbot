@@ -51,7 +51,7 @@ export function extractMessageText(msg) {
         }
         return "";
       })
-      .join(" ")
+      .join("\n")
       .trim();
   }
   return "";
