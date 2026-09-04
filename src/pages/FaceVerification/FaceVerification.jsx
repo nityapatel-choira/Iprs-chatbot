@@ -126,6 +126,7 @@ const FaceVerification = ({
                 caption="PNG, JPG/JPEG"
                 accept=".jpg,.jpeg,.png"
                 onFileSelected={handleFileSelected}
+                onCameraClick={switchToCamera}
                 status={upload.status}
                 errorMessage={upload.errorMessage}
                 autoOpen={initialMode === "upload" && !manualUploadSwitch}

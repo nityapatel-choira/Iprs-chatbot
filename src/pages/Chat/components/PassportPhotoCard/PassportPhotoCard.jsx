@@ -59,6 +59,7 @@ const PassportPhotoCard = ({
           caption="PNG, JPG/JPEG"
           accept="image/*,.jpg,.jpeg,.png"
           onFileSelected={onFileSelected}
+          onCameraClick={() => setMode("camera")}
           status={status}
           progress={progress}
           errorMessage={errorMessage}

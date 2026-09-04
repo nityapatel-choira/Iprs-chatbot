@@ -3,6 +3,7 @@ import UploadCloudIcon from "../icons/UploadCloudIcon";
 import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import CameraIcon from "../icons/CameraIcon";
+import useCameraCapture from "../DocumentScanCard/useCameraCapture";
 import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
 import styles from "./FileUploader.module.css";
 
@@ -15,6 +16,15 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/x-png",
   "application/pdf",
 ]);
+
+function dataUrlToFile(dataUrl, filename = "captured-photo.jpg") {
+  const [header, base64] = dataUrl.split(",");
+  const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
 
 function isAllowedFile(file) {
   if (!file) return false;
@@ -32,6 +42,7 @@ const FileUploader = ({
   caption = "PNG, JPG/JPEG, PDF",
   accept = "image/*,application/pdf,.jpg,.jpeg,.png,.pdf",
   onFileSelected,
+  onCameraClick,
   status = "idle",
   progress = 0,
   errorMessage,
@@ -54,6 +65,24 @@ const FileUploader = ({
 
   const [isPdfPreviewing, setIsPdfPreviewing] = useState(false);
   const [pdfPreviewRenderUrl, setPdfPreviewRenderUrl] = useState(null);
+
+  const [showCameraModal, setShowCameraModal] = useState(false);
+
+  const handleCameraCapturedImage = (dataUrl) => {
+    setShowCameraModal(false);
+    const file = dataUrlToFile(dataUrl);
+    handleFile(file);
+  };
+
+  const {
+    status: cameraStatus,
+    errorMessage: cameraErrorMessage,
+    videoRef: cameraVideoRef,
+    canvasRef: cameraCanvasRef,
+    start: startCamera,
+    capture: captureCamera,
+    cancel: cancelCamera,
+  } = useCameraCapture({ onCapture: handleCameraCapturedImage });
 
   const isDraggingHandle = useRef(false);
   const dragHandleType = useRef(null);
@@ -333,7 +362,21 @@ const FileUploader = ({
   const handleCameraClick = () => {
     if (isDisabled) return;
     setValidationError("");
-    cameraInputRef.current?.click();
+    if (onCameraClick) {
+      onCameraClick();
+      return;
+    }
+    if (navigator.mediaDevices?.getUserMedia) {
+      setShowCameraModal(true);
+      startCamera();
+    } else {
+      cameraInputRef.current?.click();
+    }
+  };
+
+  const handleCloseCameraModal = () => {
+    cancelCamera();
+    setShowCameraModal(false);
   };
 
   const effectiveStatus = validationError ? "error" : status;
@@ -453,6 +496,62 @@ const FileUploader = ({
         disabled={isDisabled}
         aria-label="Take Photo"
       />
+
+      {showCameraModal && (
+        <div className={styles.cropModalOverlay} onClick={handleCloseCameraModal}>
+          <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
+            <span className={styles.cropModalTitle}>Take Photo / Scan Document</span>
+            <button
+              type="button"
+              className={styles.cropModalClose}
+              onClick={handleCloseCameraModal}
+              aria-label="Close camera"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
+            {cameraStatus === "loading" && (
+              <div className={styles.spinnerWrap} role="status" aria-live="polite">
+                <span className={styles.spinner} />
+                <span className={styles.hint}>Starting camera...</span>
+              </div>
+            )}
+
+            {cameraStatus === "error" && (
+              <div className={styles.spinnerWrap} role="alert">
+                <span className={styles.errorIcon}>
+                  <AlertIcon />
+                </span>
+                <span className={styles.title}>Camera unavailable</span>
+                <span className={styles.caption}>{cameraErrorMessage || "Could not access camera."}</span>
+                <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {(cameraStatus === "scanning" || cameraStatus === "idle") && (
+              <div className={styles.cropImageWrapper}>
+                <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
+              </div>
+            )}
+          </div>
+
+          <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className={styles.cropCancelBtn} onClick={handleCloseCameraModal}>
+              Cancel
+            </button>
+            {cameraStatus === "scanning" && (
+              <button type="button" className={styles.cropConfirmBtn} onClick={captureCamera}>
+                Capture Photo
+              </button>
+            )}
+          </div>
+          <canvas ref={cameraCanvasRef} className={styles.hiddenInput} aria-hidden="true" />
+        </div>
+      )}
 
       {isCropping && pendingPreviewUrl && (
         <div className={styles.cropModalOverlay} onClick={handleCancelCrop}>
