@@ -12,7 +12,7 @@ import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import PaymentReview from "../../components/PaymentReview/PaymentReview";
 import StepTracker from "../../components/StepTracker/StepTracker";
-import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
+import { STAGE_LABELS, determineStageIndex } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
@@ -99,9 +99,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     };
   }, []);
 
-  const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
-  const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
-  const displayFill = sessionEnded ? 100 : trackerFill;
+
 
   // The passport-photo step is identified from the trailing run of bot
   // messages: input.title/caption are empty/generic for it on the real
@@ -189,6 +187,18 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       /check\s+your\s+details|review\s+your\s+details/i.test(lastMessageText)) &&
     input?.id !== "payment-review-correction" &&
     lastMessage?.id !== "payment-review-correction";
+
+  const displayActiveIndex = useMemo(
+    () =>
+      determineStageIndex({
+        input,
+        trailingBotText,
+        sessionEnded,
+        isPaymentReviewStep,
+      }),
+    [input, trailingBotText, sessionEnded, isPaymentReviewStep]
+  );
+  const displayProgress = sessionEnded ? 100 : progress;
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
@@ -290,7 +300,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
         <div className={styles.trackerSlot}>
-          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} currentFill={displayFill} />
+          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} progress={displayProgress} />
         </div>
 
         <div className={styles.messages} ref={messagesRef}>
