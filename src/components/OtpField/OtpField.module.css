@@ -12,43 +12,76 @@
   color: #334155;
 }
 
-.input {
+.inputContainer {
+  position: relative;
   width: 100%;
-  height: 48px;
+  height: 52px;
+}
+
+.hiddenInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.hiddenInput:disabled {
+  cursor: not-allowed;
+}
+
+.boxes {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 0 14px;
-  background: #ffffff;
   font-family: inherit;
-  font-size: 1.0625rem;
-  letter-spacing: 0.3em;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: #0f172a;
-  transition: border-color 0.15s var(--ease, ease), box-shadow 0.15s var(--ease, ease);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
-.input::placeholder {
-  letter-spacing: 0.3em;
-  color: #94a3b8;
+.boxFilled {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
 
-.input:focus-visible {
-  outline: none;
+.hiddenInput:focus ~ .boxes .boxActive {
   border-color: #0066ff;
   box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.14);
 }
 
-.inputError {
+.boxesError .box {
   border-color: #dc2626;
 }
 
-.inputError:focus-visible {
+.hiddenInput:focus ~ .boxesError .boxActive {
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
 }
 
-.input:disabled {
+.hiddenInput:disabled ~ .boxes .box {
   background: #f1f5f9;
   color: #94a3b8;
-  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.placeholder {
+  color: #cbd5e1;
+  font-weight: 400;
 }
 
 .errorText {

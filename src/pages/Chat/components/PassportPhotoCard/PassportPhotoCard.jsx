@@ -42,6 +42,7 @@ const PassportPhotoCard = ({
     return (
       <div ref={faceScanRef} className={styles.faceScanWrap}>
         <FaceVerification
+          key="camera"
           embedded
           initialMode="camera"
           onContinue={handleContinue}
