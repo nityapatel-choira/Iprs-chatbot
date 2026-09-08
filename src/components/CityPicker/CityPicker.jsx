@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCombobox } from "downshift";
 import { INDIA_CITIES } from "../../constants/indiaCities";
 import { getSuggestions } from "../../utils/locationSearch";
@@ -61,8 +61,15 @@ function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) 
 
   const trimmed = (inputValue || "").trim();
   const isMinLength = trimmed.length >= 3;
-  const matchingCities = isMinLength ? getSuggestions(trimmed, INDIA_CITIES) : [];
-  const suggestions = getFittingSuggestions(matchingCities, containerWidth, isMobile);
+  
+  const matchingCities = useMemo(() => {
+    return isMinLength ? getSuggestions(trimmed, INDIA_CITIES) : [];
+  }, [isMinLength, trimmed]);
+  
+  const suggestions = useMemo(() => {
+    return getFittingSuggestions(matchingCities, containerWidth, isMobile);
+  }, [matchingCities, containerWidth, isMobile]);
+
   const canonicalMatch = matchingCities.length > 0 ? matchingCities[0] : null;
 
   const {

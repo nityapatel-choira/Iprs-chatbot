@@ -13,44 +13,6 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
-.boxes {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.box {
-  width: 100%;
-  max-width: 44px;
-  aspect-ratio: 1 / 1;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #f8fafc;
-  font-family: inherit;
-  font-size: 1.125rem;
-  font-weight: 600;
-  text-align: center;
-  color: #0f172a;
-  transition: border-color 0.15s var(--ease, ease), box-shadow 0.15s var(--ease, ease);
-}
-
-.box::placeholder {
-  color: #94a3b8;
-}
-
-.box:focus-visible {
-  outline: none;
-  border-color: #0066ff;
-  background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.14);
-}
-
-.box:disabled {
-  background: #f1f5f9;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
 
 .verifyButton {
   width: 100%;
