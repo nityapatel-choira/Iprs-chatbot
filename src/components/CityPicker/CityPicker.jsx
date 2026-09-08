@@ -40,7 +40,7 @@ function getFittingSuggestions(candidates, containerWidth, isMobile) {
   return selected;
 }
 
-function CityPicker({ onSubmit, disabled, placeholder = "Search or select city..." }) {
+function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) {
   const [inputValue, setInputValue] = useState("");
   const [containerWidth, setContainerWidth] = useState(360);
   const [isMobile, setIsMobile] = useState(false);

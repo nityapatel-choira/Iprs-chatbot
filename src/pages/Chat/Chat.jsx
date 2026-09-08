@@ -378,7 +378,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <CityPicker
               key={input.id}
-              placeholder={input.placeholder || "Search or select city..."}
+              placeholder={input.placeholder || "Write your message"}
               onSubmit={sendAnswer}
               disabled={isTyping}
             />
