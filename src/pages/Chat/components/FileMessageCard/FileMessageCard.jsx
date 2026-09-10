@@ -83,6 +83,20 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
             setPdfThumbnail(url);
           }
         });
+      }
+    }
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isPdf, fileObject, initialPreviewUrl]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (isPdf && isPreviewOpen && !pdfFullPreview) {
+      const target = fileObject || (initialPreviewUrl && initialPreviewUrl !== "#" ? initialPreviewUrl : null);
+      if (target) {
         getPdfFullPreviewUrl(target, 1.8).then((url) => {
           if (!isCancelled && url) {
             setPdfFullPreview(url);
@@ -94,7 +108,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
     return () => {
       isCancelled = true;
     };
-  }, [isPdf, fileObject, initialPreviewUrl]);
+  }, [isPdf, isPreviewOpen, pdfFullPreview, fileObject, initialPreviewUrl]);
 
   const isUploading = status === "uploading";
   const isError = status === "error";

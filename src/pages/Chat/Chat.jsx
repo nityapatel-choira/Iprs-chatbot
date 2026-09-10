@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -53,57 +54,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     retry,
   } = useBackendConversation();
 
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const el = pageRef.current;
-    if (!vv || !el) return undefined;
+  useVisualViewport(pageRef);
 
-    let rafId = null;
-    let lastHeight = 0;
-    let layoutViewportHeight = document.documentElement.clientHeight || window.innerHeight;
-
-    const updateVisualHeight = () => {
-      if (vv.height >= layoutViewportHeight - 100) {
-        layoutViewportHeight = document.documentElement.clientHeight || window.innerHeight;
-      }
-
-      const isKeyboardOpen = vv.height < layoutViewportHeight - 100;
-      if (isKeyboardOpen) {
-        if (window.scrollY !== 0) {
-          window.scrollTo(0, 0);
-        }
-        const nextHeight = Math.round(vv.height);
-        if (Math.abs(nextHeight - lastHeight) > 2) {
-          lastHeight = nextHeight;
-          el.style.setProperty("--visual-height", `${nextHeight}px`);
-        }
-      } else if (lastHeight !== 0) {
-        lastHeight = 0;
-        el.style.removeProperty("--visual-height");
-      }
-    };
-
-    const handleViewportChange = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(updateVisualHeight);
-    };
-
-    vv.addEventListener("resize", handleViewportChange);
-    vv.addEventListener("scroll", handleViewportChange);
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      vv.removeEventListener("resize", handleViewportChange);
-      vv.removeEventListener("scroll", handleViewportChange);
-      el.style.removeProperty("--visual-height");
-    };
-  }, []);
-
-
-
-  // The passport-photo step is identified from the trailing run of bot
-  // messages: input.title/caption are empty/generic for it on the real
-  // backend.
+  // Parse trailing bot text to identify specific steps
   let trailingBotText = "";
   for (let i = history.length - 1; i >= 0 && history[i]?.sender === "bot"; i -= 1) {
     trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
