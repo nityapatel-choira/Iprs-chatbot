@@ -137,6 +137,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
       if (!video || !mountedRef.current) {
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
+        setStatus("idle");
         return;
       }
       video.srcObject = stream;

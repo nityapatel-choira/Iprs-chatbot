@@ -5,6 +5,7 @@ import AlertIcon from "../icons/AlertIcon";
 import CameraIcon from "../icons/CameraIcon";
 import useCameraCapture from "../DocumentScanCard/useCameraCapture";
 import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
+import { dataUrlToFile } from "../../utils/fileUtils";
 import styles from "./FileUploader.module.css";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
@@ -17,14 +18,6 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
 ]);
 
-function dataUrlToFile(dataUrl, filename = "captured-photo.jpg") {
-  const [header, base64] = dataUrl.split(",");
-  const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-}
 
 function isAllowedFile(file) {
   if (!file) return false;
@@ -125,6 +118,7 @@ const FileUploader = ({
 
   useEffect(() => {
     if (autoOpen && !disabled) {
+      if (inputRef.current) inputRef.current.value = "";
       inputRef.current?.click();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -356,6 +350,7 @@ const FileUploader = ({
   const handleClick = () => {
     if (isDisabled) return;
     setValidationError("");
+    if (inputRef.current) inputRef.current.value = "";
     inputRef.current?.click();
   };
 
@@ -370,6 +365,7 @@ const FileUploader = ({
       setShowCameraModal(true);
       startCamera();
     } else {
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
       cameraInputRef.current?.click();
     }
   };

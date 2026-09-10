@@ -71,7 +71,9 @@ const FaceVerification = ({
   };
 
   const switchToCamera = () => {
+    setManualUploadSwitch(false);
     setMode("camera");
+    setUpload({ status: "idle", errorMessage: "", image: null });
   };
 
   const handleFileSelected = async (file) => {

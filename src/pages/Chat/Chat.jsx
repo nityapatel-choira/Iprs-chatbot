@@ -20,6 +20,7 @@ import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import styles from "./Chat.module.css";
 
 const PASSPORT_PHOTO_STEP_PATTERN = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
@@ -53,51 +54,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     retry,
   } = useBackendConversation();
 
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const el = pageRef.current;
-    if (!vv || !el) return undefined;
-
-    let rafId = null;
-    let lastHeight = 0;
-    let layoutViewportHeight = document.documentElement.clientHeight || window.innerHeight;
-
-    const updateVisualHeight = () => {
-      if (vv.height >= layoutViewportHeight - 100) {
-        layoutViewportHeight = document.documentElement.clientHeight || window.innerHeight;
-      }
-
-      const isKeyboardOpen = vv.height < layoutViewportHeight - 100;
-      if (isKeyboardOpen) {
-        if (window.scrollY !== 0) {
-          window.scrollTo(0, 0);
-        }
-        const nextHeight = Math.round(vv.height);
-        if (Math.abs(nextHeight - lastHeight) > 2) {
-          lastHeight = nextHeight;
-          el.style.setProperty("--visual-height", `${nextHeight}px`);
-        }
-      } else if (lastHeight !== 0) {
-        lastHeight = 0;
-        el.style.removeProperty("--visual-height");
-      }
-    };
-
-    const handleViewportChange = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(updateVisualHeight);
-    };
-
-    vv.addEventListener("resize", handleViewportChange);
-    vv.addEventListener("scroll", handleViewportChange);
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      vv.removeEventListener("resize", handleViewportChange);
-      vv.removeEventListener("scroll", handleViewportChange);
-      el.style.removeProperty("--visual-height");
-    };
-  }, []);
+  useVisualViewport(pageRef);
 
 
 
@@ -378,7 +335,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <CityPicker
               key={input.id}
-              placeholder={input.placeholder || "Search or select city..."}
+              placeholder={input.placeholder || "Write your message"}
               onSubmit={sendAnswer}
               disabled={isTyping}
             />

@@ -3,17 +3,9 @@ import CameraIcon from "../../../../components/icons/CameraIcon";
 import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
 import FileUploader from "../../../../components/FileUploader/FileUploader";
+import { dataUrlToFile } from "../../../../utils/fileUtils";
 import styles from "./PassportPhotoCard.module.css";
 
-// Converts captured data URL to a File object.
-function dataUrlToFile(dataUrl, filename) {
-  const [header, base64] = dataUrl.split(",");
-  const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-}
 
 const PassportPhotoCard = ({
   title,
@@ -42,6 +34,7 @@ const PassportPhotoCard = ({
     return (
       <div ref={faceScanRef} className={styles.faceScanWrap}>
         <FaceVerification
+          key="camera"
           embedded
           initialMode="camera"
           onContinue={handleContinue}
