@@ -4,10 +4,8 @@ import LanguageCard from "../../components/LanguageCard/LanguageCard";
 import { LANGUAGES } from "../../constants/languages";
 import styles from "./LanguageSelection.module.css";
 
-const ENABLED_LANGUAGE_CODE = "en";
-
 const LanguageSelection = ({ onContinue }) => {
-  const [selected, setSelected] = useState(ENABLED_LANGUAGE_CODE);
+  const [selected, setSelected] = useState("en");
 
   const handleContinue = () => {
     if (!selected) return;
@@ -37,7 +35,6 @@ const LanguageSelection = ({ onContinue }) => {
                 native={lang.native}
                 selected={selected === lang.code}
                 onSelect={() => setSelected(lang.code)}
-                disabled={lang.code !== ENABLED_LANGUAGE_CODE}
               />
             ))}
           </div>
