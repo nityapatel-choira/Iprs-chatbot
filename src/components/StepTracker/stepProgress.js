@@ -1,30 +1,60 @@
-// Splits 0-100% progress evenly across 4 registration stages.
-export const STEP_RANGES = {
-  personalDetails: { min: 0, max: 25, label: "Personal Details" },
-  bankDetails: { min: 25, max: 50, label: "Bank Details" },
-  workNotifications: { min: 50, max: 75, label: "Work Notifications" },
-  documentUpload: { min: 75, max: 100, label: "Document Upload" },
-};
+export const STAGE_LABELS = [
+  "Personal Details",
+  "Information & Documents",
+  "Work & Music Details",
+  "Review & Payment",
+];
 
-const STAGE_ORDER = Object.keys(STEP_RANGES);
-
-export const STAGE_LABELS = STAGE_ORDER.map((key) => STEP_RANGES[key].label);
-
-export function getStepProgress(progress) {
-  const clamped = Math.max(0, Math.min(100, Number(progress) || 0));
-
-  let activeIndex = STAGE_ORDER.length - 1;
-  for (let i = 0; i < STAGE_ORDER.length; i += 1) {
-    const range = STEP_RANGES[STAGE_ORDER[i]];
-    if (clamped <= range.max) {
-      activeIndex = i;
-      break;
-    }
+export function determineStageIndex({
+  input,
+  trailingBotText = "",
+  sessionEnded = false,
+  isPaymentReviewStep = false,
+}) {
+  // All steps show completed when session has completed.
+  if (sessionEnded) {
+    return 4;
   }
 
-  const activeRange = STEP_RANGES[STAGE_ORDER[activeIndex]];
-  const span = activeRange.max - activeRange.min || 1;
-  const currentFill = Math.max(0, Math.min(100, ((clamped - activeRange.min) / span) * 100));
+  // Step 4: Final Payment Review / Fee Summary / Review input.
+  if (
+    isPaymentReviewStep ||
+    input?.type === "summary input" ||
+    input?.type === "payment-review" ||
+    input?.type === "review input"
+  ) {
+    return 3;
+  }
 
-  return { activeIndex, currentFill, progress: clamped };
+  const currentPromptText = `${input?.title || ""} ${input?.caption || ""} ${input?.placeholder || ""}`.toLowerCase();
+
+  // Step 4 Check: Explicit review / declaration / payment terms in current prompt.
+  if (/\b(payment|fee summary|declaration|i accept|review your details|check your details)\b/i.test(currentPromptText)) {
+    return 3;
+  }
+
+  // Step 3 Check: Specific Work / Music / Repertoire prompt questions.
+  if (/\b(album|track name|song title|music work|work title|repertoire|creation name|release date|work submission)\b/i.test(currentPromptText)) {
+    return 2;
+  }
+
+  // Step 2 Check: Information, Bank Details, PAN, GST, ID / Address Proofs, File / Document Uploads.
+  if (
+    input?.type === "document input" ||
+    input?.type === "file input" ||
+    /\b(bank|account|ifsc|cheque|passbook|pan|gst|address proof|identity proof|passport photo|profile photo|incorporation|memorandum|board resolution|deed|upload)\b/i.test(currentPromptText)
+  ) {
+    return 1;
+  }
+
+  // Fallback for trailing bot text context if input title is generic.
+  const trailingText = (trailingBotText || "").toLowerCase();
+  if (/\b(album|track name|song title|music work|work title|repertoire)\b/i.test(trailingText)) {
+    return 2;
+  }
+
+  // Default: Step 1 (Personal Details) is active.
+  return 0;
 }
+
+

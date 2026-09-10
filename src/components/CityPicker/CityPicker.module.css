@@ -1,32 +1,32 @@
 .container {
-  position: relative;
   width: 100%;
   max-width: 100%;
-  margin: 0;
+  margin: 0 auto;
 }
 
 .form {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
 }
 
 .inputContainer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.65rem;
   width: 100%;
   height: 56px;
   background: #ffffff;
-  border: 1px solid #cbd5e1;
+  border: none;
   border-radius: 999px;
-  padding: 0 6px 0 20px;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 0 8px 0 22px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 0.15s ease;
 }
 
 .inputContainer:focus-within {
-  border-color: #0066ff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.16);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06), 0 0 0 3px rgba(0, 102, 255, 0.16);
 }
 
 .input {
@@ -36,27 +36,28 @@
   outline: none;
   background: transparent;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #0f172a;
+  padding: 0.6rem 0;
 }
 
 .input::placeholder {
-  color: #94a3b8;
+  color: #6b7280;
 }
 
 .sendButton {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(90deg, #1a5ce6 0%, #3b7aff 100%);
+  background: #007BFF;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: opacity 0.15s var(--ease, ease), transform 0.15s var(--ease, ease);
 }
 
 .sendButton:active:not(:disabled) {
@@ -68,62 +69,78 @@
   cursor: not-allowed;
 }
 
-.menu {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  max-height: 220px;
-  margin: 0;
-  padding: 6px 0;
-  list-style: none;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
-  overflow-y: auto;
-  z-index: 100;
-  display: none;
-}
-
-.menuOpen {
-  display: block;
-}
-
-.menuItem {
-  min-height: 44px;
+.suggestionsRow {
   display: flex;
   align-items: center;
-  padding: 10px 18px;
-  font-size: 0.9375rem;
-  color: #1e293b;
-  cursor: pointer;
-  transition: background-color 0.1s ease;
-  user-select: none;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.menuItemActive {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  font-weight: 500;
-}
-
-.noMatches {
-  min-height: 44px;
-  display: flex;
+.pill {
+  flex: 0 1 auto;
+  max-width: 100%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 18px;
+  gap: 4px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 999px;
   font-size: 0.875rem;
-  color: #94a3b8;
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: all 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.pill:hover,
+.pillActive {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.cityName {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stateName {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.pillActive .stateName {
+  color: #3b82f6;
+}
+
+.noMatchesPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px dashed #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  color: #64748b;
   font-style: italic;
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {
-  .container {
-    max-width: 100%;
-  }
-
   .inputContainer {
     height: 52px;
     padding-left: 16px;
@@ -134,11 +151,16 @@
     height: 40px;
   }
 
-  .menu {
-    max-height: 180px;
+  .suggestionsRow {
+    gap: 6px;
   }
 
-  .menuItem {
-    padding: 12px 16px;
+  .pill {
+    padding: 7px 12px;
+    font-size: 0.8125rem;
+  }
+
+  .stateName {
+    display: none;
   }
 }

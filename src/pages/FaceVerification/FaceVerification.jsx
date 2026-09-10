@@ -13,6 +13,7 @@ const FaceVerification = ({
   onBack,
   onCapture,
   onContinue,
+  onFileSelected,
   language = "English",
   embedded = false,
   initialMode = "camera",
@@ -70,10 +71,16 @@ const FaceVerification = ({
   };
 
   const switchToCamera = () => {
+    setManualUploadSwitch(false);
     setMode("camera");
+    setUpload({ status: "idle", errorMessage: "", image: null });
   };
 
   const handleFileSelected = async (file) => {
+    if (onFileSelected) {
+      onFileSelected(file);
+      return;
+    }
     setUpload({ status: "uploading", errorMessage: "", image: null });
     try {
       const { faceCount, dataUrl } = await detectImageFile(file);
@@ -118,9 +125,10 @@ const FaceVerification = ({
             <div className={styles.uploadArea}>
               <FileUploader
                 title="Upload a clear photo of your face"
-                caption="JPEG or PNG, up to 5MB"
+                caption="PNG, JPG/JPEG"
                 accept=".jpg,.jpeg,.png"
                 onFileSelected={handleFileSelected}
+                onCameraClick={switchToCamera}
                 status={upload.status}
                 errorMessage={upload.errorMessage}
                 autoOpen={initialMode === "upload" && !manualUploadSwitch}

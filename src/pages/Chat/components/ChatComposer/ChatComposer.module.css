@@ -74,3 +74,7 @@
     padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
   }
 }
+
+:global([style*="--visual-height"]) .composerWrap {
+  padding-bottom: 0.75rem;
+}

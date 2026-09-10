@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
+import CityPicker from "../../components/CityPicker/CityPicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
@@ -9,8 +10,9 @@ import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard
 import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
+import PaymentReview from "../../components/PaymentReview/PaymentReview";
 import StepTracker from "../../components/StepTracker/StepTracker";
-import { STAGE_LABELS, getStepProgress } from "../../components/StepTracker/stepProgress";
+import { STAGE_LABELS, determineStageIndex } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
@@ -18,6 +20,7 @@ import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import styles from "./Chat.module.css";
 
 const PASSPORT_PHOTO_STEP_PATTERN = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
@@ -32,6 +35,8 @@ const TEXT_INPUT_CONFIG = {
 };
 
 const Chat = ({ language = "English", onBack, onLogout }) => {
+  const pageRef = useRef(null);
+
   const {
     history,
     input,
@@ -49,9 +54,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     retry,
   } = useBackendConversation();
 
-  const { activeIndex: trackerActiveIndex, currentFill: trackerFill } = getStepProgress(progress);
-  const displayActiveIndex = sessionEnded ? STAGE_LABELS.length : trackerActiveIndex;
-  const displayFill = sessionEnded ? 100 : trackerFill;
+  useVisualViewport(pageRef);
+
+
 
   // The passport-photo step is identified from the trailing run of bot
   // messages: input.title/caption are empty/generic for it on the real
@@ -128,9 +133,33 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     (input?.type === "text input" &&
       /\b(city|place of birth|current city)\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`));
 
+  const lastMessageText = extractMessageText(lastMessage);
+  const isPaymentReviewStep =
+    (input?.id === "payment-review" ||
+      input?.type === "payment-review" ||
+      input?.type === "review input" ||
+      input?.data?.type === "payment-review" ||
+      lastMessage?.id === "payment-review" ||
+      lastMessage?.type === "payment-review" ||
+      /check\s+your\s+details|review\s+your\s+details/i.test(lastMessageText)) &&
+    input?.id !== "payment-review-correction" &&
+    lastMessage?.id !== "payment-review-correction";
+
+  const displayActiveIndex = useMemo(
+    () =>
+      determineStageIndex({
+        input,
+        trailingBotText,
+        sessionEnded,
+        isPaymentReviewStep,
+      }),
+    [input, trailingBotText, sessionEnded, isPaymentReviewStep]
+  );
+  const displayProgress = sessionEnded ? 100 : progress;
+
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig);
+  const showComposer = Boolean(textConfig) && !isCityStep && !isPaymentReviewStep;
 
 
   const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
@@ -141,15 +170,12 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   function renderActiveInputWidget() {
     if (isTyping) return null;
 
+    if (isPaymentReviewStep) {
+      return null;
+    }
+
     if (isCityStep) {
-      return (
-        <CityPicker
-          key={input.id}
-          placeholder={input.placeholder || "Search or select city..."}
-          onSubmit={sendAnswer}
-          disabled={isTyping}
-        />
-      );
+      return null;
     }
 
     if (input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary) {
@@ -213,7 +239,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <FileUploader
           key={input.id}
           title={input.title || "Choose a file or drag & drop it here"}
-          caption={input.caption || "JPEG and PDF formats, up to 2MB"}
+          caption={input.caption || "PNG, JPG/JPEG, PDF"}
           onFileSelected={submitFile}
           status={effectiveUploadStatus}
           progress={effectiveUploadProgress}
@@ -226,12 +252,12 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={pageRef}>
       <div className={styles.panel}>
         <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
 
         <div className={styles.trackerSlot}>
-          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} currentFill={displayFill} />
+          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} progress={displayProgress} />
         </div>
 
         <div className={styles.messages} ref={messagesRef}>
@@ -239,9 +265,30 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             .filter((message) => !consentMessageIds.has(message.id))
             .map((message) => {
               const isLast = message.id === lastMessage?.id;
+              const msgText = extractMessageText(message);
+              const isReview =
+                message.sender === "bot" &&
+                (message.id === "payment-review" ||
+                  message.type === "payment-review" ||
+                  message.kind === "payment-review" ||
+                  /check\s+your\s+details|review\s+your\s+details/i.test(msgText)) &&
+                message.id !== "payment-review-correction";
+
+              if (isReview) {
+                return (
+                  <PaymentReview
+                    key={message.id}
+                    data={message.data || (isLast ? input?.data : undefined)}
+                    input={isLast ? input : undefined}
+                    message={message}
+                    onAction={isLast ? (actionLabel) => sendAnswer(actionLabel) : undefined}
+                  />
+                );
+              }
+
               const parsedSummary = isLast
                 ? lastMessageDocSummary
-                : message.sender === "bot" && parseDocumentSummaryText(extractMessageText(message));
+                : message.sender === "bot" && parseDocumentSummaryText(msgText);
               if (parsedSummary) {
                 return (
                   <FeeSummaryCard
@@ -282,6 +329,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             options={input.options || []}
             onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")}
           />
+        )}
+
+        {!isTyping && isCityStep && (
+          <div className={styles.cityComposerWrap}>
+            <CityPicker
+              key={input.id}
+              placeholder={input.placeholder || "Write your message"}
+              onSubmit={sendAnswer}
+              disabled={isTyping}
+            />
+          </div>
         )}
 
         {showComposer && (

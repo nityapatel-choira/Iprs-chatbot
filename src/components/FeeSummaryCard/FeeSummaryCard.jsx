@@ -18,18 +18,29 @@ const FeeSummaryCard = ({
 }) => {
   const [confirmed, setConfirmed] = useState(false);
 
+  const hasEntityLabel = Boolean(entityLabel && typeof entityLabel === "string" && entityLabel.trim());
+  const hasFee = Boolean(fee && typeof fee === "string" && fee.trim());
+  const hasInfoText = Boolean(infoText && typeof infoText === "string" && infoText.trim());
+  const showFeeCard = hasEntityLabel || hasFee || hasInfoText;
+
   return (
     <div className={styles.wrap}>
       <div className={styles.outerCard}>
-        <p className={styles.feeIntro}>You&apos;re applying as an</p>
-        <div className={styles.feeCard}>
-          <span className={styles.entityLabel}>{entityLabel}</span>
-          <div className={styles.amountGroup}>
-            <span className={styles.feeAmount}>{fee}</span>
-            <span className={styles.feeCaption}>{feeCaption}</span>
-          </div>
-          <p className={styles.infoPill}>{infoText}</p>
-        </div>
+        {showFeeCard && (
+          <>
+            {hasEntityLabel && <p className={styles.feeIntro}>You&apos;re applying as an</p>}
+            <div className={styles.feeCard}>
+              {hasEntityLabel && <span className={styles.entityLabel}>{entityLabel}</span>}
+              {hasFee && (
+                <div className={styles.amountGroup}>
+                  <span className={styles.feeAmount}>{fee}</span>
+                  {feeCaption && <span className={styles.feeCaption}>{feeCaption}</span>}
+                </div>
+              )}
+              {hasInfoText && <p className={styles.infoPill}>{infoText}</p>}
+            </div>
+          </>
+        )}
 
         {docsHeading && Array.isArray(docs) && docs.length > 0 && (
           <div className={styles.docCard}>

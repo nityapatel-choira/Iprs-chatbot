@@ -2,19 +2,20 @@ import { useLayoutEffect, useRef, useState } from "react";
 import CameraIcon from "../../../../components/icons/CameraIcon";
 import UploadCloudIcon from "../../../../components/icons/UploadCloudIcon";
 import FaceVerification from "../../../FaceVerification/FaceVerification";
+import FileUploader from "../../../../components/FileUploader/FileUploader";
+import { dataUrlToFile } from "../../../../utils/fileUtils";
 import styles from "./PassportPhotoCard.module.css";
 
-// Converts captured data URL to a File object.
-function dataUrlToFile(dataUrl, filename) {
-  const [header, base64] = dataUrl.split(",");
-  const mime = /data:(.*?);base64/.exec(header)?.[1] || "image/jpeg";
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-}
 
-const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
+const PassportPhotoCard = ({
+  title,
+  caption,
+  onFileSelected,
+  disabled,
+  status = "idle",
+  progress = 0,
+  errorMessage,
+}) => {
   const [mode, setMode] = useState(null); // null (choice) | "camera" | "upload"
   const faceScanRef = useRef(null);
 
@@ -29,10 +30,35 @@ const PassportPhotoCard = ({ title, caption, onFileSelected, disabled }) => {
     onFileSelected?.(dataUrlToFile(dataUrl, `passport-photo-${Date.now()}.jpg`));
   }
 
-  if (mode) {
+  if (mode === "camera") {
     return (
       <div ref={faceScanRef} className={styles.faceScanWrap}>
-        <FaceVerification embedded initialMode={mode} onContinue={handleContinue} />
+        <FaceVerification
+          key="camera"
+          embedded
+          initialMode="camera"
+          onContinue={handleContinue}
+          onFileSelected={onFileSelected}
+        />
+      </div>
+    );
+  }
+
+  if (mode === "upload") {
+    return (
+      <div className={styles.wrap}>
+        <FileUploader
+          title={title || "Upload your Passport photo"}
+          caption="PNG, JPG/JPEG"
+          accept="image/*,.jpg,.jpeg,.png"
+          onFileSelected={onFileSelected}
+          onCameraClick={() => setMode("camera")}
+          status={status}
+          progress={progress}
+          errorMessage={errorMessage}
+          disabled={disabled}
+          autoOpen
+        />
       </div>
     );
   }

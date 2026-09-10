@@ -1,59 +1,93 @@
-// Parses unformatted document/fee prose into FeeSummaryCard props.
+// Parses backend document requirement text into FeeSummaryCard props dynamically.
 
-const REQUIREMENTS_MARKER = /requirements for/i;
-const FEE_MARKER = /application fee/i;
-
-const DOCUMENT_DEFS = [
-  { label: "Identity Proof", match: /Identity Proof\s*(\(([^)]*)\))?/i, foldParenIntoLabel: true },
-  { label: "Bank Proof", match: /Bank Proof\s*(\(([^)]*)\))?/i },
-  { label: "Permanent Address Proof", match: /Permanent Address Proof\s*(\(([^)]*)\))?/i },
-  { label: "Present Address Proof", match: /Present Address Proof\s*(\(([^)]*)\))?/i },
-  { label: "GST Registration Certificate", match: /GST Registration Certificate\s*(\(([^)]*)\))?/i },
-  { label: "Copy of the NOC from another society", match: /\bNOC\b/i },
-  { label: "Passport Size Photo", match: /Passport\s*[Ss]ize\s*Photo/i },
-];
-
-const ENTITY_LABEL_PATTERN = /requirements for\s+(.+?)\s*(?=identity proof)/is;
-const FEE_PATTERN = /application fee\s*:?\s*(₹\s*[\d,]+)/i;
-const REFUND_NOTE_PATTERN = /([^.\n]*refundable[^.\n]*)\.?/i;
+const IS_UPLOAD_PROMPT = /\b(?:please\s+)?upload\b|\bshowing\s+your\b|\bselect\s+(?:a|any|one)\b/i;
+const IS_REVIEW_PAYLOAD = /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i;
+const HAS_REQUIREMENTS_HEADER = /requirements/i;
 
 function extractEntityLabel(text) {
-  const match = text.match(ENTITY_LABEL_PATTERN);
-  return match ? match[1].trim() : "";
+  const match = text.match(/requirements\s+(?:for|of|-|:)?\s*([^\n:]+)/i);
+  if (!match) return "";
+  const raw = match[1].trim();
+  const parenEndMatch = raw.match(/^([^(]+\([^)]+\))/);
+  if (parenEndMatch) {
+    return parenEndMatch[1].trim();
+  }
+  return raw.replace(/\.+$/, "");
 }
 
 function extractFee(text) {
-  const match = text.match(FEE_PATTERN);
+  const match = text.match(/(?:application|registration)?\s*fee\s*:?\s*(₹\s*[\d,]+|Rs\.?\s*[\d,]+)/i) || text.match(/(₹\s*[\d,]+)/i);
   return match ? match[1].replace(/\s+/g, "") : "";
 }
 
 function extractRefundNote(text) {
-  const match = text.match(REFUND_NOTE_PATTERN);
-  return match ? match[1].trim() : "";
+  const match = text.match(/\b(non-?refundable)\b/i);
+  return match ? match[1].toUpperCase() : "";
+}
+
+function extractDocs(text) {
+  const docs = [];
+  const seenKeys = new Set();
+
+  function addDoc(rawText) {
+    if (!rawText) return;
+    let cleanText = rawText.trim().replace(/^[-*•]\s*/, "").replace(/^\d+[.)]\s*/, "");
+    cleanText = cleanText.replace(/\.+$/, "").trim();
+
+    if (!cleanText || cleanText.length < 3) return;
+
+    // Exclude entity title headers, fee lines, and refund notes from document list
+    if (/^requirements\s+(?:for|of|-|:)/i.test(cleanText) || /^requirements$/i.test(cleanText)) return;
+    if (/(?:application|registration)?\s*fee\s*:/i.test(cleanText) || /^₹\s*[\d,]+/i.test(cleanText)) return;
+    if (/^non-?refundable$/i.test(cleanText) || (cleanText.length < 25 && /refundable/i.test(cleanText))) return;
+
+    let label = cleanText;
+    let subtext;
+
+    // Extract title (group 1), inside-parenthesis (group 2), and remaining after-parenthesis (group 3)
+    const parenMatch = cleanText.match(/^([^(]+)\s*\(([^)]+)\)\s*(.*)$/);
+    if (parenMatch) {
+      label = parenMatch[1].trim();
+      const insideParen = parenMatch[2].trim();
+      const afterParen = parenMatch[3].trim().replace(/\)+$/, "").trim();
+      subtext = afterParen ? `${insideParen} ${afterParen}` : insideParen;
+    }
+
+    const key = `${label.toLowerCase()}::${(subtext || "").toLowerCase()}`;
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+
+    docs.push(subtext ? { label, subtext } : { label });
+  }
+
+  // Pre-split text by:
+  // 1. Newlines \n
+  // 2. Position after closing parenthesis followed by Capital letter: (?<=\))\s*\.?\s*(?=[A-Z])
+  // 3. Position after period followed by Capital letter: (?<=\.)\s*(?=[A-Z])
+  // 4. Word boundary between lowercase letter and a Capitalized Word (2+ chars): (?<=[a-z0-9])(?=[A-Z][a-z]{2,})
+  const rawChunks = text.split(/\n|(?<=\))\s*\.?\s*(?=[A-Z])|(?<=\.)\s*(?=[A-Z])|(?<=[a-z0-9])(?=[A-Z][a-z]{2,})/);
+
+  for (const chunk of rawChunks) {
+    addDoc(chunk);
+  }
+
+  return docs;
 }
 
 const parseDocumentSummaryText = (text) => {
-  if (!text || !REQUIREMENTS_MARKER.test(text) || !FEE_MARKER.test(text)) return null;
-
-  const docs = [];
-  for (const def of DOCUMENT_DEFS) {
-    const match = text.match(def.match);
-    if (!match) continue;
-    const parenContent = match[2]?.trim();
-    if (parenContent && def.foldParenIntoLabel) {
-      docs.push({ label: `${def.label} (${parenContent})` });
-    } else if (parenContent) {
-      docs.push({ label: def.label, subtext: parenContent });
-    } else {
-      docs.push({ label: def.label });
-    }
+  if (!text || IS_UPLOAD_PROMPT.test(text) || IS_REVIEW_PAYLOAD.test(text) || !HAS_REQUIREMENTS_HEADER.test(text)) {
+    return null;
   }
+
+  const docs = extractDocs(text);
   if (docs.length === 0) return null;
+
+  const fee = extractFee(text);
 
   return {
     entityLabel: extractEntityLabel(text),
-    fee: extractFee(text),
-    feeCaption: "Total application fee",
+    fee,
+    feeCaption: fee ? "Total application fee" : "",
     infoText: extractRefundNote(text),
     docsHeading: `You'll need these ${docs.length} document${docs.length === 1 ? "" : "s"}`,
     docsSubtext: "Make sure before you start you have gathered the below mentioned documents.",

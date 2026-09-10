@@ -11,12 +11,19 @@ const UPLOAD_SUCCESS_HOLD_MS = 900;
 
 function toRichTextMessages(messages) {
   if (!Array.isArray(messages)) return [];
-  return messages.map((msg) => ({
-    id: nextId(),
-    sender: "bot",
-    kind: "richText",
-    richText: msg?.content?.richText,
-  }));
+  const result = [];
+  for (const msg of messages) {
+    const converted = {
+      id: nextId(),
+      sender: "bot",
+      kind: "richText",
+      richText: msg?.content?.richText,
+    };
+    if (extractMessageText(converted)) {
+      result.push(converted);
+    }
+  }
+  return result;
 }
 
 // Wraps terminal AI reply as a richText message.
@@ -44,7 +51,7 @@ export function extractMessageText(msg) {
         }
         return "";
       })
-      .join(" ")
+      .join("\n")
       .trim();
   }
   return "";
@@ -56,6 +63,9 @@ function mergeBotMessages(existingHistory, newMessages) {
   const updated = [...existingHistory];
   for (const msg of newMessages) {
     const newText = extractMessageText(msg);
+    if (!newText && msg.kind !== "file" && msg.kind !== "summaryCard") {
+      continue;
+    }
     const lastMsg = updated[updated.length - 1];
     const lastText = extractMessageText(lastMsg);
 
@@ -121,17 +131,10 @@ export const uploadConversationFile = createAsyncThunk(
   async ({ file, fileId }, { dispatch, rejectWithValue }) => {
     try {
       const data = await uploadFile(file, (pct) => dispatch(setUploadProgress(pct)));
-      // Backend re-asking for file input indicates rejection.
-      const isRejected = data?.input?.type === "file input";
-      dispatch(setFileMessageStatus({ fileId, status: isRejected ? "error" : "success" }));
-
-      if (isRejected) {
-        dispatch(setUploadStatus("error"));
-      } else {
-        dispatch(setUploadProgress(100));
-        dispatch(setUploadStatus("success"));
-        await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
-      }
+      dispatch(setFileMessageStatus({ fileId, status: "success" }));
+      dispatch(setUploadProgress(100));
+      dispatch(setUploadStatus("success"));
+      await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
 
       return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
     } catch (err) {

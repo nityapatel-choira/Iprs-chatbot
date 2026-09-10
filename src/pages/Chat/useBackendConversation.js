@@ -49,10 +49,6 @@ const useBackendConversation = () => {
       createdUrls.forEach((url) => URL.revokeObjectURL(url));
       createdUrls.clear();
     }
-    return () => {
-      createdUrls.forEach((url) => URL.revokeObjectURL(url));
-      createdUrls.clear();
-    };
   }, [history.length]);
 
   useEffect(() => {
