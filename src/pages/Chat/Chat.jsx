@@ -226,6 +226,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           title={input.title || (isProfilePhotoStep ? "Upload your Profile photo" : undefined)}
           caption={input.caption}
           onFileSelected={submitFile}
+          status={effectiveUploadStatus}
+          progress={effectiveUploadProgress}
+          errorMessage={effectiveUploadError}
         />
       );
     }

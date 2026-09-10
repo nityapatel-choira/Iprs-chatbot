@@ -46,6 +46,8 @@ const PassportPhotoCard = ({
           initialMode="camera"
           onContinue={handleContinue}
           onFileSelected={onFileSelected}
+          status={status}
+          disabled={disabled || status === "uploading" || status === "processing"}
         />
       </div>
     );

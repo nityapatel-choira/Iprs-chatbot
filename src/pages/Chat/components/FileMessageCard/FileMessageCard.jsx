@@ -111,6 +111,8 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   }, [isPdf, isPreviewOpen, pdfFullPreview, fileObject, initialPreviewUrl]);
 
   const isUploading = status === "uploading";
+  const isProcessing = status === "processing";
+  const isBusy = isUploading || isProcessing;
   const isError = status === "error";
   const activePreviewUrl = initialPreviewUrl || createdUrl;
 
@@ -125,26 +127,35 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   const formattedSize = formatFileSize(fileSize);
   const { base: fileNameBase, ext: fileNameExt } = splitFileName(fileName);
 
-  let fileDetailText = `${formattedSize} · View Document ↗`;
-  if (isUploading) {
-    fileDetailText = "Uploading...";
+  let fileDetailContent = <>{formattedSize} · View Document ↗</>;
+  if (isBusy) {
+    fileDetailContent = (
+      <>
+        Uploading
+        <span className={styles.typingDots}>
+          <span className={styles.dot} />
+          <span className={styles.dot} />
+          <span className={styles.dot} />
+        </span>
+      </>
+    );
   } else if (isError) {
-    fileDetailText = `${formattedSize} · Upload Failed ⚠️`;
+    fileDetailContent = <>{formattedSize} · Upload Failed ⚠️</>;
   }
 
-  const linkHref = isUploading ? undefined : activePreviewUrl || "#";
-  const linkTarget = isUploading ? undefined : activePreviewUrl ? "_blank" : undefined;
-  const linkTitle = isUploading ? "Uploading..." : activePreviewUrl ? "Click to view uploaded document" : undefined;
-  const linkStyle = isUploading ? { pointerEvents: "none", cursor: "default" } : undefined;
+  const linkHref = isBusy ? undefined : activePreviewUrl || "#";
+  const linkTarget = isBusy ? undefined : activePreviewUrl ? "_blank" : undefined;
+  const linkTitle = isBusy ? "Uploading..." : activePreviewUrl ? "Click to view uploaded document" : undefined;
+  const linkStyle = isBusy ? { pointerEvents: "none", cursor: "default" } : undefined;
 
   const handleCardClick = (e) => {
-    if (isUploading) return;
+    if (isBusy) return;
     e.preventDefault();
     setIsPreviewOpen(true);
   };
 
   const renderPreview = () => {
-    if (isUploading) {
+    if (isBusy) {
       return (
         <div className={styles.spinnerWrap}>
           <span className={styles.spinner} aria-hidden="true" />
@@ -185,7 +196,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
             <span className={styles.fileNameBase}>{fileNameBase}</span>
             {fileNameExt && <span className={styles.fileNameExt}>{fileNameExt}</span>}
           </span>
-          <span className={styles.fileDetailText}>{fileDetailText}</span>
+          <span className={styles.fileDetailText}>{fileDetailContent}</span>
         </div>
       </a>
 

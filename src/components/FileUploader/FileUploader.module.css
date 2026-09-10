@@ -58,6 +58,43 @@
   text-align: center;
   overflow-wrap: anywhere;
   word-break: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.typingDots {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3b82f6;
+  opacity: 0.6;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
 }
 
 .caption {
@@ -74,13 +111,15 @@
   align-items: center;
   gap: 10px;
   margin-top: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  width: 100%;
 }
 
 .cameraButton {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 16px;
   background: #3b82f6;
@@ -93,6 +132,8 @@
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(59, 130, 246, 0.25);
   transition: all 0.15s ease;
+  flex: 1;
+  white-space: nowrap;
 }
 
 .cameraButton:hover:not(:disabled) {
@@ -117,6 +158,9 @@
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   transition: all 0.15s ease;
+  flex: 1;
+  white-space: nowrap;
+  text-align: center;
 }
 
 .browseButton:hover:not(:disabled) {

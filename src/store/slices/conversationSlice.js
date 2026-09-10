@@ -6,8 +6,6 @@ import { consumeFreshLoginFlag } from "../../services/conversationStorage";
 let idCounter = 1;
 export const nextId = () => `m${++idCounter}`;
 
-// Brief delay so user sees upload success before next step.
-const UPLOAD_SUCCESS_HOLD_MS = 900;
 
 function toRichTextMessages(messages) {
   if (!Array.isArray(messages)) return [];
@@ -130,11 +128,20 @@ export const uploadConversationFile = createAsyncThunk(
   "conversation/uploadFile",
   async ({ file, fileId }, { dispatch, rejectWithValue }) => {
     try {
-      const data = await uploadFile(file, (pct) => dispatch(setUploadProgress(pct)));
-      dispatch(setFileMessageStatus({ fileId, status: "success" }));
-      dispatch(setUploadProgress(100));
-      dispatch(setUploadStatus("success"));
-      await new Promise((resolve) => setTimeout(resolve, UPLOAD_SUCCESS_HOLD_MS));
+      const data = await uploadFile(
+        file,
+        (pct) => {
+          dispatch(setUploadProgress(pct));
+          if (pct >= 100) {
+            dispatch(setUploadStatus("success"));
+            dispatch(setFileMessageStatus({ fileId, status: "success" }));
+          }
+        },
+        () => {
+          dispatch(setUploadStatus("processing"));
+          dispatch(setFileMessageStatus({ fileId, status: "processing" }));
+        }
+      );
 
       return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
     } catch (err) {

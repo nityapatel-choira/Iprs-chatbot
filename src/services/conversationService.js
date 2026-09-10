@@ -5,10 +5,10 @@ function sendMessage(message) {
   return request("/conversation/message", { method: "POST", body });
 }
 
-function uploadFile(file, onProgress) {
+function uploadFile(file, onProgress, onUploadComplete) {
   const formData = new FormData();
   formData.append("file", file);
-  return uploadRequest("/conversation/upload", formData, onProgress);
+  return uploadRequest("/conversation/upload", formData, onProgress, onUploadComplete);
 }
 
 export { sendMessage, uploadFile };

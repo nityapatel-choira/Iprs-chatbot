@@ -110,9 +110,9 @@ const FileUploader = ({
   useEffect(() => {
     let isCancelled = false;
     if (isPdfPreviewing && pendingFile) {
-      getPdfFullPreviewUrl(pendingFile, 1.8).then((url) => {
-        if (!isCancelled && url) {
-          setPdfPreviewRenderUrl(url);
+      getPdfFullPreviewUrl(pendingFile, 1.5).then((url) => {
+        if (!isCancelled) {
+          setPdfPreviewRenderUrl(url || "error");
         }
       });
     } else {
@@ -130,7 +130,7 @@ const FileUploader = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const busy = status === "uploading";
+  const busy = status === "uploading" || status === "processing";
   const isDisabled = disabled || busy;
 
   const dragCounter = useRef(0);
@@ -383,20 +383,39 @@ const FileUploader = ({
   const activeErrorMessage = validationError || errorMessage;
 
   function renderDropzoneContent() {
-    if (effectiveStatus === "uploading") {
+    if (effectiveStatus === "uploading" || effectiveStatus === "processing") {
+      const isProcessing = effectiveStatus === "processing";
       return (
         <div className={styles.spinnerWrap} role="status" aria-live="polite">
           {localPreviewUrl ? (
-            <img src={localPreviewUrl} alt={fileName || "Uploading"} className={styles.thumbnail} />
+            <img src={localPreviewUrl} alt={fileName || (isProcessing ? "Processing" : "Uploading")} className={styles.thumbnail} />
           ) : (
             <span className={styles.spinner} />
           )}
-          <span className={styles.title}>Uploading {fileName}...</span>
-          <div className={styles.progressTrack}>
-            <div className={styles.progressFill} style={{ width: `${progress}%` }} />
-          </div>
-          <span className={styles.caption}>{progress}%</span>
-          <span className={styles.hint}>Please wait while we process your document.</span>
+          
+          <span className={styles.title}>
+            {isProcessing ? "Processing document" : `Uploading ${fileName}...`}
+          </span>
+          {isProcessing && (
+            <span className={styles.typingDots}>
+              <span className={styles.dot} />
+              <span className={styles.dot} />
+              <span className={styles.dot} />
+            </span>
+          )}
+          
+          {!isProcessing && (
+            <>
+              <div className={styles.progressTrack}>
+                <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+              </div>
+              <span className={styles.caption}>{progress}%</span>
+            </>
+          )}
+          
+          <span className={styles.hint}>
+            {isProcessing ? "Please wait while we extract data." : "Please wait while we process your document."}
+          </span>
         </div>
       );
     }
@@ -639,7 +658,12 @@ const FileUploader = ({
 
           <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
             <div className={styles.cropImageWrapper}>
-              {pdfPreviewRenderUrl ? (
+              {pdfPreviewRenderUrl === "error" ? (
+                <div className={styles.spinnerWrap} role="alert">
+                  <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
+                  <span className={styles.caption} style={{ marginTop: 8, color: '#94a3b8' }}>You can still use this document.</span>
+                </div>
+              ) : pdfPreviewRenderUrl ? (
                 <img
                   src={pdfPreviewRenderUrl}
                   alt={pendingFile.name || "PDF preview"}
