@@ -69,7 +69,6 @@ const FileUploader = ({
 
   const {
     status: cameraStatus,
-    errorMessage: cameraErrorMessage,
     videoRef: cameraVideoRef,
     canvasRef: cameraCanvasRef,
     start: startCamera,
@@ -521,15 +520,25 @@ const FileUploader = ({
                   <AlertIcon />
                 </span>
                 <span className={styles.title}>Camera unavailable</span>
-                <span className={styles.caption}>{cameraErrorMessage || "Could not access camera."}</span>
-                <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
-                  Try Again
+                <span className={styles.caption}>Please upload the document from your device.</span>
+                <button 
+                  type="button" 
+                  className={styles.cropConfirmBtn} 
+                  onClick={() => {
+                    handleCloseCameraModal();
+                    handleClick();
+                  }}
+                >
+                  Upload from Device
                 </button>
               </div>
             )}
 
-            {(cameraStatus === "scanning" || cameraStatus === "idle") && (
-              <div className={styles.cropImageWrapper}>
+            {cameraStatus !== "error" && (
+              <div 
+                className={styles.cropImageWrapper}
+                style={cameraStatus === "loading" ? { position: "absolute", opacity: 0, pointerEvents: "none" } : {}}
+              >
                 <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
               </div>
             )}
