@@ -12,7 +12,10 @@ import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import PaymentReview from "../../components/PaymentReview/PaymentReview";
 import StepTracker from "../../components/StepTracker/StepTracker";
-import { STAGE_LABELS, determineStageIndex } from "../../components/StepTracker/stepProgress";
+import {
+  STAGE_LABELS,
+  determineStageIndex,
+} from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
@@ -23,7 +26,8 @@ import parseDocumentSummaryText from "./parseDocumentSummaryText";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
 import styles from "./Chat.module.css";
 
-const PASSPORT_PHOTO_STEP_PATTERN = /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
+const PASSPORT_PHOTO_STEP_PATTERN =
+  /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
 const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
 
 // Only these input types render the free-text composer.
@@ -62,15 +66,22 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   // messages: input.title/caption are empty/generic for it on the real
   // backend.
   let trailingBotText = "";
-  for (let i = history.length - 1; i >= 0 && history[i]?.sender === "bot"; i -= 1) {
+  for (
+    let i = history.length - 1;
+    i >= 0 && history[i]?.sender === "bot";
+    i -= 1
+  ) {
     trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
   }
 
   const isConsentAcceptStep =
-    input?.type === "choice input" && (input.items || []).length === 1 && input.items[0]?.content === "I Accept";
+    input?.type === "choice input" &&
+    (input.items || []).length === 1 &&
+    input.items[0]?.content === "I Accept";
 
   const lastMessage = history[history.length - 1];
-  const pendingConsentMessages = isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
+  const pendingConsentMessages =
+    isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
 
   // Consent turns live entirely in the popup, so both the bot prompt and
   // its "I Accept" reply stay out of the transcript permanently - not just
@@ -79,59 +90,78 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     const resolvedConsentMessageIds = new Set();
     for (let i = 1; i < history.length; i += 1) {
       const message = history[i];
-      if (message?.sender === "user" && extractMessageText(message) === "I Accept" && history[i - 1]?.sender === "bot") {
+      if (
+        message?.sender === "user" &&
+        extractMessageText(message) === "I Accept" &&
+        history[i - 1]?.sender === "bot"
+      ) {
         resolvedConsentMessageIds.add(history[i - 1].id);
         resolvedConsentMessageIds.add(message.id);
       }
     }
     const last = history[history.length - 1];
-    const pending = isConsentAcceptStep && last?.sender === "bot" ? [last.id] : [];
+    const pending =
+      isConsentAcceptStep && last?.sender === "bot" ? [last.id] : [];
     return new Set([...resolvedConsentMessageIds, ...pending]);
   }, [history, isConsentAcceptStep]);
-
 
   const pendingConsentMessageId = pendingConsentMessages[0]?.id ?? null;
   const consentPrecededByDocSummary =
     pendingConsentMessageId != null &&
     history.length >= 2 &&
     history[history.length - 2]?.sender === "bot" &&
-    Boolean(parseDocumentSummaryText(extractMessageText(history[history.length - 2])));
+    Boolean(
+      parseDocumentSummaryText(extractMessageText(history[history.length - 2])),
+    );
 
-  
   const [visibleConsentMessageId, setVisibleConsentMessageId] = useState(null);
 
   useEffect(() => {
-    if (!pendingConsentMessageId || !consentPrecededByDocSummary) return undefined;
+    if (!pendingConsentMessageId || !consentPrecededByDocSummary)
+      return undefined;
 
     const CONSENT_POPUP_DELAY_MS = 2500;
-    const timer = setTimeout(() => setVisibleConsentMessageId(pendingConsentMessageId), CONSENT_POPUP_DELAY_MS);
-  
+    const timer = setTimeout(
+      () => setVisibleConsentMessageId(pendingConsentMessageId),
+      CONSENT_POPUP_DELAY_MS,
+    );
+
     return () => clearTimeout(timer);
   }, [pendingConsentMessageId, consentPrecededByDocSummary]);
 
   const showConsentPopup =
     Boolean(pendingConsentMessageId) &&
-    (!consentPrecededByDocSummary || visibleConsentMessageId === pendingConsentMessageId);
+    (!consentPrecededByDocSummary ||
+      visibleConsentMessageId === pendingConsentMessageId);
 
-
-  const isNonConsentChoiceStep = input?.type === "choice input" && !isConsentAcceptStep;
+  const isNonConsentChoiceStep =
+    input?.type === "choice input" && !isConsentAcceptStep;
   const lastMessageDocSummary =
-    lastMessage?.sender === "bot" ? parseDocumentSummaryText(extractMessageText(lastMessage)) : null;
-  const pendingDocSummary = isNonConsentChoiceStep ? lastMessageDocSummary : null;
+    lastMessage?.sender === "bot"
+      ? parseDocumentSummaryText(extractMessageText(lastMessage))
+      : null;
+  const pendingDocSummary = isNonConsentChoiceStep
+    ? lastMessageDocSummary
+    : null;
 
   const isPassportPhotoStep =
     input?.type === "file input" &&
-    (PASSPORT_PHOTO_STEP_PATTERN.test(`${input.title || ""} ${input.caption || ""}`) ||
+    (PASSPORT_PHOTO_STEP_PATTERN.test(
+      `${input.title || ""} ${input.caption || ""}`,
+    ) ||
       PASSPORT_PHOTO_STEP_PATTERN.test(trailingBotText));
 
   const isProfilePhotoStep =
     input?.type === "file input" &&
-    (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID || /profile photo/i.test(trailingBotText));
+    (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
+      /profile photo/i.test(trailingBotText));
 
   const isCityStep =
     input?.type === "city input" ||
     (input?.type === "text input" &&
-      /\b(city|place of birth|current city)\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`));
+      /\b(city|place of birth|current city)\b/i.test(
+        `${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`,
+      ));
 
   const lastMessageText = extractMessageText(lastMessage);
   const isPaymentReviewStep =
@@ -141,7 +171,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       input?.data?.type === "payment-review" ||
       lastMessage?.id === "payment-review" ||
       lastMessage?.type === "payment-review" ||
-      /check\s+your\s+details|review\s+your\s+details/i.test(lastMessageText)) &&
+      /check\s+your\s+details|review\s+your\s+details/i.test(
+        lastMessageText,
+      )) &&
     input?.id !== "payment-review-correction" &&
     lastMessage?.id !== "payment-review-correction";
 
@@ -153,16 +185,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         sessionEnded,
         isPaymentReviewStep,
       }),
-    [input, trailingBotText, sessionEnded, isPaymentReviewStep]
+    [input, trailingBotText, sessionEnded, isPaymentReviewStep],
   );
   const displayProgress = sessionEnded ? 100 : progress;
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
-  const showComposer = Boolean(textConfig) && !isCityStep && !isPaymentReviewStep;
+  const showComposer =
+    Boolean(textConfig) && !isCityStep && !isPaymentReviewStep;
 
-
-  const isUploadForCurrentInput = input?.type === "file input" && uploadForInputId === input.id;
+  const isUploadForCurrentInput =
+    input?.type === "file input" && uploadForInputId === input.id;
   const effectiveUploadStatus = isUploadForCurrentInput ? uploadStatus : "idle";
   const effectiveUploadProgress = isUploadForCurrentInput ? uploadProgress : 0;
   const effectiveUploadError = isUploadForCurrentInput ? uploadError : "";
@@ -178,7 +211,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       return null;
     }
 
-    if (input?.type === "choice input" && !isConsentAcceptStep && !pendingDocSummary) {
+    if (
+      input?.type === "choice input" &&
+      !isConsentAcceptStep &&
+      !pendingDocSummary
+    ) {
       return (
         <QuickReplyCard
           options={(input.items || []).map((item) => ({ label: item.content }))}
@@ -196,7 +233,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <CheckboxGroup
           options={input.options || []}
           caption={input.caption}
-          onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
+          onSubmit={(selected) =>
+            sendAnswer(selected.map((opt) => opt.label).join(", "))
+          }
         />
       );
     }
@@ -223,11 +262,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       );
     }
 
-    if (input?.type === "file input" && (isPassportPhotoStep || isProfilePhotoStep)) {
+    if (
+      input?.type === "file input" &&
+      (isPassportPhotoStep || isProfilePhotoStep)
+    ) {
       return (
         <PassportPhotoCard
           key={input.id}
-          title={input.title || (isProfilePhotoStep ? "Upload your Profile photo" : undefined)}
+          title={
+            input.title ||
+            (isProfilePhotoStep ? "Upload your Profile photo" : undefined)
+          }
           caption={input.caption}
           onFileSelected={submitFile}
         />
@@ -254,10 +299,19 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   return (
     <div className={styles.page} ref={pageRef}>
       <div className={styles.panel}>
-        <ChatHeader title="IPRS Membership Assistant" language={language} onBack={onBack} onLogout={onLogout} />
+        <ChatHeader
+          title="IPRS Membership Assistant"
+          language={language}
+          onBack={onBack}
+          onLogout={onLogout}
+        />
 
         <div className={styles.trackerSlot}>
-          <StepTracker stages={STAGE_LABELS} activeIndex={displayActiveIndex} progress={displayProgress} />
+          <StepTracker
+            stages={STAGE_LABELS}
+            activeIndex={displayActiveIndex}
+            progress={displayProgress}
+          />
         </div>
 
         <div className={styles.messages} ref={messagesRef}>
@@ -271,7 +325,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                 (message.id === "payment-review" ||
                   message.type === "payment-review" ||
                   message.kind === "payment-review" ||
-                  /check\s+your\s+details|review\s+your\s+details/i.test(msgText)) &&
+                  /check\s+your\s+details|review\s+your\s+details/i.test(
+                    msgText,
+                  )) &&
                 message.id !== "payment-review-correction";
 
               if (isReview) {
@@ -281,7 +337,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     data={message.data || (isLast ? input?.data : undefined)}
                     input={isLast ? input : undefined}
                     message={message}
-                    onAction={isLast ? (actionLabel) => sendAnswer(actionLabel) : undefined}
+                    onAction={
+                      isLast
+                        ? (actionLabel) => sendAnswer(actionLabel)
+                        : undefined
+                    }
                   />
                 );
               }
@@ -294,7 +354,13 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                   <FeeSummaryCard
                     key={message.id}
                     {...parsedSummary}
-                    options={isLast && pendingDocSummary ? (input.items || []).map((item) => ({ label: item.content })) : undefined}
+                    options={
+                      isLast && pendingDocSummary
+                        ? (input.items || []).map((item) => ({
+                            label: item.content,
+                          }))
+                        : undefined
+                    }
                     onOptionSelect={(option) => sendAnswer(option.label)}
                   />
                 );
@@ -311,7 +377,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           {error && (
             <div className={styles.errorBanner} role="alert">
               <span>{error}</span>
-              <button type="button" className={styles.retryButton} onClick={retry}>
+              <button
+                type="button"
+                className={styles.retryButton}
+                onClick={retry}
+              >
                 Retry
               </button>
             </div>
@@ -319,7 +389,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         </div>
 
         {!isTyping && isConsentAcceptStep && showConsentPopup && (
-          <ConsentDialog messages={pendingConsentMessages} onAccept={() => sendAnswer("I Accept")} onBack={() => {}} />
+          <ConsentDialog
+            messages={pendingConsentMessages}
+            onAccept={() => sendAnswer("I Accept")}
+            onBack={() => {}}
+          />
         )}
 
         {!isTyping && input?.type === "declaration input" && (
@@ -327,7 +401,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             open
             title={input.title}
             options={input.options || []}
-            onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")}
+            onSubmit={(selected) =>
+              sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")
+            }
           />
         )}
 
