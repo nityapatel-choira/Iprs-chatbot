@@ -62,26 +62,73 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
 
 
-  // The passport-photo step is identified from the trailing run of bot
-  // messages: input.title/caption are empty/generic for it on the real
-  // backend.
-  let trailingBotText = "";
-  for (
-    let i = history.length - 1;
-    i >= 0 && history[i]?.sender === "bot";
-    i -= 1
-  ) {
-    trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
-  }
+  const lastMessage = history[history.length - 1];
+  const lastMessageText = extractMessageText(lastMessage);
 
   const isConsentAcceptStep =
     input?.type === "choice input" &&
     (input.items || []).length === 1 &&
     input.items[0]?.content === "I Accept";
 
-  const lastMessage = history[history.length - 1];
   const pendingConsentMessages =
     isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
+
+  const {
+    trailingBotText,
+    isPassportPhotoStep,
+    isProfilePhotoStep,
+    isCityStep,
+    isPaymentReviewStep,
+  } = useMemo(() => {
+    let tText = "";
+    for (
+      let i = history.length - 1;
+      i >= 0 && history[i]?.sender === "bot";
+      i -= 1
+    ) {
+      tText = `${extractMessageText(history[i])} ${tText}`;
+    }
+
+    const _isPassportPhotoStep =
+      input?.type === "file input" &&
+      (PASSPORT_PHOTO_STEP_PATTERN.test(
+        `${input.title || ""} ${input.caption || ""}`,
+      ) ||
+        PASSPORT_PHOTO_STEP_PATTERN.test(tText));
+
+    const _isProfilePhotoStep =
+      input?.type === "file input" &&
+      (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
+        /profile photo/i.test(tText));
+
+    const _isCityStep =
+      input?.type === "city input" ||
+      (input?.type === "text input" &&
+        /\b(city|place of birth|current city)\b/i.test(
+          `${input.placeholder || ""} ${input.title || ""} ${tText}`,
+        ));
+
+    const _isPaymentReviewStep =
+      (input?.id === "payment-review" ||
+        input?.type === "payment-review" ||
+        input?.type === "review input" ||
+        input?.data?.type === "payment-review" ||
+        lastMessage?.id === "payment-review" ||
+        lastMessage?.type === "payment-review" ||
+        /check\s+your\s+details|review\s+your\s+details/i.test(
+          lastMessageText,
+        )) &&
+      input?.id !== "payment-review-correction" &&
+      lastMessage?.id !== "payment-review-correction";
+
+    return {
+      trailingBotText: tText,
+      isPassportPhotoStep: _isPassportPhotoStep,
+      isProfilePhotoStep: _isProfilePhotoStep,
+      isCityStep: _isCityStep,
+      isPaymentReviewStep: _isPaymentReviewStep,
+    };
+  }, [history, input, lastMessage, lastMessageText]);
 
   // Consent turns live entirely in the popup, so both the bot prompt and
   // its "I Accept" reply stay out of the transcript permanently - not just
@@ -144,38 +191,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     ? lastMessageDocSummary
     : null;
 
-  const isPassportPhotoStep =
-    input?.type === "file input" &&
-    (PASSPORT_PHOTO_STEP_PATTERN.test(
-      `${input.title || ""} ${input.caption || ""}`,
-    ) ||
-      PASSPORT_PHOTO_STEP_PATTERN.test(trailingBotText));
 
-  const isProfilePhotoStep =
-    input?.type === "file input" &&
-    (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
-      /profile photo/i.test(trailingBotText));
-
-  const isCityStep =
-    input?.type === "city input" ||
-    (input?.type === "text input" &&
-      /\b(city|place of birth|current city)\b/i.test(
-        `${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`,
-      ));
-
-  const lastMessageText = extractMessageText(lastMessage);
-  const isPaymentReviewStep =
-    (input?.id === "payment-review" ||
-      input?.type === "payment-review" ||
-      input?.type === "review input" ||
-      input?.data?.type === "payment-review" ||
-      lastMessage?.id === "payment-review" ||
-      lastMessage?.type === "payment-review" ||
-      /check\s+your\s+details|review\s+your\s+details/i.test(
-        lastMessageText,
-      )) &&
-    input?.id !== "payment-review-correction" &&
-    lastMessage?.id !== "payment-review-correction";
 
   const displayActiveIndex = useMemo(
     () =>

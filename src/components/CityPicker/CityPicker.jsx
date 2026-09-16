@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useCombobox } from "downshift";
-import { INDIA_CITIES } from "../../constants/indiaCities";
 import { getSuggestions } from "../../utils/locationSearch";
 import SendIcon from "../icons/SendIcon";
 import styles from "./CityPicker.module.css";
@@ -44,7 +43,18 @@ function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) 
   const [inputValue, setInputValue] = useState("");
   const [containerWidth, setContainerWidth] = useState(360);
   const [isMobile, setIsMobile] = useState(false);
+  const [citiesList, setCitiesList] = useState([]);
   const formRef = useRef(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    import("../../constants/indiaCities").then((module) => {
+      if (!isCancelled) setCitiesList(module.INDIA_CITIES || []);
+    });
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -63,8 +73,8 @@ function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) 
   const isMinLength = trimmed.length >= 3;
   
   const matchingCities = useMemo(() => {
-    return isMinLength ? getSuggestions(trimmed, INDIA_CITIES) : [];
-  }, [isMinLength, trimmed]);
+    return isMinLength ? getSuggestions(trimmed, citiesList) : [];
+  }, [isMinLength, trimmed, citiesList]);
   
   const suggestions = useMemo(() => {
     return getFittingSuggestions(matchingCities, containerWidth, isMobile);
