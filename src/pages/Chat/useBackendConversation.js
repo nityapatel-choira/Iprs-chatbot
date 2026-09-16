@@ -19,6 +19,7 @@ import {
   selectUploadProgress,
   selectUploadError,
   selectUploadForInputId,
+  selectPayuPayload,
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress } from "../../services/conversationStorage";
@@ -36,6 +37,7 @@ const useBackendConversation = () => {
   const uploadProgress = useAppSelector(selectUploadProgress);
   const uploadError = useAppSelector(selectUploadError);
   const uploadForInputId = useAppSelector(selectUploadForInputId);
+  const payuPayload = useAppSelector(selectPayuPayload);
 
   const messagesRef = useRef(null);
   const startedRef = useRef(false);
@@ -136,6 +138,7 @@ const useBackendConversation = () => {
     uploadProgress,
     uploadError,
     uploadForInputId,
+    payuPayload,
     messagesRef,
     sendAnswer,
     submitFile,

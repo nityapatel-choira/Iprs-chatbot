@@ -117,6 +117,11 @@ function applyConversationResponse(state, data) {
       state.history = mergeBotMessages(state.history, messagesToAppend);
     }
   }
+
+  const payuData = data?.payuData || data?.payuPayload || data?.paymentRequest || data?.payu;
+  if (payuData) {
+    state.payuPayload = payuData;
+  }
 }
 
 export const sendConversationTurn = createAsyncThunk("conversation/sendTurn", async (message) => {
@@ -161,6 +166,7 @@ const initialState = {
   uploadProgress: 0,
   uploadError: "",
   uploadForInputId: null,
+  payuPayload: null,
 };
 
 const conversationSlice = createSlice({
@@ -202,6 +208,7 @@ const conversationSlice = createSlice({
       uploadProgress: 0,
       uploadError: "",
       uploadForInputId: null,
+      payuPayload: null,
     }),
   },
   extraReducers: (builder) => {
@@ -219,6 +226,11 @@ const conversationSlice = createSlice({
         state.isTyping = false;
       })
       .addCase(uploadConversationFile.fulfilled, (state, action) => {
+        const { fileId } = action.meta.arg;
+        const message = state.history.find((msg) => msg.id === fileId);
+        if (message) {
+          message.status = "success";
+        }
         applyConversationResponse(state, action.payload);
       })
       .addCase(uploadConversationFile.rejected, (state, action) => {
@@ -248,5 +260,6 @@ export const selectUploadStatus = (state) => state.conversation.uploadStatus;
 export const selectUploadProgress = (state) => state.conversation.uploadProgress;
 export const selectUploadError = (state) => state.conversation.uploadError;
 export const selectUploadForInputId = (state) => state.conversation.uploadForInputId;
+export const selectPayuPayload = (state) => state.conversation.payuPayload;
 
 export default conversationSlice.reducer;

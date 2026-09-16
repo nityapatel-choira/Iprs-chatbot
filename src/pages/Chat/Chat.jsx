@@ -24,6 +24,7 @@ import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
+import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
 
 const PASSPORT_PHOTO_STEP_PATTERN =
@@ -52,6 +53,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     uploadProgress,
     uploadError,
     uploadForInputId,
+    payuPayload,
     messagesRef,
     sendAnswer,
     submitFile,
@@ -431,6 +433,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             type={textConfig.type}
           />
         )}
+
+        {payuPayload && <PayURedirect payuPayload={payuPayload} />}
       </div>
     </div>
   );

@@ -17,6 +17,8 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
+const PaymentSuccess = lazy(() => import("./pages/Payment/PaymentSuccess"));
+const PaymentFailure = lazy(() => import("./pages/Payment/PaymentFailure"));
 
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 const DevCityTest = import.meta.env.DEV ? lazy(() => import("./components/CityPicker/CityPicker")) : null;
@@ -79,6 +81,25 @@ const App = () => {
           </Suspense>
         </div>
       </div>
+    );
+  }
+
+
+
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+  if (path.startsWith("/payment/success")) {
+    return (
+      <Suspense fallback={null}>
+        <PaymentSuccess />
+      </Suspense>
+    );
+  }
+  
+  if (path.startsWith("/payment/failure")) {
+    return (
+      <Suspense fallback={null}>
+        <PaymentFailure />
+      </Suspense>
     );
   }
 
