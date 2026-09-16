@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { sendMessage, uploadFile } from "../../services/conversationService";
+import { sendMessage, initiatePayment, uploadFile } from "../../services/conversationService";
 import { getRegistrationCompleted } from "../../services/registrationState";
 import { consumeFreshLoginFlag } from "../../services/conversationStorage";
 
@@ -122,12 +122,30 @@ function applyConversationResponse(state, data) {
   if (payuData) {
     state.payuPayload = payuData;
   }
+  
+  if (data?.isPaymentStep !== undefined) {
+    state.isPaymentStep = Boolean(data.isPaymentStep);
+  } else if (data?.payment !== undefined) {
+    state.isPaymentStep = Boolean(data.payment);
+  }
 }
 
 export const sendConversationTurn = createAsyncThunk("conversation/sendTurn", async (message) => {
   const data = await sendMessage(message);
   return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
 });
+
+export const triggerPayuIntegration = createAsyncThunk(
+  "conversation/triggerPayu",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await initiatePayment();
+      return data;
+    } catch (err) {
+      return rejectWithValue(err.message || "Failed to initiate payment");
+    }
+  }
+);
 
 export const uploadConversationFile = createAsyncThunk(
   "conversation/uploadFile",
@@ -167,6 +185,7 @@ const initialState = {
   uploadError: "",
   uploadForInputId: null,
   payuPayload: null,
+  isPaymentStep: false,
 };
 
 const conversationSlice = createSlice({
@@ -209,6 +228,7 @@ const conversationSlice = createSlice({
       uploadError: "",
       uploadForInputId: null,
       payuPayload: null,
+      isPaymentStep: false,
     }),
   },
   extraReducers: (builder) => {
@@ -236,6 +256,14 @@ const conversationSlice = createSlice({
       .addCase(uploadConversationFile.rejected, (state, action) => {
         state.uploadStatus = "error";
         state.uploadError = action.payload || "Upload failed. Please try again.";
+      })
+      .addCase(triggerPayuIntegration.fulfilled, (state, action) => {
+        if (action.payload?.actionUrl && action.payload?.params) {
+          state.payuPayload = {
+            actionUrl: action.payload.actionUrl,
+            params: action.payload.params,
+          };
+        }
       });
   },
 });
@@ -261,5 +289,6 @@ export const selectUploadProgress = (state) => state.conversation.uploadProgress
 export const selectUploadError = (state) => state.conversation.uploadError;
 export const selectUploadForInputId = (state) => state.conversation.uploadForInputId;
 export const selectPayuPayload = (state) => state.conversation.payuPayload;
+export const selectIsPaymentStep = (state) => state.conversation.isPaymentStep;
 
 export default conversationSlice.reducer;

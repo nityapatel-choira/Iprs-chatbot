@@ -1,16 +1,8 @@
-import { useMemo } from "react";
+
 import styles from "./PaymentFailure.module.css";
 import AlertIcon from "../../components/icons/AlertIcon";
 
-const PaymentFailure = () => {
-  const { txnid, errorMessage } = useMemo(() => {
-    if (typeof window === "undefined") return { txnid: null, errorMessage: null };
-    const params = new URLSearchParams(window.location.search);
-    return {
-      txnid: params.get("txnid"),
-      errorMessage: params.get("errorMessage") || params.get("error"),
-    };
-  }, []);
+const PaymentFailure = ({ txnid, errorMessage }) => {
 
   const handleReturn = () => {
     window.location.href = "/";

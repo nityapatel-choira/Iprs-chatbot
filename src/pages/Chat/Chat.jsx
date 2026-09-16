@@ -54,8 +54,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     uploadError,
     uploadForInputId,
     payuPayload,
+    isPaymentStepFromBackend,
     messagesRef,
     sendAnswer,
+    triggerPayment,
     submitFile,
     retry,
   } = useBackendConversation();
@@ -167,7 +169,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   const lastMessageText = extractMessageText(lastMessage);
   const isPaymentReviewStep =
-    (input?.id === "payment-review" ||
+    ((input?.id === "payment-review" ||
       input?.type === "payment-review" ||
       input?.type === "review input" ||
       input?.data?.type === "payment-review" ||
@@ -176,8 +178,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       /check\s+your\s+details|review\s+your\s+details/i.test(
         lastMessageText,
       )) &&
-    input?.id !== "payment-review-correction" &&
-    lastMessage?.id !== "payment-review-correction";
+      input?.id !== "payment-review-correction" &&
+      lastMessage?.id !== "payment-review-correction");
 
   const displayActiveIndex = useMemo(
     () =>
@@ -220,8 +222,14 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     ) {
       return (
         <QuickReplyCard
-          options={(input.items || []).map((item) => ({ label: item.content }))}
-          onSelect={(option) => sendAnswer(option.label)}
+          options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
+          onSelect={(option) => {
+            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(option.label, option.id);
+            }
+          }}
         />
       );
     }
@@ -236,7 +244,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           options={input.options || []}
           caption={input.caption}
           onSubmit={(selected) =>
-            sendAnswer(selected.map((opt) => opt.label).join(", "))
+            sendAnswer(
+              selected.map((opt) => opt.label).join(", "),
+              selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",")
+            )
           }
         />
       );
@@ -247,8 +258,21 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <FeeSummaryCard
           key={input.id}
           {...input.data}
-          onOptionSelect={(option) => sendAnswer(option.label)}
-          onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}
+          onOptionSelect={(option) => {
+            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(option.label, option.id);
+            }
+          }}
+          onConfirm={() => {
+            const label = input.data?.confirmLabel || "Confirmed";
+            if (isPaymentStepFromBackend && /pay/i.test(label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(label);
+            }
+          }}
         />
       );
     }
@@ -344,7 +368,13 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     message={message}
                     onAction={
                       isLast
-                        ? (actionLabel) => sendAnswer(actionLabel)
+                        ? (actionLabel) => {
+                            if (/pay/i.test(actionLabel)) {
+                              triggerPayment();
+                            } else {
+                              sendAnswer(actionLabel);
+                            }
+                          }
                         : undefined
                     }
                   />
@@ -362,11 +392,18 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     options={
                       isLast && pendingDocSummary
                         ? (input.items || []).map((item) => ({
-                            label: item.content,
+                            label: item.content || item.label,
+                            id: item.id || item.value || item.key,
                           }))
                         : undefined
                     }
-                    onOptionSelect={(option) => sendAnswer(option.label)}
+                    onOptionSelect={(option) => {
+                      if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
+                        triggerPayment();
+                      } else {
+                        sendAnswer(option.label, option.id);
+                      }
+                    }}
                   />
                 );
               }
@@ -406,9 +443,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             open
             title={input.title}
             options={input.options || []}
-            onSubmit={(selected) =>
-              sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")
-            }
+            onSubmit={(selected) => {
+              const display = selected.map((opt) => opt.label).join(", ") || "None";
+              const value = selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",") || "None";
+              sendAnswer(display, value);
+            }}
           />
         )}
 

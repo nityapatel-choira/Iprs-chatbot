@@ -1,16 +1,8 @@
-import { useMemo } from "react";
+
 import styles from "./PaymentSuccess.module.css";
 import CheckIcon from "../../components/icons/CheckIcon";
 
-const PaymentSuccess = () => {
-  const { txnid, amount } = useMemo(() => {
-    if (typeof window === "undefined") return { txnid: null, amount: null };
-    const params = new URLSearchParams(window.location.search);
-    return {
-      txnid: params.get("txnid"),
-      amount: params.get("amount"),
-    };
-  }, []);
+const PaymentSuccess = ({ txnid, amount }) => {
 
   const handleReturn = () => {
     window.location.href = "/";
