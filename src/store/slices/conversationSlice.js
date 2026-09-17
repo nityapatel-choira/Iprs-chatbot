@@ -257,13 +257,26 @@ const conversationSlice = createSlice({
         state.uploadStatus = "error";
         state.uploadError = action.payload || "Upload failed. Please try again.";
       })
+      .addCase(triggerPayuIntegration.pending, (state) => {
+        state.isTyping = true;
+        state.error = null;
+      })
       .addCase(triggerPayuIntegration.fulfilled, (state, action) => {
+        state.isTyping = false;
         if (action.payload?.actionUrl && action.payload?.params) {
           state.payuPayload = {
             actionUrl: action.payload.actionUrl,
             params: action.payload.params,
           };
+        } else {
+          state.error = "Could not start the payment. Please try again.";
         }
+      })
+      // triggerPayment() has already cleared the Pay button, so without this the member is left
+      // with nothing to tap - setting error surfaces the retry, which re-runs triggerPayment().
+      .addCase(triggerPayuIntegration.rejected, (state, action) => {
+        state.isTyping = false;
+        state.error = action.payload || "Could not start the payment. Please try again.";
       });
   },
 });

@@ -82,11 +82,14 @@ const useBackendConversation = () => {
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [history, isTyping]);
 
-  const sendAnswer = (text, value) => {
+  // Always relay the visible label, never an item id/key: the backend saves this text as-is into
+  // the member's record (e.g. ApplicantPath, which the fee is looked up from) and matches replies
+  // like "Yes"/"Start over" by text.
+  const sendAnswer = (text) => {
     if (!text || !text.trim()) return;
     dispatch(addUserMessage(text));
     dispatch(clearInput());
-    runMessage(value ?? text);
+    runMessage(text);
   };
 
   const triggerPayment = () => {
