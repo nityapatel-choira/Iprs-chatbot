@@ -429,3 +429,9 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+@media (min-width: 1024px) {
+  .cameraButton {
+    display: none !important;
+  }
+}
