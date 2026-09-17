@@ -1,4 +1,3 @@
-import { INDIA_CITIES } from "../constants/indiaCities";
 
 const STATE_NAMES = new Set([
   "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh", "goa", "gujarat",
@@ -103,7 +102,7 @@ export function normalizeLocationRecord(item) {
  * Priority 2: Prefix match on locality field.
  * Priority 3: Fallback substring match.
  */
-export function getSuggestions(query, locationList = INDIA_CITIES) {
+export function getSuggestions(query, locationList = []) {
   const cleanQuery = (query || "").toLowerCase().trim();
   if (!cleanQuery) return [];
 
