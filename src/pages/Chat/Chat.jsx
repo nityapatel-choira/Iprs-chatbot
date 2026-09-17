@@ -203,9 +203,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         input,
         trailingBotText,
         sessionEnded,
-        isPaymentReviewStep,
+        // The real payment button has no useful title/caption text for the keyword checks below
+        // to match against, so it's passed in explicitly rather than relying on those regexes.
+        isPaymentReviewStep: isPaymentReviewStep || isPaymentStepFromBackend,
       }),
-    [input, trailingBotText, sessionEnded, isPaymentReviewStep],
+    [input, trailingBotText, sessionEnded, isPaymentReviewStep, isPaymentStepFromBackend],
   );
   const displayProgress = sessionEnded ? 100 : progress;
 
@@ -243,7 +245,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
               triggerPayment();
             } else {
-              sendAnswer(option.label, option.id);
+              sendAnswer(option.label);
             }
           }}
         />
@@ -259,12 +261,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <CheckboxGroup
           options={input.options || []}
           caption={input.caption}
-          onSubmit={(selected) =>
-            sendAnswer(
-              selected.map((opt) => opt.label).join(", "),
-              selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",")
-            )
-          }
+          onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
         />
       );
     }
@@ -278,7 +275,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
               triggerPayment();
             } else {
-              sendAnswer(option.label, option.id);
+              sendAnswer(option.label);
             }
           }}
           onConfirm={() => {
@@ -417,7 +414,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                       if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
                         triggerPayment();
                       } else {
-                        sendAnswer(option.label, option.id);
+                        sendAnswer(option.label);
                       }
                     }}
                   />
@@ -460,9 +457,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             title={input.title}
             options={input.options || []}
             onSubmit={(selected) => {
-              const display = selected.map((opt) => opt.label).join(", ") || "None";
-              const value = selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",") || "None";
-              sendAnswer(display, value);
+              sendAnswer(selected.map((opt) => opt.label).join(", ") || "None");
             }}
           />
         )}
