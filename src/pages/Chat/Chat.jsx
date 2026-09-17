@@ -24,6 +24,7 @@ import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
+import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
 
 const PASSPORT_PHOTO_STEP_PATTERN =
@@ -52,8 +53,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     uploadProgress,
     uploadError,
     uploadForInputId,
+    payuPayload,
+    isPaymentStepFromBackend,
     messagesRef,
     sendAnswer,
+    triggerPayment,
     submitFile,
     retry,
   } = useBackendConversation();
@@ -234,8 +238,14 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     ) {
       return (
         <QuickReplyCard
-          options={(input.items || []).map((item) => ({ label: item.content }))}
-          onSelect={(option) => sendAnswer(option.label)}
+          options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
+          onSelect={(option) => {
+            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(option.label, option.id);
+            }
+          }}
         />
       );
     }
@@ -250,7 +260,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           options={input.options || []}
           caption={input.caption}
           onSubmit={(selected) =>
-            sendAnswer(selected.map((opt) => opt.label).join(", "))
+            sendAnswer(
+              selected.map((opt) => opt.label).join(", "),
+              selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",")
+            )
           }
         />
       );
@@ -261,8 +274,21 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <FeeSummaryCard
           key={input.id}
           {...input.data}
-          onOptionSelect={(option) => sendAnswer(option.label)}
-          onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}
+          onOptionSelect={(option) => {
+            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(option.label, option.id);
+            }
+          }}
+          onConfirm={() => {
+            const label = input.data?.confirmLabel || "Confirmed";
+            if (isPaymentStepFromBackend && /pay/i.test(label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(label);
+            }
+          }}
         />
       );
     }
@@ -358,7 +384,13 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     message={message}
                     onAction={
                       isLast
-                        ? (actionLabel) => sendAnswer(actionLabel)
+                        ? (actionLabel) => {
+                            if (/pay/i.test(actionLabel)) {
+                              triggerPayment();
+                            } else {
+                              sendAnswer(actionLabel);
+                            }
+                          }
                         : undefined
                     }
                   />
@@ -376,11 +408,18 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     options={
                       isLast && pendingDocSummary
                         ? (input.items || []).map((item) => ({
-                            label: item.content,
+                            label: item.content || item.label,
+                            id: item.id || item.value || item.key,
                           }))
                         : undefined
                     }
-                    onOptionSelect={(option) => sendAnswer(option.label)}
+                    onOptionSelect={(option) => {
+                      if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
+                        triggerPayment();
+                      } else {
+                        sendAnswer(option.label, option.id);
+                      }
+                    }}
                   />
                 );
               }
@@ -420,9 +459,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             open
             title={input.title}
             options={input.options || []}
-            onSubmit={(selected) =>
-              sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")
-            }
+            onSubmit={(selected) => {
+              const display = selected.map((opt) => opt.label).join(", ") || "None";
+              const value = selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",") || "None";
+              sendAnswer(display, value);
+            }}
           />
         )}
 
@@ -447,6 +488,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             type={textConfig.type}
           />
         )}
+
+        {payuPayload && <PayURedirect payuPayload={payuPayload} />}
       </div>
     </div>
   );
