@@ -12,6 +12,7 @@ import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard"
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import PaymentReview from "../../components/PaymentReview/PaymentReview";
+import PaymentResultModal from "./components/PaymentResultModal/PaymentResultModal";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import {
   STAGE_LABELS,
@@ -60,6 +61,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     triggerPayment,
     submitFile,
     retry,
+    dismissPaymentResult,
   } = useBackendConversation();
 
   useVisualViewport(pageRef);
@@ -203,9 +205,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         input,
         trailingBotText,
         sessionEnded,
-        // The real payment button has no useful title/caption text for the keyword checks below
-        // to match against, so it's passed in explicitly rather than relying on those regexes.
-        isPaymentReviewStep: isPaymentReviewStep || isPaymentStepFromBackend,
+        isPaymentReviewStep,
+        isPaymentStep: isPaymentStepFromBackend,
       }),
     [input, trailingBotText, sessionEnded, isPaymentReviewStep, isPaymentStepFromBackend],
   );
@@ -338,6 +339,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     return null;
   }
 
+  const paymentResultMsg = history.find(m => m.id === "payment_verify");
+
   return (
     <div className={styles.page} ref={pageRef}>
       <div className={styles.panel}>
@@ -358,10 +361,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
         <div className={styles.messages} ref={messagesRef}>
           {history
-            .filter((message) => !consentMessageIds.has(message.id))
+            .filter((message) => !consentMessageIds.has(message.id) && message.id !== "payment_verify")
             .map((message) => {
               const isLast = message.id === lastMessage?.id;
               const msgText = extractMessageText(message);
+
               const isReview =
                 message.sender === "bot" &&
                 (message.id === "payment-review" ||
@@ -485,6 +489,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         )}
 
         {payuPayload && <PayURedirect payuPayload={payuPayload} />}
+        
+        {paymentResultMsg && paymentResultMsg.data?.status !== "PENDING" && (
+          <PaymentResultModal data={paymentResultMsg.data} onClose={dismissPaymentResult} />
+        )}
       </div>
     </div>
   );

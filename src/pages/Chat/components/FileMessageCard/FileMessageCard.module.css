@@ -199,6 +199,14 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
+.pdfObject {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  border: none;
+}
+
 .typingDots {
   display: inline-flex;
   gap: 2px;

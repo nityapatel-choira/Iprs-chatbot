@@ -10,6 +10,7 @@ export function determineStageIndex({
   trailingBotText = "",
   sessionEnded = false,
   isPaymentReviewStep = false,
+  isPaymentStep = false,
 }) {
   // All steps show completed when session has completed.
   if (sessionEnded) {
@@ -18,6 +19,7 @@ export function determineStageIndex({
 
   // Step 4: Final Payment Review / Fee Summary / Review input.
   if (
+    isPaymentStep ||
     isPaymentReviewStep ||
     input?.type === "summary input" ||
     input?.type === "payment-review" ||

@@ -4,10 +4,12 @@ import {
   nextId,
   sendConversationTurn,
   triggerPayuIntegration,
+  verifyPayment,
   uploadConversationFile,
   addUserMessage,
   addUserFileMessage,
   clearInput,
+  clearPaymentResult,
   setUploadForInputId,
   setUploadStatus,
   setUploadProgress,
@@ -72,7 +74,23 @@ const useBackendConversation = () => {
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
+    
+    // Check for payment callback transaction ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTxnId = urlParams.get("txnid");
+    const isPaymentPath = window.location.pathname.startsWith("/payment/");
+    const txnId = urlTxnId || (isPaymentPath ? localStorage.getItem("payu_txnId") : null);
+
+    // Always restore session from backend to prevent mobile restart issues
     runMessage(undefined);
+
+    if (txnId) {
+      // Clean up URL if there are query parameters to avoid re-triggering on refresh
+      if (urlTxnId) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      dispatch(verifyPayment(txnId));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -141,6 +159,10 @@ const useBackendConversation = () => {
     lastActionRef.current?.();
   };
 
+  const dismissPaymentResult = () => {
+    dispatch(clearPaymentResult());
+  };
+
   return {
     history,
     input,
@@ -159,6 +181,7 @@ const useBackendConversation = () => {
     triggerPayment,
     submitFile,
     retry,
+    dismissPaymentResult,
   };
 };
 
