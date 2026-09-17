@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import {
   nextId,
   sendConversationTurn,
+  triggerPayuIntegration,
   uploadConversationFile,
   addUserMessage,
   addUserFileMessage,
@@ -19,6 +20,8 @@ import {
   selectUploadProgress,
   selectUploadError,
   selectUploadForInputId,
+  selectPayuPayload,
+  selectIsPaymentStep,
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress } from "../../services/conversationStorage";
@@ -36,6 +39,8 @@ const useBackendConversation = () => {
   const uploadProgress = useAppSelector(selectUploadProgress);
   const uploadError = useAppSelector(selectUploadError);
   const uploadForInputId = useAppSelector(selectUploadForInputId);
+  const payuPayload = useAppSelector(selectPayuPayload);
+  const isPaymentStepFromBackend = useAppSelector(selectIsPaymentStep);
 
   const messagesRef = useRef(null);
   const startedRef = useRef(false);
@@ -77,11 +82,19 @@ const useBackendConversation = () => {
     el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [history, isTyping]);
 
-  const sendAnswer = (text) => {
+  const sendAnswer = (text, value) => {
     if (!text || !text.trim()) return;
     dispatch(addUserMessage(text));
     dispatch(clearInput());
-    runMessage(text);
+    runMessage(value ?? text);
+  };
+
+  const triggerPayment = () => {
+    dispatch(addUserMessage("Pay"));
+    dispatch(clearInput());
+    
+    lastActionRef.current = () => triggerPayment();
+    dispatch(triggerPayuIntegration());
   };
 
   const submitFile = async (file) => {
@@ -136,8 +149,11 @@ const useBackendConversation = () => {
     uploadProgress,
     uploadError,
     uploadForInputId,
+    payuPayload,
+    isPaymentStepFromBackend,
     messagesRef,
     sendAnswer,
+    triggerPayment,
     submitFile,
     retry,
   };
