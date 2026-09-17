@@ -35,18 +35,11 @@
 
 .choiceRow {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 10px;
   width: 100%;
-  max-width: 320px;
+  max-width: 420px;
   margin-top: 14px;
-}
-
-@media (min-width: 480px) {
-  .choiceRow {
-    flex-direction: row;
-    max-width: 420px;
-  }
 }
 
 .choiceButton {

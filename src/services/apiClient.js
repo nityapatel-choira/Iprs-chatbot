@@ -66,7 +66,7 @@ async function request(path, { method = "GET", body, headers } = {}) {
   return parseEnvelope(res);
 }
 
-function uploadRequest(path, formData, onProgress) {
+function uploadRequest(path, formData, onProgress, onUploadComplete) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${BASE_URL}${path}`);
@@ -77,8 +77,12 @@ function uploadRequest(path, formData, onProgress) {
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {
         const pct = Math.round((e.loaded / e.total) * 100);
-        onProgress(pct >= 100 ? 99 : pct);
+        onProgress(pct);
       }
+    };
+
+    xhr.upload.onload = () => {
+      if (onUploadComplete) onUploadComplete();
     };
 
     xhr.onload = () => {

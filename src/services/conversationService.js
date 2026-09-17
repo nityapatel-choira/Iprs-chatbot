@@ -5,10 +5,21 @@ function sendMessage(message) {
   return request("/conversation/message", { method: "POST", body });
 }
 
-function uploadFile(file, onProgress) {
-  const formData = new FormData();
-  formData.append("file", file);
-  return uploadRequest("/conversation/upload", formData, onProgress);
+function initiatePayment() {
+  return request("/payment/initiate", {
+    method: "POST",
+    body: {},
+  });
 }
 
-export { sendMessage, uploadFile };
+function uploadFile(file, onProgress, onUploadComplete) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return uploadRequest("/conversation/upload", formData, onProgress, onUploadComplete);
+}
+
+function checkPaymentStatus(txnId) {
+  return request(`/payment/status/${txnId}`, { method: "GET" });
+}
+
+export { sendMessage, initiatePayment, uploadFile, checkPaymentStatus };

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useVisualViewport } from "../../hooks/useVisualViewport";
 import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
@@ -23,7 +24,7 @@ import ChatComposer from "./components/ChatComposer/ChatComposer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
-import { useVisualViewport } from "../../hooks/useVisualViewport";
+import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
 
 const PASSPORT_PHOTO_STEP_PATTERN =
@@ -52,8 +53,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     uploadProgress,
     uploadError,
     uploadForInputId,
+    payuPayload,
+    isPaymentStepFromBackend,
     messagesRef,
     sendAnswer,
+    triggerPayment,
     submitFile,
     retry,
   } = useBackendConversation();
@@ -62,26 +66,73 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
 
 
-  // The passport-photo step is identified from the trailing run of bot
-  // messages: input.title/caption are empty/generic for it on the real
-  // backend.
-  let trailingBotText = "";
-  for (
-    let i = history.length - 1;
-    i >= 0 && history[i]?.sender === "bot";
-    i -= 1
-  ) {
-    trailingBotText = `${extractMessageText(history[i])} ${trailingBotText}`;
-  }
+  const lastMessage = history[history.length - 1];
+  const lastMessageText = extractMessageText(lastMessage);
 
   const isConsentAcceptStep =
     input?.type === "choice input" &&
     (input.items || []).length === 1 &&
     input.items[0]?.content === "I Accept";
 
-  const lastMessage = history[history.length - 1];
   const pendingConsentMessages =
     isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
+
+  const {
+    trailingBotText,
+    isPassportPhotoStep,
+    isProfilePhotoStep,
+    isCityStep,
+    isPaymentReviewStep,
+  } = useMemo(() => {
+    let tText = "";
+    for (
+      let i = history.length - 1;
+      i >= 0 && history[i]?.sender === "bot";
+      i -= 1
+    ) {
+      tText = `${extractMessageText(history[i])} ${tText}`;
+    }
+
+    const _isPassportPhotoStep =
+      input?.type === "file input" &&
+      (PASSPORT_PHOTO_STEP_PATTERN.test(
+        `${input.title || ""} ${input.caption || ""}`,
+      ) ||
+        PASSPORT_PHOTO_STEP_PATTERN.test(tText));
+
+    const _isProfilePhotoStep =
+      input?.type === "file input" &&
+      (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
+        /profile photo/i.test(tText));
+
+    const _isCityStep =
+      input?.type === "city input" ||
+      (input?.type === "text input" &&
+        /\b(city|place of birth|current city)\b/i.test(
+          `${input.placeholder || ""} ${input.title || ""} ${tText}`,
+        ));
+
+    const _isPaymentReviewStep =
+      (input?.id === "payment-review" ||
+        input?.type === "payment-review" ||
+        input?.type === "review input" ||
+        input?.data?.type === "payment-review" ||
+        lastMessage?.id === "payment-review" ||
+        lastMessage?.type === "payment-review" ||
+        /check\s+your\s+details|review\s+your\s+details/i.test(
+          lastMessageText,
+        )) &&
+      input?.id !== "payment-review-correction" &&
+      lastMessage?.id !== "payment-review-correction";
+
+    return {
+      trailingBotText: tText,
+      isPassportPhotoStep: _isPassportPhotoStep,
+      isProfilePhotoStep: _isProfilePhotoStep,
+      isCityStep: _isCityStep,
+      isPaymentReviewStep: _isPaymentReviewStep,
+    };
+  }, [history, input, lastMessage, lastMessageText]);
 
   // Consent turns live entirely in the popup, so both the bot prompt and
   // its "I Accept" reply stay out of the transcript permanently - not just
@@ -144,38 +195,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     ? lastMessageDocSummary
     : null;
 
-  const isPassportPhotoStep =
-    input?.type === "file input" &&
-    (PASSPORT_PHOTO_STEP_PATTERN.test(
-      `${input.title || ""} ${input.caption || ""}`,
-    ) ||
-      PASSPORT_PHOTO_STEP_PATTERN.test(trailingBotText));
 
-  const isProfilePhotoStep =
-    input?.type === "file input" &&
-    (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
-      /profile photo/i.test(trailingBotText));
-
-  const isCityStep =
-    input?.type === "city input" ||
-    (input?.type === "text input" &&
-      /\b(city|place of birth|current city)\b/i.test(
-        `${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`,
-      ));
-
-  const lastMessageText = extractMessageText(lastMessage);
-  const isPaymentReviewStep =
-    (input?.id === "payment-review" ||
-      input?.type === "payment-review" ||
-      input?.type === "review input" ||
-      input?.data?.type === "payment-review" ||
-      lastMessage?.id === "payment-review" ||
-      lastMessage?.type === "payment-review" ||
-      /check\s+your\s+details|review\s+your\s+details/i.test(
-        lastMessageText,
-      )) &&
-    input?.id !== "payment-review-correction" &&
-    lastMessage?.id !== "payment-review-correction";
 
   const displayActiveIndex = useMemo(
     () =>
@@ -218,8 +238,14 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     ) {
       return (
         <QuickReplyCard
-          options={(input.items || []).map((item) => ({ label: item.content }))}
-          onSelect={(option) => sendAnswer(option.label)}
+          options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
+          onSelect={(option) => {
+            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(option.label, option.id);
+            }
+          }}
         />
       );
     }
@@ -234,7 +260,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           options={input.options || []}
           caption={input.caption}
           onSubmit={(selected) =>
-            sendAnswer(selected.map((opt) => opt.label).join(", "))
+            sendAnswer(
+              selected.map((opt) => opt.label).join(", "),
+              selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",")
+            )
           }
         />
       );
@@ -245,8 +274,21 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <FeeSummaryCard
           key={input.id}
           {...input.data}
-          onOptionSelect={(option) => sendAnswer(option.label)}
-          onConfirm={() => sendAnswer(input.data?.confirmLabel || "Confirmed")}
+          onOptionSelect={(option) => {
+            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(option.label, option.id);
+            }
+          }}
+          onConfirm={() => {
+            const label = input.data?.confirmLabel || "Confirmed";
+            if (isPaymentStepFromBackend && /pay/i.test(label)) {
+              triggerPayment();
+            } else {
+              sendAnswer(label);
+            }
+          }}
         />
       );
     }
@@ -275,6 +317,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           }
           caption={input.caption}
           onFileSelected={submitFile}
+          status={effectiveUploadStatus}
+          progress={effectiveUploadProgress}
+          errorMessage={effectiveUploadError}
         />
       );
     }
@@ -339,7 +384,13 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     message={message}
                     onAction={
                       isLast
-                        ? (actionLabel) => sendAnswer(actionLabel)
+                        ? (actionLabel) => {
+                            if (/pay/i.test(actionLabel)) {
+                              triggerPayment();
+                            } else {
+                              sendAnswer(actionLabel);
+                            }
+                          }
                         : undefined
                     }
                   />
@@ -357,11 +408,18 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     options={
                       isLast && pendingDocSummary
                         ? (input.items || []).map((item) => ({
-                            label: item.content,
+                            label: item.content || item.label,
+                            id: item.id || item.value || item.key,
                           }))
                         : undefined
                     }
-                    onOptionSelect={(option) => sendAnswer(option.label)}
+                    onOptionSelect={(option) => {
+                      if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
+                        triggerPayment();
+                      } else {
+                        sendAnswer(option.label, option.id);
+                      }
+                    }}
                   />
                 );
               }
@@ -401,9 +459,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             open
             title={input.title}
             options={input.options || []}
-            onSubmit={(selected) =>
-              sendAnswer(selected.map((opt) => opt.label).join(", ") || "None")
-            }
+            onSubmit={(selected) => {
+              const display = selected.map((opt) => opt.label).join(", ") || "None";
+              const value = selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",") || "None";
+              sendAnswer(display, value);
+            }}
           />
         )}
 
@@ -428,6 +488,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             type={textConfig.type}
           />
         )}
+
+        {payuPayload && <PayURedirect payuPayload={payuPayload} />}
       </div>
     </div>
   );

@@ -17,6 +17,8 @@ const FaceVerification = ({
   language = "English",
   embedded = false,
   initialMode = "camera",
+  status: parentStatus = "idle",
+  disabled = false,
 }) => {
   const {
     status,
@@ -208,12 +210,23 @@ const FaceVerification = ({
 
               {showSuccess && (
                 <div className={styles.resultActions}>
-                  <button type="button" className={styles.continueButton} onClick={() => onContinue?.(displayImage)}>
-                    Continue
-                  </button>
-                  <button type="button" className={styles.retakeButton} onClick={handleRetake}>
-                    Retake
-                  </button>
+                  {parentStatus === "uploading" || parentStatus === "processing" ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span className={styles.spinner} style={{ width: 22, height: 22, borderWidth: 2 }} />
+                      <span style={{ color: '#0f172a', fontSize: '0.9375rem', fontWeight: 600 }}>
+                        {parentStatus === "processing" ? "Processing..." : "Uploading..."}
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <button type="button" className={styles.continueButton} onClick={() => onContinue?.(displayImage)} disabled={disabled}>
+                        Continue
+                      </button>
+                      <button type="button" className={styles.retakeButton} onClick={handleRetake} disabled={disabled}>
+                        Retake
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
