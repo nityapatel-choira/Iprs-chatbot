@@ -30,6 +30,36 @@ function isAllowedFile(file) {
   return validExt || validMime;
 }
 
+const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, footerExtra }) => (
+  <div className={styles.cropModalOverlay} onClick={onCancel}>
+    <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
+      <span className={styles.cropModalTitle}>{title}</span>
+      <button
+        type="button"
+        className={styles.cropModalClose}
+        onClick={onCancel}
+        aria-label="Close"
+      >
+        ✕
+      </button>
+    </div>
+    <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
+      {children}
+    </div>
+    <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
+      <button type="button" className={styles.cropCancelBtn} onClick={onCancel}>
+        Cancel
+      </button>
+      {confirmLabel && onConfirm && (
+        <button type="button" className={styles.cropConfirmBtn} onClick={onConfirm}>
+          {confirmLabel}
+        </button>
+      )}
+    </div>
+    {footerExtra}
+  </div>
+);
+
 const FileUploader = ({
   title = "Choose a file or drag & drop it here",
   caption = "PNG, JPG/JPEG, PDF",
@@ -513,176 +543,120 @@ const FileUploader = ({
       />
 
       {showCameraModal && (
-        <div className={styles.cropModalOverlay} onClick={handleCloseCameraModal}>
-          <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
-            <span className={styles.cropModalTitle}>Take Photo / Scan Document</span>
-            <button
-              type="button"
-              className={styles.cropModalClose}
-              onClick={handleCloseCameraModal}
-              aria-label="Close camera"
-            >
-              ✕
-            </button>
-          </div>
+        <PreviewModal
+          title="Take Photo / Scan Document"
+          onCancel={handleCloseCameraModal}
+          onConfirm={cameraStatus === "scanning" ? captureCamera : undefined}
+          confirmLabel={cameraStatus === "scanning" ? "Capture Photo" : null}
+          footerExtra={<canvas ref={cameraCanvasRef} className={styles.hiddenInput} aria-hidden="true" />}
+        >
+          {cameraStatus === "loading" && (
+            <div className={styles.spinnerWrap} role="status" aria-live="polite">
+              <span className={styles.spinner} />
+              <span className={styles.hint}>Starting camera...</span>
+            </div>
+          )}
 
-          <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
-            {cameraStatus === "loading" && (
-              <div className={styles.spinnerWrap} role="status" aria-live="polite">
-                <span className={styles.spinner} />
-                <span className={styles.hint}>Starting camera...</span>
-              </div>
-            )}
-
-            {cameraStatus === "error" && (
-              <div className={styles.spinnerWrap} role="alert">
-                <span className={styles.errorIcon}>
-                  <AlertIcon />
-                </span>
-                <span className={styles.title}>Camera unavailable</span>
-                <span className={styles.caption}>{cameraErrorMessage || "Could not access camera."}</span>
-                <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
-                  Try Again
-                </button>
-              </div>
-            )}
-
-            {(cameraStatus === "scanning" || cameraStatus === "idle") && (
-              <div className={styles.cropImageWrapper}>
-                <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
-              </div>
-            )}
-          </div>
-
-          <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
-            <button type="button" className={styles.cropCancelBtn} onClick={handleCloseCameraModal}>
-              Cancel
-            </button>
-            {cameraStatus === "scanning" && (
-              <button type="button" className={styles.cropConfirmBtn} onClick={captureCamera}>
-                Capture Photo
+          {cameraStatus === "error" && (
+            <div className={styles.spinnerWrap} role="alert">
+              <span className={styles.errorIcon}>
+                <AlertIcon />
+              </span>
+              <span className={styles.title}>Camera unavailable</span>
+              <span className={styles.caption}>{cameraErrorMessage || "Could not access camera."}</span>
+              <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
+                Try Again
               </button>
-            )}
-          </div>
-          <canvas ref={cameraCanvasRef} className={styles.hiddenInput} aria-hidden="true" />
-        </div>
+            </div>
+          )}
+
+          {(cameraStatus === "scanning" || cameraStatus === "idle") && (
+            <div className={styles.cropImageWrapper}>
+              <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
+            </div>
+          )}
+        </PreviewModal>
       )}
 
       {isCropping && pendingPreviewUrl && (
-        <div className={styles.cropModalOverlay} onClick={handleCancelCrop}>
-          <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
-            <span className={styles.cropModalTitle}>Crop & Adjust Document</span>
-            <button
-              type="button"
-              className={styles.cropModalClose}
-              onClick={handleCancelCrop}
-              aria-label="Cancel crop"
+        <PreviewModal
+          title="Crop & Adjust Document"
+          onCancel={handleCancelCrop}
+          onConfirm={handleConfirmCrop}
+          confirmLabel="Use Document"
+        >
+          <div className={styles.cropImageWrapper}>
+            <img
+              ref={imgRef}
+              src={pendingPreviewUrl}
+              alt="Document preview"
+              className={styles.cropImage}
+            />
+            <div
+              className={styles.cropSelectionBox}
+              style={{
+                left: `${cropRect.x}%`,
+                top: `${cropRect.y}%`,
+                width: `${cropRect.width}%`,
+                height: `${cropRect.height}%`,
+              }}
             >
-              ✕
-            </button>
-          </div>
-
-          <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.cropImageWrapper}>
-              <img
-                ref={imgRef}
-                src={pendingPreviewUrl}
-                alt="Document preview"
-                className={styles.cropImage}
+              <span
+                className={`${styles.cropHandle} ${styles.handleNw}`}
+                onPointerDown={(e) => handlePointerDown("nw", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
               />
-              <div
-                className={styles.cropSelectionBox}
-                style={{
-                  left: `${cropRect.x}%`,
-                  top: `${cropRect.y}%`,
-                  width: `${cropRect.width}%`,
-                  height: `${cropRect.height}%`,
-                }}
-              >
-                <span
-                  className={`${styles.cropHandle} ${styles.handleNw}`}
-                  onPointerDown={(e) => handlePointerDown("nw", e)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                />
-                <span
-                  className={`${styles.cropHandle} ${styles.handleNe}`}
-                  onPointerDown={(e) => handlePointerDown("ne", e)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                />
-                <span
-                  className={`${styles.cropHandle} ${styles.handleSw}`}
-                  onPointerDown={(e) => handlePointerDown("sw", e)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                />
-                <span
-                  className={`${styles.cropHandle} ${styles.handleSe}`}
-                  onPointerDown={(e) => handlePointerDown("se", e)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                />
-              </div>
+              <span
+                className={`${styles.cropHandle} ${styles.handleNe}`}
+                onPointerDown={(e) => handlePointerDown("ne", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
+              <span
+                className={`${styles.cropHandle} ${styles.handleSw}`}
+                onPointerDown={(e) => handlePointerDown("sw", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
+              <span
+                className={`${styles.cropHandle} ${styles.handleSe}`}
+                onPointerDown={(e) => handlePointerDown("se", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
             </div>
           </div>
-
-          <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
-            <button type="button" className={styles.cropCancelBtn} onClick={handleCancelCrop}>
-              Cancel
-            </button>
-            <button type="button" className={styles.cropConfirmBtn} onClick={handleConfirmCrop}>
-              Use Document
-            </button>
-          </div>
-        </div>
+        </PreviewModal>
       )}
 
       {isPdfPreviewing && pendingFile && (
-        <div className={styles.cropModalOverlay} onClick={handleCancelPdfPreview}>
-          <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
-            <span className={styles.cropModalTitle}>Preview PDF Document</span>
-            <button
-              type="button"
-              className={styles.cropModalClose}
-              onClick={handleCancelPdfPreview}
-              aria-label="Cancel preview"
-            >
-              ✕
-            </button>
+        <PreviewModal
+          title="Preview PDF Document"
+          onCancel={handleCancelPdfPreview}
+          onConfirm={handleConfirmPdfUpload}
+          confirmLabel="Use Document"
+        >
+          <div className={styles.cropImageWrapper}>
+            {pdfPreviewRenderUrl === "error" ? (
+              <div className={styles.spinnerWrap} role="alert">
+                <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
+                <span className={styles.caption} style={{ marginTop: 8, color: '#94a3b8' }}>You can still use this document.</span>
+              </div>
+            ) : pdfPreviewRenderUrl ? (
+              <img
+                src={pdfPreviewRenderUrl}
+                alt={pendingFile.name || "PDF preview"}
+                className={styles.cropImage}
+              />
+            ) : (
+              <div className={styles.spinnerWrap} role="status" aria-live="polite">
+                <span className={styles.spinner} />
+                <span className={styles.hint}>Loading PDF preview...</span>
+              </div>
+            )}
           </div>
-
-          <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.cropImageWrapper}>
-              {pdfPreviewRenderUrl === "error" ? (
-                <div className={styles.spinnerWrap} role="alert">
-                  <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
-                  <span className={styles.caption} style={{ marginTop: 8, color: '#94a3b8' }}>You can still use this document.</span>
-                </div>
-              ) : pdfPreviewRenderUrl ? (
-                <img
-                  src={pdfPreviewRenderUrl}
-                  alt={pendingFile.name || "PDF preview"}
-                  className={styles.cropImage}
-                />
-              ) : (
-                <div className={styles.spinnerWrap} role="status" aria-live="polite">
-                  <span className={styles.spinner} />
-                  <span className={styles.hint}>Loading PDF preview...</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
-            <button type="button" className={styles.cropCancelBtn} onClick={handleCancelPdfPreview}>
-              Cancel
-            </button>
-            <button type="button" className={styles.cropConfirmBtn} onClick={handleConfirmPdfUpload}>
-              Use Document
-            </button>
-          </div>
-        </div>
+        </PreviewModal>
       )}
     </div>
   );
