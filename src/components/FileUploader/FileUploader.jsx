@@ -90,6 +90,23 @@ const FileUploader = ({
   const [pdfPreviewRenderUrl, setPdfPreviewRenderUrl] = useState(null);
 
   const [showCameraModal, setShowCameraModal] = useState(false);
+  const [hasCamera, setHasCamera] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+      navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+          if (isMounted) {
+            setHasCamera(devices.some(d => d.kind === "videoinput"));
+          }
+        })
+        .catch(() => {
+          // Fallback to true if permission denied or error occurs
+        });
+    }
+    return () => { isMounted = false; };
+  }, []);
 
   const handleCameraCapturedImage = (dataUrl) => {
     setShowCameraModal(false);
@@ -478,18 +495,20 @@ const FileUploader = ({
         <span className={styles.title}>{title}</span>
         <span className={styles.caption}>{caption}</span>
         <div className={styles.buttonGroup}>
-          <button
-            type="button"
-            className={styles.cameraButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCameraClick();
-            }}
-            disabled={isDisabled}
-          >
-            <CameraIcon width={18} height={18} />
-            <span>Take Photo</span>
-          </button>
+          {hasCamera && (
+            <button
+              type="button"
+              className={styles.cameraButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCameraClick();
+              }}
+              disabled={isDisabled}
+            >
+              <CameraIcon width={18} height={18} />
+              <span>Take Photo</span>
+            </button>
+          )}
           <button
             type="button"
             className={styles.browseButton}
