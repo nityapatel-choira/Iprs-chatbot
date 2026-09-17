@@ -430,8 +430,4 @@
   white-space: nowrap;
 }
 
-@media (min-width: 1024px) {
-  .cameraButton {
-    display: none !important;
-  }
-}
+
