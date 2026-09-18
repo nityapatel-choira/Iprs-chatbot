@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
-import getPdfThumbnailUrl, { getPdfFullPreviewUrl } from "../../../../utils/pdfThumbnail";
+import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
@@ -47,7 +47,6 @@ function formatFileSize(size) {
 
 const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
-  const [pdfFullPreview, setPdfFullPreview] = useState(null);
   const [createdUrl, setCreatedUrl] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -91,24 +90,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
     };
   }, [isPdf, fileObject, initialPreviewUrl]);
 
-  useEffect(() => {
-    let isCancelled = false;
 
-    if (isPdf && isPreviewOpen && !pdfFullPreview) {
-      const target = fileObject || (initialPreviewUrl && initialPreviewUrl !== "#" ? initialPreviewUrl : null);
-      if (target) {
-        getPdfFullPreviewUrl(target, 1.8).then((url) => {
-          if (!isCancelled && url) {
-            setPdfFullPreview(url);
-          }
-        });
-      }
-    }
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isPdf, isPreviewOpen, pdfFullPreview, fileObject, initialPreviewUrl]);
 
   const isUploading = status === "uploading";
   const isProcessing = status === "processing";
@@ -221,11 +203,21 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                 className={styles.previewModalImage}
               />
             ) : (
-              <img
-                src={pdfFullPreview || pdfThumbnail || activePreviewUrl}
-                alt={fileName || "Document Preview"}
-                className={styles.previewModalImage}
-              />
+              <object
+                data={activePreviewUrl}
+                type="application/pdf"
+                className={styles.pdfObject}
+              >
+                <iframe
+                  src={activePreviewUrl}
+                  title="PDF preview"
+                  className={styles.pdfObject}
+                >
+                  <div style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
+                    Preview unavailable
+                  </div>
+                </iframe>
+              </object>
             )}
           </div>
         </div>

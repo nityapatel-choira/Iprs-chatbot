@@ -4,7 +4,7 @@ import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import CameraIcon from "../icons/CameraIcon";
 import useCameraCapture from "../DocumentScanCard/useCameraCapture";
-import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
+
 import { dataUrlToFile } from "../../utils/fileUtils";
 import styles from "./FileUploader.module.css";
 
@@ -87,7 +87,6 @@ const FileUploader = ({
   const [cropRect, setCropRect] = useState({ x: 5, y: 5, width: 90, height: 90 });
 
   const [isPdfPreviewing, setIsPdfPreviewing] = useState(false);
-  const [pdfPreviewRenderUrl, setPdfPreviewRenderUrl] = useState(null);
 
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [hasCamera, setHasCamera] = useState(true);
@@ -148,20 +147,14 @@ const FileUploader = ({
   }, [selectedFile]);
 
   useEffect(() => {
-    let isCancelled = false;
-    if (isPdfPreviewing && pendingFile) {
-      getPdfFullPreviewUrl(pendingFile, 1.5).then((url) => {
-        if (!isCancelled) {
-          setPdfPreviewRenderUrl(url || "error");
-        }
-      });
-    } else {
-      Promise.resolve().then(() => setPdfPreviewRenderUrl(null));
-    }
     return () => {
-      isCancelled = true;
+      if (pendingPreviewUrl) {
+        URL.revokeObjectURL(pendingPreviewUrl);
+      }
     };
-  }, [isPdfPreviewing, pendingFile]);
+  }, [pendingPreviewUrl]);
+
+
 
   useEffect(() => {
     if (autoOpen && !disabled) {
@@ -656,24 +649,23 @@ const FileUploader = ({
           onConfirm={handleConfirmPdfUpload}
           confirmLabel="Use Document"
         >
-          <div className={styles.cropImageWrapper}>
-            {pdfPreviewRenderUrl === "error" ? (
-              <div className={styles.spinnerWrap} role="alert">
-                <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
-                <span className={styles.caption} style={{ marginTop: 8, color: '#94a3b8' }}>You can still use this document.</span>
-              </div>
-            ) : pdfPreviewRenderUrl ? (
-              <img
-                src={pdfPreviewRenderUrl}
-                alt={pendingFile.name || "PDF preview"}
-                className={styles.cropImage}
-              />
-            ) : (
-              <div className={styles.spinnerWrap} role="status" aria-live="polite">
-                <span className={styles.spinner} />
-                <span className={styles.hint}>Loading PDF preview...</span>
-              </div>
-            )}
+          <div className={styles.cropImageWrapper} style={{ overflow: 'hidden', width: '100%' }}>
+            <object
+              data={pendingPreviewUrl}
+              type="application/pdf"
+              className={styles.pdfObject}
+            >
+              <iframe
+                src={pendingPreviewUrl}
+                title="PDF preview"
+                className={styles.pdfObject}
+              >
+                <div className={styles.spinnerWrap} role="alert">
+                  <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
+                  <span className={styles.caption} style={{ marginTop: 8, color: '#94a3b8' }}>You can still use this document.</span>
+                </div>
+              </iframe>
+            </object>
           </div>
         </PreviewModal>
       )}

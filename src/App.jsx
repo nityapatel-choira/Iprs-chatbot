@@ -17,7 +17,6 @@ import { resetRegistration } from "./store/slices/registrationSlice";
 
 const Login = lazy(() => import("./pages/Login/Login"));
 const Chat = lazy(() => import("./pages/Chat/Chat"));
-const PaymentCallback = lazy(() => import("./pages/Payment/PaymentCallback"));
 
 const DevFaceScan = import.meta.env.DEV ? lazy(() => import("./pages/FaceVerification/FaceVerification")) : null;
 const DevCityTest = import.meta.env.DEV ? lazy(() => import("./components/CityPicker/CityPicker")) : null;
@@ -84,15 +83,6 @@ const App = () => {
   }
 
 
-
-  const path = typeof window !== "undefined" ? window.location.pathname : "";
-  if (path.startsWith("/payment/success") || path.startsWith("/payment/failure") || path.startsWith("/payment/status") || path.startsWith("/payment/callback")) {
-    return (
-      <Suspense fallback={null}>
-        <PaymentCallback />
-      </Suspense>
-    );
-  }
 
   if (showSplash) {
     return <Splash onDone={() => setShowSplash(false)} />;

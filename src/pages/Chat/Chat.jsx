@@ -12,6 +12,7 @@ import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard"
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import PaymentReview from "../../components/PaymentReview/PaymentReview";
+import PaymentResultModal from "./components/PaymentResultModal/PaymentResultModal";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import {
   STAGE_LABELS,
@@ -60,6 +61,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     triggerPayment,
     submitFile,
     retry,
+    dismissPaymentResult,
   } = useBackendConversation();
 
   useVisualViewport(pageRef);
@@ -204,8 +206,9 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         trailingBotText,
         sessionEnded,
         isPaymentReviewStep,
+        isPaymentStep: isPaymentStepFromBackend,
       }),
-    [input, trailingBotText, sessionEnded, isPaymentReviewStep],
+    [input, trailingBotText, sessionEnded, isPaymentReviewStep, isPaymentStepFromBackend],
   );
   const displayProgress = sessionEnded ? 100 : progress;
 
@@ -243,7 +246,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
               triggerPayment();
             } else {
-              sendAnswer(option.label, option.id);
+              sendAnswer(option.label);
             }
           }}
         />
@@ -259,12 +262,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <CheckboxGroup
           options={input.options || []}
           caption={input.caption}
-          onSubmit={(selected) =>
-            sendAnswer(
-              selected.map((opt) => opt.label).join(", "),
-              selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",")
-            )
-          }
+          onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
         />
       );
     }
@@ -278,7 +276,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
               triggerPayment();
             } else {
-              sendAnswer(option.label, option.id);
+              sendAnswer(option.label);
             }
           }}
           onConfirm={() => {
@@ -341,6 +339,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     return null;
   }
 
+  const paymentResultMsg = history.find(m => m.id === "payment_verify");
+
   return (
     <div className={styles.page} ref={pageRef}>
       <div className={styles.panel}>
@@ -361,10 +361,11 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
         <div className={styles.messages} ref={messagesRef}>
           {history
-            .filter((message) => !consentMessageIds.has(message.id))
+            .filter((message) => !consentMessageIds.has(message.id) && message.id !== "payment_verify")
             .map((message) => {
               const isLast = message.id === lastMessage?.id;
               const msgText = extractMessageText(message);
+
               const isReview =
                 message.sender === "bot" &&
                 (message.id === "payment-review" ||
@@ -417,7 +418,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                       if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
                         triggerPayment();
                       } else {
-                        sendAnswer(option.label, option.id);
+                        sendAnswer(option.label);
                       }
                     }}
                   />
@@ -460,9 +461,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             title={input.title}
             options={input.options || []}
             onSubmit={(selected) => {
-              const display = selected.map((opt) => opt.label).join(", ") || "None";
-              const value = selected.map((opt) => opt.key || opt.id || opt.value || opt.label).join(",") || "None";
-              sendAnswer(display, value);
+              sendAnswer(selected.map((opt) => opt.label).join(", ") || "None");
             }}
           />
         )}
@@ -490,6 +489,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         )}
 
         {payuPayload && <PayURedirect payuPayload={payuPayload} />}
+        
+        {paymentResultMsg && paymentResultMsg.data?.status !== "PENDING" && (
+          <PaymentResultModal data={paymentResultMsg.data} onClose={dismissPaymentResult} />
+        )}
       </div>
     </div>
   );

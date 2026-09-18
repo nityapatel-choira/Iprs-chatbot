@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { sendMessage, initiatePayment, uploadFile } from "../../services/conversationService";
+import { sendMessage, initiatePayment, uploadFile, checkPaymentStatus } from "../../services/conversationService";
 import { getRegistrationCompleted } from "../../services/registrationState";
 import { consumeFreshLoginFlag } from "../../services/conversationStorage";
 
@@ -173,6 +173,22 @@ export const uploadConversationFile = createAsyncThunk(
     }
   }
 );
+export const verifyPayment = createAsyncThunk(
+  "conversation/verifyPayment",
+  async (txnId, { rejectWithValue }) => {
+    try {
+      const data = await checkPaymentStatus(txnId);
+      // The backend may also return next conversation steps in `data`, 
+      // similar to `sendMessage`.
+      return { ...data, txnid: txnId, __isFreshLogin: consumeFreshLoginFlag() };
+    } catch (err) {
+      return rejectWithValue({
+        message: err.message || "Failed to connect to the server to verify payment status.",
+        txnid: txnId,
+      });
+    }
+  }
+);
 
 const initialState = {
   history: [],
@@ -218,6 +234,9 @@ const conversationSlice = createSlice({
     setUploadError: (state, action) => {
       state.uploadError = action.payload;
     },
+    clearPaymentResult: (state) => {
+      state.history = state.history.filter((m) => m.id !== "payment_verify");
+    },
     resetConversation: () => ({
       history: [],
       input: null,
@@ -257,11 +276,63 @@ const conversationSlice = createSlice({
         state.uploadStatus = "error";
         state.uploadError = action.payload || "Upload failed. Please try again.";
       })
+      .addCase(triggerPayuIntegration.pending, (state) => {
+        state.isTyping = true;
+        state.error = null;
+      })
       .addCase(triggerPayuIntegration.fulfilled, (state, action) => {
+        state.isTyping = false;
         if (action.payload?.actionUrl && action.payload?.params) {
           state.payuPayload = {
             actionUrl: action.payload.actionUrl,
             params: action.payload.params,
+          };
+        } else {
+          state.error = "Could not start the payment. Please try again.";
+        }
+      })
+      // triggerPayment() has already cleared the Pay button, so without this the member is left
+      // with nothing to tap - setting error surfaces the retry, which re-runs triggerPayment().
+      .addCase(triggerPayuIntegration.rejected, (state, action) => {
+        state.isTyping = false;
+        state.error = action.payload || "Could not start the payment. Please try again.";
+      })
+      .addCase(verifyPayment.pending, (state) => {
+        state.isTyping = true;
+        // Inject a temporary verification message
+        const verifyMsg = {
+          id: "payment_verify",
+          sender: "bot",
+          type: "payment-result",
+          data: { status: "VERIFYING" }
+        };
+        state.history = [...state.history.filter(m => m.id !== "payment_verify"), verifyMsg];
+      })
+      .addCase(verifyPayment.fulfilled, (state, action) => {
+        state.isTyping = false;
+        
+        // Find and update the verification message
+        const verifyMsgIndex = state.history.findIndex(m => m.id === "payment_verify");
+        if (verifyMsgIndex !== -1) {
+          state.history[verifyMsgIndex].data = {
+            status: action.payload.status || "SUCCESS",
+            amount: action.payload.amount,
+            txnid: action.payload.txnid
+          };
+        }
+        
+        // If the backend returned a new input step (e.g. continuing the flow), apply it
+        applyConversationResponse(state, action.payload);
+      })
+      .addCase(verifyPayment.rejected, (state, action) => {
+        state.isTyping = false;
+        
+        const verifyMsgIndex = state.history.findIndex(m => m.id === "payment_verify");
+        if (verifyMsgIndex !== -1) {
+          state.history[verifyMsgIndex].data = {
+            status: "FAILED",
+            errorMessage: action.payload?.message || action.error?.message,
+            txnid: action.payload?.txnid
           };
         }
       });
@@ -278,6 +349,7 @@ export const {
   setUploadForInputId,
   setUploadError,
   resetConversation,
+  clearPaymentResult,
 } = conversationSlice.actions;
 
 export const selectHistory = (state) => state.conversation.history;
