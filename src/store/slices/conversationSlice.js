@@ -178,10 +178,22 @@ export const verifyPayment = createAsyncThunk(
   async (txnId, { rejectWithValue }) => {
     try {
       const data = await checkPaymentStatus(txnId);
+      
+      // Cleanup the transaction ID from local storage once verification is terminal
+      const status = data?.status || "SUCCESS";
+      if (status !== "PENDING" && status !== "VERIFYING") {
+        localStorage.removeItem("payu_txnId");
+      }
+
       // The backend may also return next conversation steps in `data`, 
       // similar to `sendMessage`.
       return { ...data, txnid: txnId, __isFreshLogin: consumeFreshLoginFlag() };
     } catch (err) {
+      // Clean up on confirmed stale/unauthorized transactions (403) to prevent stale verification loops.
+      // Keep it for network errors, 5xx, or temporary API failures so the transaction remains recoverable.
+      if (err.status === 403) {
+        localStorage.removeItem("payu_txnId");
+      }
       return rejectWithValue({
         message: err.message || "Failed to connect to the server to verify payment status.",
         txnid: txnId,
@@ -190,19 +202,40 @@ export const verifyPayment = createAsyncThunk(
   }
 );
 
-const initialState = {
-  history: [],
-  input: null,
-  // Prevents typing indicator flicker on restored completed sessions.
-  isTyping: !getRegistrationCompleted(),
-  error: null,
-  uploadStatus: "idle",
-  uploadProgress: 0,
-  uploadError: "",
-  uploadForInputId: null,
-  payuPayload: null,
-  isPaymentStep: false,
+const getInitialState = () => {
+  let restored = { history: [], input: null };
+  
+  try {
+    const backup = sessionStorage.getItem("iprs_chat_backup");
+    if (backup) {
+      sessionStorage.removeItem("iprs_chat_backup");
+      const parsed = JSON.parse(backup);
+      if (Array.isArray(parsed.history)) {
+        restored.history = parsed.history;
+      }
+      if (parsed.input !== undefined) {
+        restored.input = parsed.input;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to restore chat backup", err);
+  }
+
+  return {
+    ...restored,
+    // Prevents typing indicator flicker on restored completed sessions.
+    isTyping: !getRegistrationCompleted(),
+    error: null,
+    uploadStatus: "idle",
+    uploadProgress: 0,
+    uploadError: "",
+    uploadForInputId: null,
+    payuPayload: null,
+    isPaymentStep: false,
+  };
 };
+
+const initialState = getInitialState();
 
 const conversationSlice = createSlice({
   name: "conversation",

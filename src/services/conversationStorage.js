@@ -1,4 +1,3 @@
-const CHAT_HISTORY_KEY = "iprs_chat_history";
 const CHAT_PROGRESS_KEY = "iprs_chat_progress";
 const FRESH_LOGIN_KEY = "iprs_fresh_login";
 
@@ -45,10 +44,10 @@ function consumeFreshLoginFlag() {
 
 function clearStoredConversation() {
   try {
-    // Purges legacy stored chat history.
-    localStorage.removeItem(CHAT_HISTORY_KEY);
     localStorage.removeItem(CHAT_PROGRESS_KEY);
     sessionStorage.removeItem(FRESH_LOGIN_KEY);
+    localStorage.removeItem("payu_txnId");
+    sessionStorage.removeItem("iprs_chat_backup");
   } catch {
     // Ignore storage errors
   }

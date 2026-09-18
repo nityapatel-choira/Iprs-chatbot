@@ -88,7 +88,10 @@ const App = () => {
     return <Splash onDone={() => setShowSplash(false)} />;
   }
 
-  if (!languageCode) {
+  const path = window.location.pathname;
+  const isPaymentCallback = path.startsWith("/payment/");
+
+  if (!languageCode && !isPaymentCallback) {
     return <LanguageSelection onContinue={handleLanguageContinue} />;
   }
 

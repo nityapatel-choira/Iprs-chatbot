@@ -81,15 +81,18 @@ const useBackendConversation = () => {
     const isPaymentPath = window.location.pathname.startsWith("/payment/");
     const txnId = urlTxnId || (isPaymentPath ? localStorage.getItem("payu_txnId") : null);
 
-    // Always restore session from backend to prevent mobile restart issues
-    runMessage(undefined);
-
     if (txnId) {
-      // Clean up URL if there are query parameters to avoid re-triggering on refresh
-      if (urlTxnId) {
+      // Clean up URL to return to the normal Chat route, avoiding a standalone page feel
+      if (isPaymentPath) {
+        window.history.replaceState({}, document.title, "/");
+      } else if (urlTxnId) {
+        // If txnId was just a query param on the normal route, strip it
         window.history.replaceState({}, document.title, window.location.pathname);
       }
       dispatch(verifyPayment(txnId));
+    } else {
+      // Always restore session from backend to prevent mobile restart issues
+      runMessage(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

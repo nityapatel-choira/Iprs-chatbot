@@ -488,7 +488,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           />
         )}
 
-        {payuPayload && <PayURedirect payuPayload={payuPayload} />}
+        {payuPayload && <PayURedirect payuPayload={payuPayload} history={history} input={input} />}
         
         {paymentResultMsg && paymentResultMsg.data?.status !== "PENDING" && (
           <PaymentResultModal data={paymentResultMsg.data} onClose={dismissPaymentResult} />

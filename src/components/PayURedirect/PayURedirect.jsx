@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const PayURedirect = ({ payuPayload }) => {
+const PayURedirect = ({ payuPayload, history, input }) => {
   const formRef = useRef(null);
 
   useEffect(() => {
@@ -10,10 +10,21 @@ const PayURedirect = ({ payuPayload }) => {
       if (txnId) {
         localStorage.setItem("payu_txnId", txnId);
       }
+      
+      // Persist conversation history to sessionStorage so it can be restored on return
+      if (history && history.length > 0) {
+        try {
+          const snapshot = JSON.stringify({ history, input });
+          sessionStorage.setItem("iprs_chat_backup", snapshot);
+        } catch (e) {
+          console.error("Failed to persist chat history for payment redirect", e);
+        }
+      }
+
       // Auto-submit the form as soon as it renders
       formRef.current.submit();
     }
-  }, [payuPayload]);
+  }, [payuPayload, history, input]);
 
   if (!payuPayload) return null;
 
