@@ -134,6 +134,7 @@ const FaceVerification = ({
                 status={upload.status}
                 errorMessage={upload.errorMessage}
                 autoOpen={initialMode === "upload" && !manualUploadSwitch}
+                requireRearCamera={false}
               />
               <button type="button" className={styles.fallbackLink} onClick={switchToCamera}>
                 Use camera instead

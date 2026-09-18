@@ -71,6 +71,7 @@ const FileUploader = ({
   errorMessage,
   disabled,
   autoOpen = false,
+  requireRearCamera = true,
 }) => {
   const inputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -96,16 +97,58 @@ const FileUploader = ({
     if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
       navigator.mediaDevices.enumerateDevices()
         .then(devices => {
-          if (isMounted) {
-            setHasCamera(devices.some(d => d.kind === "videoinput"));
+          if (!isMounted) return;
+          const videoInputs = devices.filter(d => d.kind === "videoinput");
+          
+          if (videoInputs.length === 0) {
+            setHasCamera(false);
+            return;
+          }
+
+          if (!requireRearCamera) {
+            setHasCamera(true);
+            return;
+          }
+
+          let hasExplicitRear = false;
+          let allLabelsEmpty = true;
+
+          for (const d of videoInputs) {
+            const label = (d.label || "").toLowerCase();
+            if (label) allLabelsEmpty = false;
+            
+            if (label.includes("environment") || label.includes("back") || label.includes("rear")) {
+              hasExplicitRear = true;
+              break;
+            }
+            if (typeof d.getCapabilities === "function") {
+              const caps = d.getCapabilities();
+              if (caps && caps.facingMode && caps.facingMode.includes("environment")) {
+                hasExplicitRear = true;
+                break;
+              }
+            }
+          }
+
+          if (hasExplicitRear) {
+            setHasCamera(true);
+          } else if (allLabelsEmpty && videoInputs.length > 1) {
+            // Unlabelled multiple cameras (likely mobile)
+            setHasCamera(true);
+          } else if (!allLabelsEmpty) {
+            // Labelled but no rear camera found
+            setHasCamera(false);
+          } else {
+            // Single unlabelled camera (likely desktop)
+            setHasCamera(false);
           }
         })
         .catch(() => {
-          // Fallback to true if permission denied or error occurs
+          if (isMounted) setHasCamera(true);
         });
     }
     return () => { isMounted = false; };
-  }, []);
+  }, [requireRearCamera]);
 
   const handleCameraCapturedImage = (dataUrl) => {
     setShowCameraModal(false);
@@ -582,11 +625,12 @@ const FileUploader = ({
             </div>
           )}
 
-          {(cameraStatus === "scanning" || cameraStatus === "idle") && (
-            <div className={styles.cropImageWrapper}>
-              <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
-            </div>
-          )}
+          <div 
+            className={styles.cropImageWrapper}
+            style={{ display: (cameraStatus === "scanning" || cameraStatus === "idle") ? "block" : "none" }}
+          >
+            <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
+          </div>
         </PreviewModal>
       )}
 
