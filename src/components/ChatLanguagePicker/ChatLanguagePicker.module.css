@@ -1,0 +1,151 @@
+.container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.inputContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  height: 56px;
+  background: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 0 8px 0 22px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 0.15s ease;
+}
+
+.inputContainer:focus-within {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06), 0 0 0 3px rgba(0, 102, 255, 0.16);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1rem;
+  color: #0f172a;
+  padding: 0.6rem 0;
+}
+
+.input::placeholder {
+  color: #6b7280;
+}
+
+.sendButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #007BFF;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s var(--ease, ease), transform 0.15s var(--ease, ease);
+}
+
+.sendButton:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.sendButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.suggestionsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pill {
+  flex: 0 1 auto;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  transition: all 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.pill:hover,
+.pillActive {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.languageName {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.noMatchesPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  background: rgba(241, 245, 249, 0.9);
+  border: 1px dashed #cbd5e1;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .inputContainer {
+    height: 52px;
+    padding-left: 16px;
+  }
+
+  .sendButton {
+    width: 40px;
+    height: 40px;
+  }
+
+  .suggestionsRow {
+    gap: 6px;
+  }
+
+  .pill {
+    padding: 7px 12px;
+    font-size: 0.8125rem;
+  }
+}
