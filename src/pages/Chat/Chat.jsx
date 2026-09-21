@@ -4,6 +4,7 @@ import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
 import FileUploader from "../../components/FileUploader/FileUploader";
 import PinInput from "../../components/PinInput/PinInput";
 import CityPicker from "../../components/CityPicker/CityPicker";
+import ChatLanguagePicker from "../../components/ChatLanguagePicker/ChatLanguagePicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
 import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
@@ -84,6 +85,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     isPassportPhotoStep,
     isProfilePhotoStep,
     isCityStep,
+    isMotherTongueStep,
     isPaymentReviewStep,
   } = useMemo(() => {
     let tText = "";
@@ -107,12 +109,19 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
         /profile photo/i.test(tText));
 
-    const _isCityStep =
-      input?.type === "city input" ||
-      (input?.type === "text input" &&
-        /\b(city|place of birth|current city)\b/i.test(
-          `${input.placeholder || ""} ${input.title || ""} ${tText}`,
-        ));
+    let _isCityStep = false;
+    let _isMotherTongueStep = false;
+
+    if (input?.type === "city input") {
+      _isCityStep = true;
+    } else if (input?.type === "text input") {
+      const searchStr = `${input.placeholder || ""} ${input.title || ""} ${tText}`;
+      if (/\bmother tongue\b/i.test(searchStr)) {
+        _isMotherTongueStep = true;
+      } else if (/\b(city|place of birth|current city)\b/i.test(searchStr)) {
+        _isCityStep = true;
+      }
+    }
 
     const _isPaymentReviewStep =
       (input?.id === "payment-review" ||
@@ -132,6 +141,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       isPassportPhotoStep: _isPassportPhotoStep,
       isProfilePhotoStep: _isProfilePhotoStep,
       isCityStep: _isCityStep,
+      isMotherTongueStep: _isMotherTongueStep,
       isPaymentReviewStep: _isPaymentReviewStep,
     };
   }, [history, input, lastMessage, lastMessageText]);
@@ -215,7 +225,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
   const isTextStep = Boolean(textConfig) && !isTyping;
   const showComposer =
-    Boolean(textConfig) && !isCityStep && !isPaymentReviewStep;
+    Boolean(textConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep;
 
   const isUploadForCurrentInput =
     input?.type === "file input" && uploadForInputId === input.id;
@@ -470,6 +480,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <CityPicker
               key={input.id}
+              placeholder={input.placeholder || "Write your message"}
+              onSubmit={sendAnswer}
+              disabled={isTyping}
+            />
+          </div>
+        )}
+
+        {!isTyping && isMotherTongueStep && (
+          <div className={styles.cityComposerWrap}>
+            <ChatLanguagePicker
+              key={`lang-${input.id}`}
               placeholder={input.placeholder || "Write your message"}
               onSubmit={sendAnswer}
               disabled={isTyping}
