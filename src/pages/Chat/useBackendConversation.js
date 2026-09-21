@@ -78,8 +78,7 @@ const useBackendConversation = () => {
     // Check for payment callback transaction ID
     const urlParams = new URLSearchParams(window.location.search);
     const urlTxnId = urlParams.get("txnid");
-    const isPaymentPath = window.location.pathname.startsWith("/payment/");
-    const txnId = urlTxnId || (isPaymentPath ? localStorage.getItem("payu_txnId") : null);
+    const txnId = urlTxnId || localStorage.getItem("payu_txnId");
 
     // Always restore session from backend to prevent mobile restart issues
     runMessage(undefined);
@@ -161,6 +160,7 @@ const useBackendConversation = () => {
 
   const dismissPaymentResult = () => {
     dispatch(clearPaymentResult());
+    localStorage.removeItem("payu_txnId");
   };
 
   return {
