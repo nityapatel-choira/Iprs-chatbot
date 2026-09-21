@@ -26,7 +26,7 @@ const PaymentResultModal = ({ data, onClose }) => {
   const renderContent = () => {
     if (status === "VERIFYING") {
       return (
-        <div className={styles.card}>
+        <div className={styles.container}>
           <h2 className={styles.title}>Verifying Payment...</h2>
           <p className={styles.message}>
             Please wait while we securely check your payment status.
@@ -37,7 +37,7 @@ const PaymentResultModal = ({ data, onClose }) => {
 
     if (status === "SUCCESS") {
       return (
-        <div className={styles.card}>
+        <div className={styles.container}>
           <div className={styles.successIconWrap}>
             <CheckIcon />
           </div>
@@ -68,7 +68,7 @@ const PaymentResultModal = ({ data, onClose }) => {
 
     // FAILED or ERROR
     return (
-      <div className={styles.card}>
+      <div className={styles.container}>
         <div className={styles.errorIconWrap}>
           <ErrorIcon />
         </div>

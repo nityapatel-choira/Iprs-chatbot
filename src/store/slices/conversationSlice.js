@@ -311,11 +311,17 @@ const conversationSlice = createSlice({
       .addCase(verifyPayment.fulfilled, (state, action) => {
         state.isTyping = false;
         
-        // Find and update the verification message
         const verifyMsgIndex = state.history.findIndex(m => m.id === "payment_verify");
+        const validStatuses = ["SUCCESS", "FAILED", "PENDING"];
+        let backendStatus = action.payload?.status;
+
+        if (!validStatuses.includes(backendStatus)) {
+          backendStatus = "FAILED";
+        }
+
         if (verifyMsgIndex !== -1) {
           state.history[verifyMsgIndex].data = {
-            status: action.payload.status || "SUCCESS",
+            status: backendStatus,
             amount: action.payload.amount,
             txnid: action.payload.txnid
           };
@@ -331,7 +337,7 @@ const conversationSlice = createSlice({
         if (verifyMsgIndex !== -1) {
           state.history[verifyMsgIndex].data = {
             status: "FAILED",
-            errorMessage: action.payload?.message || action.error?.message,
+            errorMessage: action.payload?.message || action.error?.message || "Transaction not found or server error",
             txnid: action.payload?.txnid
           };
         }
