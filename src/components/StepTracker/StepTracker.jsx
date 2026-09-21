@@ -8,6 +8,8 @@ const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
 const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
   const visualFill = Math.max(0, Math.min(100, Number(progress) || 0));
+  const progressIndex = Math.round((visualFill / 100) * (stages.length - 1));
+  const effectiveActiveIndex = Math.max(activeIndex, progressIndex);
 
   return (
     <div className={styles.wrap}>
@@ -18,7 +20,7 @@ const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
 
         <div className={styles.track}>
           {stages.map((stage, i) => {
-            const status = i < activeIndex ? "completed" : i === activeIndex ? "active" : "pending";
+            const status = i < effectiveActiveIndex ? "completed" : i === effectiveActiveIndex ? "active" : "pending";
             const Icon = ICONS[i] || ProfileIcon;
             return (
               <div key={stage} className={styles.node}>

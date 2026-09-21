@@ -154,6 +154,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
     } catch (err) {
       if (!mountedRef.current) return;
       console.error("Face scan failed to start:", err);
+      stopEverything();
       setStatus("error");
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setErrorMessage("Camera access was denied. Please allow camera permission and try again.");

@@ -25,10 +25,34 @@ const DocumentScanCard = ({
         </button>
       )}
 
-      {status === "loading" && (
+      {(status === "loading" || status === "scanning") && (
         <div className={styles.panel}>
-          <span className={styles.spinner} />
-          <span className={styles.title}>Starting camera...</span>
+          {status === "loading" && (
+            <>
+              <span className={styles.spinner} />
+              <span className={styles.title}>Starting camera...</span>
+            </>
+          )}
+
+          <div 
+            className={styles.frameStage}
+            style={{ display: status === "scanning" ? "" : "none" }}
+          >
+            <video ref={videoRef} className={styles.video} muted playsInline />
+            <span className={styles.frameGuide} aria-hidden="true" />
+          </div>
+          
+          {status === "scanning" && (
+            <>
+              <span className={styles.caption}>{title}</span>
+              <button type="button" className={styles.actionButton} onClick={capture}>
+                Capture
+              </button>
+              <button type="button" className={styles.linkButton} onClick={cancel}>
+                Cancel
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -43,22 +67,6 @@ const DocumentScanCard = ({
           </span>
           <button type="button" className={styles.actionButton} onClick={start}>
             Try Again
-          </button>
-        </div>
-      )}
-
-      {status === "scanning" && (
-        <div className={styles.panel}>
-          <div className={styles.frameStage}>
-            <video ref={videoRef} className={styles.video} muted playsInline />
-            <span className={styles.frameGuide} aria-hidden="true" />
-          </div>
-          <span className={styles.caption}>{title}</span>
-          <button type="button" className={styles.actionButton} onClick={capture}>
-            Capture
-          </button>
-          <button type="button" className={styles.linkButton} onClick={cancel}>
-            Cancel
           </button>
         </div>
       )}

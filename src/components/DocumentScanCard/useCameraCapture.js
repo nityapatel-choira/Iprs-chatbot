@@ -39,7 +39,7 @@ const useCameraCapture = ({ onCapture } = {}) => {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 960 } },
+        video: { facingMode: { exact: "environment" }, width: { ideal: 1280 }, height: { ideal: 960 } },
         audio: false,
       });
 
@@ -63,11 +63,12 @@ const useCameraCapture = ({ onCapture } = {}) => {
     } catch (err) {
       if (!mountedRef.current) return;
       console.error("Document scan failed to start:", err);
+      stopEverything();
       setStatus("error");
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
         setErrorMessage("Camera access was denied. Please allow camera permission and try again.");
-      } else if (err.name === "NotFoundError" || err.name === "NotSupportedError") {
-        setErrorMessage("No camera was found on this device.");
+      } else if (err.name === "NotFoundError" || err.name === "NotSupportedError" || err.name === "OverconstrainedError") {
+        setErrorMessage("No rear camera was found on this device.");
       } else {
         setErrorMessage("Couldn't start the camera. Please try again.");
       }

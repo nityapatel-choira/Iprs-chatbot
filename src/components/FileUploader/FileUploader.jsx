@@ -4,6 +4,7 @@ import CheckIcon from "../icons/CheckIcon";
 import AlertIcon from "../icons/AlertIcon";
 import CameraIcon from "../icons/CameraIcon";
 import useCameraCapture from "../DocumentScanCard/useCameraCapture";
+import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
 
 import { dataUrlToFile } from "../../utils/fileUtils";
 import styles from "./FileUploader.module.css";
@@ -30,18 +31,30 @@ function isAllowedFile(file) {
   return validExt || validMime;
 }
 
-const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, footerExtra }) => (
+const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, footerExtra, openUrl }) => (
   <div className={styles.cropModalOverlay} onClick={onCancel}>
     <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
       <span className={styles.cropModalTitle}>{title}</span>
-      <button
-        type="button"
-        className={styles.cropModalClose}
-        onClick={onCancel}
-        aria-label="Close"
-      >
-        ✕
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {openUrl && (
+          <a
+            href={openUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', fontWeight: '600' }}
+          >
+            Open ↗
+          </a>
+        )}
+        <button
+          type="button"
+          className={styles.cropModalClose}
+          onClick={onCancel}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
     </div>
     <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
       {children}
@@ -71,6 +84,7 @@ const FileUploader = ({
   errorMessage,
   disabled,
   autoOpen = false,
+  requireRearCamera = true,
 }) => {
   const inputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -87,6 +101,7 @@ const FileUploader = ({
   const [cropRect, setCropRect] = useState({ x: 5, y: 5, width: 90, height: 90 });
 
   const [isPdfPreviewing, setIsPdfPreviewing] = useState(false);
+  const [pdfImageUrl, setPdfImageUrl] = useState(null);
 
   const [showCameraModal, setShowCameraModal] = useState(false);
   const [hasCamera, setHasCamera] = useState(true);
@@ -96,16 +111,58 @@ const FileUploader = ({
     if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
       navigator.mediaDevices.enumerateDevices()
         .then(devices => {
-          if (isMounted) {
-            setHasCamera(devices.some(d => d.kind === "videoinput"));
+          if (!isMounted) return;
+          const videoInputs = devices.filter(d => d.kind === "videoinput");
+          
+          if (videoInputs.length === 0) {
+            setHasCamera(false);
+            return;
+          }
+
+          if (!requireRearCamera) {
+            setHasCamera(true);
+            return;
+          }
+
+          let hasExplicitRear = false;
+          let allLabelsEmpty = true;
+
+          for (const d of videoInputs) {
+            const label = (d.label || "").toLowerCase();
+            if (label) allLabelsEmpty = false;
+            
+            if (label.includes("environment") || label.includes("back") || label.includes("rear")) {
+              hasExplicitRear = true;
+              break;
+            }
+            if (typeof d.getCapabilities === "function") {
+              const caps = d.getCapabilities();
+              if (caps && caps.facingMode && caps.facingMode.includes("environment")) {
+                hasExplicitRear = true;
+                break;
+              }
+            }
+          }
+
+          if (hasExplicitRear) {
+            setHasCamera(true);
+          } else if (allLabelsEmpty && videoInputs.length > 1) {
+            // Unlabelled multiple cameras (likely mobile)
+            setHasCamera(true);
+          } else if (!allLabelsEmpty) {
+            // Labelled but no rear camera found
+            setHasCamera(false);
+          } else {
+            // Single unlabelled camera (likely desktop)
+            setHasCamera(false);
           }
         })
         .catch(() => {
-          // Fallback to true if permission denied or error occurs
+          if (isMounted) setHasCamera(true);
         });
     }
     return () => { isMounted = false; };
-  }, []);
+  }, [requireRearCamera]);
 
   const handleCameraCapturedImage = (dataUrl) => {
     setShowCameraModal(false);
@@ -192,6 +249,11 @@ const FileUploader = ({
       setPendingFile(file);
       setPendingPreviewUrl(url);
       setIsPdfPreviewing(true);
+      getPdfFullPreviewUrl(file).then((imgUrl) => {
+        setPdfImageUrl(imgUrl);
+      }).catch(err => {
+        console.error("Failed to load PDF preview:", err);
+      });
     } else {
       setSelectedFile(file);
       setFileName(file.name);
@@ -582,11 +644,12 @@ const FileUploader = ({
             </div>
           )}
 
-          {(cameraStatus === "scanning" || cameraStatus === "idle") && (
-            <div className={styles.cropImageWrapper}>
-              <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
-            </div>
-          )}
+          <div 
+            className={styles.cropImageWrapper}
+            style={{ display: (cameraStatus === "scanning" || cameraStatus === "idle") ? "block" : "none" }}
+          >
+            <video ref={cameraVideoRef} className={styles.cropImage} autoPlay playsInline muted />
+          </div>
         </PreviewModal>
       )}
 
@@ -648,8 +711,9 @@ const FileUploader = ({
           onCancel={handleCancelPdfPreview}
           onConfirm={handleConfirmPdfUpload}
           confirmLabel="Use Document"
+          openUrl={pendingPreviewUrl}
         >
-          <div className={styles.cropImageWrapper} style={{ overflow: 'hidden', width: '100%' }}>
+          <div className={styles.cropImageWrapper} style={{ overflow: 'hidden', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <object
               data={pendingPreviewUrl}
               type="application/pdf"
@@ -662,10 +726,20 @@ const FileUploader = ({
               >
                 <div className={styles.spinnerWrap} role="alert">
                   <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
-                  <span className={styles.caption} style={{ marginTop: 8, color: '#94a3b8' }}>You can still use this document.</span>
                 </div>
               </iframe>
             </object>
+            
+            <div className={styles.mobilePdfFallback}>
+              {pdfImageUrl ? (
+                <img src={pdfImageUrl} alt="PDF Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <span className={styles.spinner} />
+                  <span style={{ color: '#fff', fontSize: '0.875rem' }}>Loading PDF preview...</span>
+                </div>
+              )}
+            </div>
           </div>
         </PreviewModal>
       )}
