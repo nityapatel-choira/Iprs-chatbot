@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
-import getPdfThumbnailUrl from "../../../../utils/pdfThumbnail";
+import getPdfThumbnailUrl, { getPdfFullPreviewUrl } from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
@@ -48,6 +48,7 @@ function formatFileSize(size) {
 const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mimeType, rawFile, status }) => {
   const [pdfThumbnail, setPdfThumbnail] = useState(null);
   const [createdUrl, setCreatedUrl] = useState(null);
+  const [pdfImageUrl, setPdfImageUrl] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const fileObject = rawFile instanceof File || rawFile instanceof Blob ? rawFile : null;
@@ -56,7 +57,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
 
   useEffect(() => {
     let url = null;
-    if (!initialPreviewUrl && fileObject && isImage) {
+    if (!initialPreviewUrl && fileObject && (isImage || isPdf)) {
       url = URL.createObjectURL(fileObject);
       const activeUrl = url;
       Promise.resolve().then(() => setCreatedUrl(activeUrl));
@@ -69,7 +70,27 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         URL.revokeObjectURL(url);
       }
     };
-  }, [initialPreviewUrl, fileObject, isImage]);
+  }, [initialPreviewUrl, fileObject, isImage, isPdf]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (isPdf && fileObject) {
+      getPdfFullPreviewUrl(fileObject).then((imgUrl) => {
+        if (!isCancelled) setPdfImageUrl(imgUrl);
+      }).catch(err => {
+        console.error("Failed to load PDF preview:", err);
+      });
+    } else if (isPdf && initialPreviewUrl) {
+      getPdfFullPreviewUrl(initialPreviewUrl).then((imgUrl) => {
+        if (!isCancelled) setPdfImageUrl(imgUrl);
+      }).catch(err => {
+        console.error("Failed to load PDF preview:", err);
+      });
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [fileObject, isPdf, initialPreviewUrl]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -186,14 +207,26 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         <div className={styles.previewModalOverlay} onClick={() => setIsPreviewOpen(false)}>
           <div className={styles.previewModalHeader} onClick={(e) => e.stopPropagation()}>
             <span className={styles.previewModalTitle}>{fileName}</span>
-            <button
-              type="button"
-              className={styles.previewModalClose}
-              onClick={() => setIsPreviewOpen(false)}
-              aria-label="Close preview"
-            >
-              ✕
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {!isImage && activePreviewUrl && (
+                <a
+                  href={activePreviewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', fontWeight: '600' }}
+                >
+                  Open ↗
+                </a>
+              )}
+              <button
+                type="button"
+                className={styles.previewModalClose}
+                onClick={() => setIsPreviewOpen(false)}
+                aria-label="Close preview"
+              >
+                ✕
+              </button>
+            </div>
           </div>
           <div className={styles.previewModalContent} onClick={(e) => e.stopPropagation()}>
             {isImage ? (
@@ -203,6 +236,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                 className={styles.previewModalImage}
               />
             ) : (
+            <>
               <object
                 data={activePreviewUrl}
                 type="application/pdf"
@@ -218,6 +252,18 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                   </div>
                 </iframe>
               </object>
+              
+              <div className={styles.mobilePdfFallback}>
+                {pdfImageUrl ? (
+                  <img src={pdfImageUrl} alt="PDF Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                    <span className={styles.spinner} />
+                    <span style={{ color: '#fff', fontSize: '0.875rem' }}>Loading PDF preview...</span>
+                  </div>
+                )}
+              </div>
+            </>
             )}
           </div>
         </div>
