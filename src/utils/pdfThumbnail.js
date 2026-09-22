@@ -1,4 +1,4 @@
-import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+import PdfWorker from "pdfjs-dist/build/pdf.worker.mjs?worker";
 
 let pdfjsLibPromise = null;
 
@@ -6,7 +6,7 @@ const loadPdfJs = async () => {
   if (!pdfjsLibPromise) {
     pdfjsLibPromise = (async () => {
       const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+      pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker();
       return pdfjsLib;
     })();
   }
@@ -14,15 +14,16 @@ const loadPdfJs = async () => {
 };
 
 const getPdfThumbnailUrl = async (fileOrUrl) => {
+  let objectUrl = null;
   try {
     let source;
     if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
-      const arrayBuffer = await fileOrUrl.arrayBuffer();
-      source = { data: arrayBuffer };
+      objectUrl = URL.createObjectURL(fileOrUrl);
+      source = { url: objectUrl };
     } else if (typeof fileOrUrl === "string" && fileOrUrl.length > 0 && fileOrUrl !== "#") {
       source = { url: fileOrUrl };
     } else {
-      return null;
+      return 'error';
     }
 
     const pdfjsLib = await loadPdfJs();
@@ -37,23 +38,26 @@ const getPdfThumbnailUrl = async (fileOrUrl) => {
     canvas.height = Math.round(viewport.height);
 
     await page.render({ canvasContext: context, viewport }).promise;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
     return canvas.toDataURL("image/png");
   } catch (err) {
     console.warn("Failed to generate PDF thumbnail:", err);
-    return null;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    return 'error';
   }
 };
 
 export const getPdfFullPreviewUrl = async (fileOrUrl, scale = 1.5) => {
+  let objectUrl = null;
   try {
     let source;
     if (fileOrUrl instanceof File || fileOrUrl instanceof Blob) {
-      const arrayBuffer = await fileOrUrl.arrayBuffer();
-      source = { data: arrayBuffer };
+      objectUrl = URL.createObjectURL(fileOrUrl);
+      source = { url: objectUrl };
     } else if (typeof fileOrUrl === "string" && fileOrUrl.length > 0 && fileOrUrl !== "#") {
       source = { url: fileOrUrl };
     } else {
-      return null;
+      return 'error';
     }
 
     const pdfjsLib = await loadPdfJs();
@@ -62,16 +66,19 @@ export const getPdfFullPreviewUrl = async (fileOrUrl, scale = 1.5) => {
     const page = await pdf.getPage(1);
 
     const viewport = page.getViewport({ scale });
+    
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
     canvas.width = Math.round(viewport.width);
     canvas.height = Math.round(viewport.height);
 
     await page.render({ canvasContext: context, viewport }).promise;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
     return canvas.toDataURL("image/png");
   } catch (err) {
     console.warn("Failed to generate PDF full preview:", err);
-    return null;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    return 'error';
   }
 };
 
