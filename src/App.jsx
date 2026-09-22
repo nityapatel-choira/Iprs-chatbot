@@ -25,7 +25,12 @@ const App = () => {
   const dispatch = useAppDispatch();
   const languageCode = useAppSelector(selectLanguageCode);
   const loggedIn = useAppSelector(selectIsAuthenticated);
-  const [showSplash, setShowSplash] = useState(true);
+
+  // Skip Splash when returning from a PayU callback.
+  const [showSplash, setShowSplash] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return !params.get("txnid") && !window.location.pathname.startsWith("/payment/");
+  });
 
   const resetSession = useCallback(() => {
     dispatch(setAuthenticated(false));

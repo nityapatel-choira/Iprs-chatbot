@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import BotAvatar from "../../pages/Chat/components/BotAvatar/BotAvatar";
+import QuickReplyCard from "../QuickReplyCard/QuickReplyCard";
 import styles from "./PaymentReview.module.css";
 
 function extractRawText(message, data) {
@@ -115,8 +116,7 @@ function normalizeReviewPayload(data, input, message) {
   if (Array.isArray(input?.items) && input.items.length > 0) {
     actions = input.items.map((item) => {
       const label = item.content || item.label || String(item);
-      const isPrimary = /yes|correct|pay|confirm/i.test(label);
-      return { label, action: label, primary: isPrimary };
+      return { label, action: label };
     });
   } else if (Array.isArray(data?.actions) && data.actions.length > 0) {
     actions = data.actions;
@@ -174,18 +174,10 @@ const PaymentReview = ({ data, input, message, onAction }) => {
       ))}
 
       {actions.length > 0 && (
-        <div className={styles.actionsCard}>
-          {actions.map((act, aIdx) => (
-            <button
-              key={`${act.label}-${aIdx}`}
-              type="button"
-              className={`${styles.actionButton} ${act.primary ? styles.actionButtonPrimary : ""}`}
-              onClick={() => onAction?.(act.action || act.label)}
-            >
-              {act.label}
-            </button>
-          ))}
-        </div>
+        <QuickReplyCard
+          options={actions}
+          onSelect={(act) => onAction?.(act.action || act.label)}
+        />
       )}
     </div>
   );

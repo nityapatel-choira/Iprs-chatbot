@@ -78,3 +78,10 @@
 :global([style*="--visual-height"]) .composerWrap {
   padding-bottom: 0.75rem;
 }
+
+.inputError {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: #ef4444;
+  padding-left: 1rem;
+}

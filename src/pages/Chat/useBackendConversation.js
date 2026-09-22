@@ -76,18 +76,14 @@ const useBackendConversation = () => {
     startedRef.current = true;
     
     // Check for payment callback transaction ID
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlTxnId = urlParams.get("txnid");
-    const txnId = urlTxnId || localStorage.getItem("payu_txnId");
+    const txnId = new URLSearchParams(window.location.search).get("txnid");
 
     // Always restore session from backend to prevent mobile restart issues
     runMessage(undefined);
 
     if (txnId) {
-      // Clean up URL if there are query parameters to avoid re-triggering on refresh
-      if (urlTxnId) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
+      // Clean up URL to avoid re-triggering on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
       dispatch(verifyPayment(txnId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -160,7 +156,6 @@ const useBackendConversation = () => {
 
   const dismissPaymentResult = () => {
     dispatch(clearPaymentResult());
-    localStorage.removeItem("payu_txnId");
   };
 
   return {

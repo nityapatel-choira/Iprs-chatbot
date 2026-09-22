@@ -223,9 +223,16 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const displayProgress = sessionEnded ? 100 : progress;
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
-  const isTextStep = Boolean(textConfig) && !isTyping;
+
+  // Backend has no GSTIN input type, so detect it from the prompt text.
+  const isGstinStep =
+    input?.type === "text input" &&
+    /\bgst(?:in)?\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`);
+  const effectiveTextConfig = isGstinStep ? { type: "gstin", inputMode: "text" } : textConfig;
+
+  const isTextStep = Boolean(effectiveTextConfig) && !isTyping;
   const showComposer =
-    Boolean(textConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep;
+    Boolean(effectiveTextConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep;
 
   const isUploadForCurrentInput =
     input?.type === "file input" && uploadForInputId === input.id;
@@ -242,6 +249,18 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
     if (isCityStep) {
       return null;
+    }
+
+    if (textConfig && Array.isArray(input.items) && input.items.length > 0) {
+      return (
+        <QuickReplyCard
+          options={input.items.map((item) => ({
+            label: item.content || item.label,
+            id: item.id,
+          }))}
+          onSelect={(option) => sendAnswer(option.label)}
+        />
+      );
     }
 
     if (
@@ -504,8 +523,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             onSend={sendAnswer}
             disabled={isTyping || !isTextStep}
             placeholder="Write your message"
-            inputMode={textConfig.inputMode}
-            type={textConfig.type}
+            inputMode={effectiveTextConfig.inputMode}
+            type={effectiveTextConfig.type}
           />
         )}
 
