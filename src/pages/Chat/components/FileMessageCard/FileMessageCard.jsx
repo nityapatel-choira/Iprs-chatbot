@@ -79,12 +79,14 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
         if (!isCancelled) setPdfImageUrl(imgUrl);
       }).catch(err => {
         console.error("Failed to load PDF preview:", err);
+        if (!isCancelled) setPdfImageUrl('error');
       });
     } else if (isPdf && initialPreviewUrl) {
       getPdfFullPreviewUrl(initialPreviewUrl).then((imgUrl) => {
         if (!isCancelled) setPdfImageUrl(imgUrl);
       }).catch(err => {
         console.error("Failed to load PDF preview:", err);
+        if (!isCancelled) setPdfImageUrl('error');
       });
     }
     return () => {
@@ -254,7 +256,13 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
               </object>
               
               <div className={styles.mobilePdfFallback}>
-                {pdfImageUrl ? (
+                {pdfImageUrl === 'error' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                    <span className={styles.errorIcon} style={{ fontSize: '2rem' }}>⚠️</span>
+                    <span style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '600' }}>Preview unavailable</span>
+                    <span style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center' }}>The PDF could not be rendered.</span>
+                  </div>
+                ) : pdfImageUrl ? (
                   <img src={pdfImageUrl} alt="PDF Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
