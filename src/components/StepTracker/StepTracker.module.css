@@ -1,4 +1,5 @@
 .wrap {
+  --line-duration: 0.4s;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
@@ -26,7 +27,7 @@
   height: 100%;
   background: #007BFF;
   border-radius: 2px;
-  transition: width 0.4s var(--ease, ease);
+  transition: width var(--line-duration) var(--ease, ease);
 }
 
 .track {
@@ -78,6 +79,12 @@
   box-shadow: 0 0 0 2px #007BFF;
   background: #007BFF;
   color: #ffffff;
+}
+
+/* Light a step only after the line has finished moving to it. */
+.circle.completed,
+.circle.active {
+  transition-delay: var(--line-duration);
 }
 
 .circle.pending {

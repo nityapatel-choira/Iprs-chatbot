@@ -230,11 +230,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   const textConfig = input?.type ? TEXT_INPUT_CONFIG[input.type] : null;
 
-  // Backend has no GSTIN input type, so detect it from the prompt text.
-  const isGstinStep =
-    input?.type === "text input" &&
-    /\bgst(?:in)?\b/i.test(`${input.placeholder || ""} ${input.title || ""} ${trailingBotText}`);
-  const effectiveTextConfig = isGstinStep ? { type: "gstin", inputMode: "text" } : textConfig;
+  // Backend has no GSTIN/Work Link input types, so detect them from the prompt text.
+  const isPlainTextInput = input?.type === "text input";
+  const promptText = `${input?.placeholder || ""} ${input?.title || ""} ${trailingBotText}`;
+  const isGstinStep = isPlainTextInput && /\bgst(?:in)?\b/i.test(promptText);
+  const isWorkLinkStep =
+    (isPlainTextInput || input?.type === "url input") && /\bwork\s*link\b/i.test(promptText);
+  const effectiveTextConfig = isGstinStep
+    ? { type: "gstin", inputMode: "text" }
+    : isWorkLinkStep
+      ? { type: "worklink", inputMode: "url" }
+      : textConfig;
 
   const isTextStep = Boolean(effectiveTextConfig) && !isTyping;
   const showComposer =

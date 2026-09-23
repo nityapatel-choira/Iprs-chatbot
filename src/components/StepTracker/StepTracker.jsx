@@ -7,9 +7,11 @@ import styles from "./StepTracker.module.css";
 const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
 const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
-  const visualFill = Math.max(0, Math.min(100, Number(progress) || 0));
-  const progressIndex = Math.round((visualFill / 100) * (stages.length - 1));
-  const effectiveActiveIndex = Math.max(activeIndex, progressIndex);
+  const lastIndex = stages.length - 1;
+  const progressFill = Math.max(0, Math.min(100, Number(progress) || 0));
+  // A step turns active only once the line reaches it, and the line always reaches the active step.
+  const effectiveActiveIndex = Math.max(activeIndex, Math.floor((progressFill / 100) * lastIndex));
+  const visualFill = Math.min(100, Math.max(progressFill, (effectiveActiveIndex / lastIndex) * 100));
 
   return (
     <div className={styles.wrap}>
