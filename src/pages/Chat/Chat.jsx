@@ -94,6 +94,12 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       i >= 0 && history[i]?.sender === "bot";
       i -= 1
     ) {
+      // The resume summary card ("Here's what you told us earlier: ... Place of
+      // birth: Mumbai ...") recaps answers from steps the member already passed.
+      // It's a bot message with no user reply before the NEXT question, so this
+      // backward scan would otherwise fold its old field labels (city, photo,
+      // etc.) into the text used to detect the CURRENT step - stop before it.
+      if (history[i]?.id === "resume-summary") break;
       tText = `${extractMessageText(history[i])} ${tText}`;
     }
 
