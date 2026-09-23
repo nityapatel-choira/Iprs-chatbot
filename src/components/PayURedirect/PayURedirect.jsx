@@ -5,11 +5,6 @@ const PayURedirect = ({ payuPayload }) => {
 
   useEffect(() => {
     if (payuPayload && formRef.current) {
-      // Store the txnId for status verification after PayU redirect
-      const txnId = payuPayload.txnId || payuPayload.params?.txnid || payuPayload.payment?.txnId;
-      if (txnId) {
-        localStorage.setItem("payu_txnId", txnId);
-      }
       // Auto-submit the form as soon as it renders
       formRef.current.submit();
     }
