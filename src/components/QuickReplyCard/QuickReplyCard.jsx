@@ -11,7 +11,7 @@ const QuickReplyCard = ({ options, onSelect, disabled }) => {
           type="button"
           className={styles.option}
           onClick={() => onSelect?.(option)}
-          disabled={disabled}
+          disabled={disabled || option.disabled}
         >
           <span className={styles.optionLabel}>{option.label}</span>
           {option.subtext && <span className={styles.optionSubtext}>{option.subtext}</span>}
