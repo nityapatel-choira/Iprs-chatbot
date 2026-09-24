@@ -244,20 +244,6 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     ? lastMessageDocSummary
     : null;
 
-  // Auto-advance Payment Review step so the user goes straight to the Pay option
-  useEffect(() => {
-    if (!isTyping && Array.isArray(input?.items)) {
-      const confirmItem = input.items.find((item) => {
-        const lbl = String(item.content || item.label || "");
-        return /yes, everything is correct/i.test(lbl);
-      });
-      if (confirmItem) {
-        const actionLabel = confirmItem.content || confirmItem.label;
-        sendAnswer(actionLabel);
-      }
-    }
-  }, [isTyping, input, sendAnswer]);
-
   const displayActiveIndex = useMemo(
     () =>
       determineStageIndex({
@@ -335,15 +321,6 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       !isConsentAcceptStep &&
       !pendingDocSummary
     ) {
-      // Hide the review confirmation buttons since they are auto-advanced
-      const hasReviewConfirm = (input.items || []).some((item) => {
-        const lbl = String(item.content || item.label || "");
-        return /yes, everything is correct/i.test(lbl);
-      });
-      if (hasReviewConfirm) {
-        return null;
-      }
-
       return (
         <QuickReplyCard
           options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
@@ -497,6 +474,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     data={message.data || (isLast ? input?.data : undefined)}
                     input={isLast ? input : undefined}
                     message={message}
+                    onAction={
+                      isLast
+                        ? (actionLabel) => {
+                            if (/pay/i.test(actionLabel)) {
+                              triggerPayment();
+                            } else {
+                              sendAnswer(actionLabel);
+                            }
+                          }
+                        : undefined
+                    }
                   />
                 );
               }

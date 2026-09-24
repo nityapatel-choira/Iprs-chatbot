@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import BotAvatar from "../../pages/Chat/components/BotAvatar/BotAvatar";
+import QuickReplyCard from "../QuickReplyCard/QuickReplyCard";
 import styles from "./PaymentReview.module.css";
 
 function extractRawText(message, data) {
@@ -107,14 +108,27 @@ function normalizeReviewPayload(data, input, message) {
       ? input.sections
       : [];
 
+  let actions = [];
+  if (Array.isArray(input?.items) && input.items.length > 0) {
+    actions = input.items.map((item) => {
+      const label = item.content || item.label || String(item);
+      return { label, action: label, id: item.id || item.value || item.key };
+    });
+  } else if (Array.isArray(data?.actions) && data.actions.length > 0) {
+    actions = data.actions;
+  } else if (Array.isArray(input?.actions) && input.actions.length > 0) {
+    actions = input.actions;
+  }
+
   return {
     introTitle: introTitle || "Please review all your details before proceeding to payment.",
     sections,
+    actions,
   };
 }
 
-const PaymentReview = ({ data, input, message }) => {
-  const { introTitle, sections } = useMemo(
+const PaymentReview = ({ data, input, message, onAction }) => {
+  const { introTitle, sections, actions } = useMemo(
     () => normalizeReviewPayload(data, input, message),
     [data, input, message]
   );
@@ -154,6 +168,13 @@ const PaymentReview = ({ data, input, message }) => {
           </div>
         </div>
       ))}
+
+      {actions.length > 0 && (
+        <QuickReplyCard
+          options={actions}
+          onSelect={(act) => onAction?.(act.action || act.label)}
+        />
+      )}
     </div>
   );
 };
