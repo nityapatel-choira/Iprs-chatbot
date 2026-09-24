@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import BotAvatar from "../../pages/Chat/components/BotAvatar/BotAvatar";
-import QuickReplyCard from "../QuickReplyCard/QuickReplyCard";
 import styles from "./PaymentReview.module.css";
 
 function extractRawText(message, data) {
@@ -31,22 +30,18 @@ function extractRawText(message, data) {
 function getSectionTitle(rawTitle) {
   const clean = rawTitle.trim();
 
-  // Keep exact section title for uploaded documents, songs, or titles with numbers/counts
   if (/documents\s+you\s+uploaded|uploaded\s+documents|your\s+songs|\(\d+\)/i.test(clean)) {
     return clean;
   }
 
-  // Group personal/membership/identity/address fields under Personal Details
   if (/personal|your details|membership|identity|address/i.test(clean)) {
     return "Personal Details";
   }
 
-  // Group bank fields under Bank Details
   if (/bank/i.test(clean)) {
     return "Bank Details";
   }
 
-  // Group work submission fields under Work Submission
   if (/work\s+submission/i.test(clean)) {
     return "Work Submission";
   }
@@ -112,27 +107,14 @@ function normalizeReviewPayload(data, input, message) {
       ? input.sections
       : [];
 
-  let actions = [];
-  if (Array.isArray(input?.items) && input.items.length > 0) {
-    actions = input.items.map((item) => {
-      const label = item.content || item.label || String(item);
-      return { label, action: label };
-    });
-  } else if (Array.isArray(data?.actions) && data.actions.length > 0) {
-    actions = data.actions;
-  } else if (Array.isArray(input?.actions) && input.actions.length > 0) {
-    actions = input.actions;
-  }
-
   return {
     introTitle: introTitle || "Please review all your details before proceeding to payment.",
     sections,
-    actions,
   };
 }
 
-const PaymentReview = ({ data, input, message, onAction }) => {
-  const { introTitle, sections, actions } = useMemo(
+const PaymentReview = ({ data, input, message }) => {
+  const { introTitle, sections } = useMemo(
     () => normalizeReviewPayload(data, input, message),
     [data, input, message]
   );
@@ -172,13 +154,6 @@ const PaymentReview = ({ data, input, message, onAction }) => {
           </div>
         </div>
       ))}
-
-      {actions.length > 0 && (
-        <QuickReplyCard
-          options={actions}
-          onSelect={(act) => onAction?.(act.action || act.label)}
-        />
-      )}
     </div>
   );
 };

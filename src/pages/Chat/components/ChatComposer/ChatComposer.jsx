@@ -32,18 +32,18 @@ const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" 
 
   return (
     <div className={styles.composerWrap}>
-      {(isGstinType || isWorkLinkType) && (
-        <p
-          className={styles.inputError}
-          role="alert"
-          style={{ visibility: value.trim() && !isValid ? "visible" : "hidden" }}
-        >
-          {isGstinType
-            ? "Invalid GSTIN format. Example: 22AAAAA0000A1Z5"
-            : "Invalid link. Example: https://youtube.com/watch?v=abc123"}
-        </p>
-      )}
       <form className={styles.composer} onSubmit={handleSubmit}>
+        {(isGstinType || isWorkLinkType) && (
+          <p
+            className={styles.inputError}
+            role="alert"
+            style={{ visibility: value.trim() && !isValid ? "visible" : "hidden" }}
+          >
+            {isGstinType
+              ? "Invalid GSTIN format. Example: 22AAAAA0000A1Z5"
+              : "Invalid link. Example: https://youtube.com/watch?v=abc123"}
+          </p>
+        )}
         <button type="button" className={styles.micButton} aria-label="Voice input" disabled={disabled}>
           <MicIcon />
         </button>
