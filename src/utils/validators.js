@@ -8,6 +8,17 @@ export const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email |
 export const isValidGstin = (gstin) =>
   /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin || "");
 
+// Scheme is optional since users often paste links like "youtube.com/...".
+export const isValidWorkLink = (link) => {
+  if (!link || /\s/.test(link)) return false;
+  try {
+    const url = new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(link) ? link : `https://${link}`);
+    return /^https?:$/.test(url.protocol) && /\.[a-z]{2,}$/i.test(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 export const sanitizeGstin = (value) =>
   (value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 15);
 

@@ -1,20 +1,23 @@
 import { useState } from "react";
 import MicIcon from "../../../../components/icons/MicIcon";
 import SendIcon from "../../../../components/icons/SendIcon";
-import { isValidEmail, isValidGstin, sanitizeGstin } from "../../../../utils/validators";
+import { isValidEmail, isValidGstin, isValidWorkLink, sanitizeGstin } from "../../../../utils/validators";
 import styles from "./ChatComposer.module.css";
 
 const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" }) => {
   const [value, setValue] = useState("");
 
   const isGstinType = type === "gstin";
+  const isWorkLinkType = type === "worklink";
 
   const isValid =
     type === "email"
       ? isValidEmail(value.trim())
       : isGstinType
         ? isValidGstin(value)
-        : Boolean(value.trim());
+        : isWorkLinkType
+          ? isValidWorkLink(value.trim())
+          : Boolean(value.trim());
 
   const handleChange = (e) => {
     setValue(isGstinType ? sanitizeGstin(e.target.value) : e.target.value);
@@ -29,13 +32,15 @@ const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" 
 
   return (
     <div className={styles.composerWrap}>
-      {isGstinType && (
+      {(isGstinType || isWorkLinkType) && (
         <p
           className={styles.inputError}
           role="alert"
-          style={{ visibility: value && !isValid ? "visible" : "hidden" }}
+          style={{ visibility: value.trim() && !isValid ? "visible" : "hidden" }}
         >
-          Invalid GSTIN format. Example: 22AAAAA0000A1Z5
+          {isGstinType
+            ? "Invalid GSTIN format. Example: 22AAAAA0000A1Z5"
+            : "Invalid link. Example: https://youtube.com/watch?v=abc123"}
         </p>
       )}
       <form className={styles.composer} onSubmit={handleSubmit}>
@@ -44,7 +49,7 @@ const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" 
         </button>
         <input
           className={styles.composerInput}
-          type={isGstinType ? "text" : type}
+          type={isGstinType || isWorkLinkType ? "text" : type}
           inputMode={inputMode}
           placeholder={placeholder}
           value={value}

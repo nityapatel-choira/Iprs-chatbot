@@ -48,20 +48,18 @@ const PassportPhotoCard = ({
 
   if (mode === "upload") {
     return (
-      <div className={styles.wrap}>
-        <FileUploader
-          title={title || "Upload your Passport photo"}
-          caption="PNG, JPG/JPEG"
-          accept="image/*,.jpg,.jpeg,.png"
-          onFileSelected={onFileSelected}
-          onCameraClick={() => setMode("camera")}
-          status={status}
-          progress={progress}
-          errorMessage={errorMessage}
-          disabled={disabled}
-          autoOpen
-        />
-      </div>
+      <FileUploader
+        title={title || "Upload your Passport photo"}
+        caption="PNG, JPG/JPEG"
+        accept="image/*,.jpg,.jpeg,.png"
+        onFileSelected={onFileSelected}
+        onCameraClick={() => setMode("camera")}
+        status={status}
+        progress={progress}
+        errorMessage={errorMessage}
+        disabled={disabled}
+        autoOpen
+      />
     );
   }
 
