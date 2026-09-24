@@ -1,4 +1,5 @@
 import { getToken, clearToken } from "./tokenStorage";
+import { getLanguageCode } from "./languagePreference";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.iprs.choira.io";
 
@@ -52,6 +53,12 @@ async function request(path, { method = "GET", body, headers } = {}) {
   const finalHeaders = { "Content-Type": "application/json", ...headers };
   if (token) finalHeaders.Authorization = `Bearer ${token}`;
 
+  // The language the member picked on the first screen. The backend translates its
+  // reply into it; without this header it answers in English, which is also what
+  // happens for anyone who somehow reaches the chat without choosing.
+  const language = getLanguageCode();
+  if (language) finalHeaders["X-Language"] = language;
+
   let res;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
@@ -73,6 +80,10 @@ function uploadRequest(path, formData, onProgress, onUploadComplete) {
 
     const token = getToken();
     if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    // Uploads answer with the next chat step, so they need the language too.
+    const language = getLanguageCode();
+    if (language) xhr.setRequestHeader("X-Language", language);
 
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) {

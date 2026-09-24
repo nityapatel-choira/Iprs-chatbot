@@ -4,10 +4,14 @@ import LanguageCard from "../../components/LanguageCard/LanguageCard";
 import { LANGUAGES } from "../../constants/languages";
 import styles from "./LanguageSelection.module.css";
 
-const ENABLED_LANGUAGE_CODE = "en";
+// Every language in LANGUAGES is selectable. The flow is authored in English and
+// translated on the way out by the API (see modules/translation there), so adding a
+// language needs no new copy here - only that its code is in the API's
+// TRANSLATION_SUPPORTED_LANGUAGES.
+const DEFAULT_LANGUAGE_CODE = "en";
 
 const LanguageSelection = ({ onContinue }) => {
-  const [selected, setSelected] = useState(ENABLED_LANGUAGE_CODE);
+  const [selected, setSelected] = useState(DEFAULT_LANGUAGE_CODE);
 
   const handleContinue = () => {
     if (!selected) return;
@@ -37,7 +41,6 @@ const LanguageSelection = ({ onContinue }) => {
                 native={lang.native}
                 selected={selected === lang.code}
                 onSelect={() => setSelected(lang.code)}
-                disabled={lang.code !== ENABLED_LANGUAGE_CODE}
               />
             ))}
           </div>
