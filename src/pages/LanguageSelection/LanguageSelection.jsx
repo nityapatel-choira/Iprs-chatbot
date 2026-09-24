@@ -3,6 +3,7 @@ import iprsLogo from "../../assets/iprs-logo.png";
 import LanguageCard from "../../components/LanguageCard/LanguageCard";
 import { LANGUAGES } from "../../constants/languages";
 import styles from "./LanguageSelection.module.css";
+import { t } from "../../i18n";
 
 // Every language in LANGUAGES is selectable. The flow is authored in English and
 // translated on the way out by the API (see modules/translation there), so adding a
@@ -27,7 +28,7 @@ const LanguageSelection = ({ onContinue }) => {
           <img src={iprsLogo} alt="IPRS" className={styles.logo} />
 
           <div className={styles.textGroup}>
-            <h1 className={styles.heading}>Choose your language</h1>
+            <h1 className={styles.heading}>{t("Choose your language")}</h1>
             <p className={styles.subtitle}>
               Select the language you&apos;d like to use. You can change it later in settings.
             </p>

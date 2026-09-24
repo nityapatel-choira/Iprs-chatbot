@@ -5,6 +5,7 @@ import OtpField from "../../components/OtpField/OtpField";
 import { sendOtp, verifyOtp } from "../../services/authService";
 import { isValidPhone, isValidOtp, sanitizeDigits } from "../../utils/validators";
 import styles from "./Login.module.css";
+import { t, t1 } from "../../i18n";
 
 const Login = ({ onContinue }) => {
   const [phase, setPhase] = useState("phone");
@@ -20,8 +21,8 @@ const Login = ({ onContinue }) => {
   const otpValid = isValidOtp(otp);
   const fullPhone = `${countryCode}${phone}`;
 
-  const phoneError = phoneTouched && phone.length > 0 && !phoneValid ? "Enter a valid 10-digit mobile number" : "";
-  const otpError = otpTouched && otp.length > 0 && !otpValid ? "Enter the code we texted you" : "";
+  const phoneError = phoneTouched && phone.length > 0 && !phoneValid ? t("Enter a valid 10-digit mobile number") : "";
+  const otpError = otpTouched && otp.length > 0 && !otpValid ? t("Enter the code we texted you") : "";
 
   const handlePhoneChange = (raw) => setPhone(sanitizeDigits(raw, 10));
   const handleOtpChange = (raw) => {
@@ -46,7 +47,7 @@ const Login = ({ onContinue }) => {
   const handleSendOtp = () => {
     setPhoneTouched(true);
     if (!phoneValid) return;
-    requestOtp(() => setPhase("otp"), "Couldn't send the code. Please try again.");
+    requestOtp(() => setPhase("otp"), t("Couldn't send the code. Please try again."));
   };
 
   const handleVerifyOtp = async () => {
@@ -60,7 +61,7 @@ const Login = ({ onContinue }) => {
       onContinue?.(data);
     } catch {
       // Show fixed error message on OTP rejection.
-      setApiError("Invalid OTP. Please enter the correct OTP.");
+      setApiError(t("Invalid OTP. Please enter the correct OTP."));
     } finally {
       setIsSubmitting(false);
     }
@@ -74,7 +75,7 @@ const Login = ({ onContinue }) => {
   };
 
   const handleResend = () => {
-    requestOtp(undefined, "Couldn't resend the code. Please try again.");
+    requestOtp(undefined, t("Couldn't resend the code. Please try again."));
   };
 
   const handleFooterClick = phase === "phone" ? handleSendOtp : handleVerifyOtp;
@@ -82,9 +83,9 @@ const Login = ({ onContinue }) => {
 
   let footerLabel;
   if (phase === "phone") {
-    footerLabel = isSubmitting ? "Sending..." : "Continue";
+    footerLabel = isSubmitting ? t("Sending...") : t("Continue");
   } else {
-    footerLabel = isSubmitting ? "Verifying..." : "Verify & Continue";
+    footerLabel = isSubmitting ? t("Verifying...") : t("Verify & Continue");
   }
 
   return (
@@ -96,11 +97,11 @@ const Login = ({ onContinue }) => {
           <img src={iprsLogo} alt="IPRS" className={styles.logo} />
 
           <div className={styles.textGroup}>
-            <h1 className={styles.heading}>Sign In</h1>
+            <h1 className={styles.heading}>{t("Sign In")}</h1>
             <p className={styles.subtitle}>
               {phase === "phone"
-                ? "We'll text a one-time code to verify your number."
-                : `Enter the code we sent to ${fullPhone}.`}
+                ? t("We'll text a one-time code to verify your number.")
+                : t1("Enter the code we sent to {0}.", fullPhone)}
             </p>
           </div>
 
