@@ -30,7 +30,7 @@ const LanguageSelection = ({ onContinue }) => {
           <div className={styles.textGroup}>
             <h1 className={styles.heading}>{t("Choose your language")}</h1>
             <p className={styles.subtitle}>
-              Select the language you&apos;d like to use. You can change it later in settings.
+              {t("Select the language you'd like to use. You can change it later in settings.")}
             </p>
           </div>
 

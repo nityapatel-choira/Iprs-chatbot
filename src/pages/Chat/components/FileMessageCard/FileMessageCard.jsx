@@ -218,7 +218,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                   rel="noreferrer"
                   style={{ color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', fontWeight: '600' }}
                 >
-                  Open ↗
+                  {t("Open ↗")}
                 </a>
               )}
               <button
