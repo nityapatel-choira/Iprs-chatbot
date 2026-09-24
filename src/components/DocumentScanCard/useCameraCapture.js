@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { t } from "../../i18n";
 
 const useCameraCapture = ({ onCapture } = {}) => {
   const [status, setStatus] = useState("idle");
@@ -35,7 +36,7 @@ const useCameraCapture = ({ onCapture } = {}) => {
 
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
-        throw Object.assign(new Error("Camera not supported"), { name: "NotSupportedError" });
+        throw Object.assign(new Error(t("Camera not supported")), { name: "NotSupportedError" });
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -66,9 +67,9 @@ const useCameraCapture = ({ onCapture } = {}) => {
       stopEverything();
       setStatus("error");
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setErrorMessage("Camera access was denied. Please allow camera permission and try again.");
+        setErrorMessage(t("Camera access was denied. Please allow camera permission and try again."));
       } else if (err.name === "NotFoundError" || err.name === "NotSupportedError" || err.name === "OverconstrainedError") {
-        setErrorMessage("No rear camera was found on this device.");
+        setErrorMessage(t("No rear camera was found on this device."));
       } else {
         setErrorMessage("Couldn't start the camera. Please try again.");
       }

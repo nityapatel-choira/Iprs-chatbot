@@ -16,7 +16,7 @@ import PaymentReview from "../../components/PaymentReview/PaymentReview";
 import PaymentResultModal from "./components/PaymentResultModal/PaymentResultModal";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import {
-  STAGE_LABELS,
+  stageLabels,
   determineStageIndex,
 } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
@@ -28,6 +28,7 @@ import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
 import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
+import { t } from "../../i18n";
 
 const PASSPORT_PHOTO_STEP_PATTERN =
   /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
@@ -75,7 +76,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const isConsentAcceptStep =
     input?.type === "choice input" &&
     (input.items || []).length === 1 &&
-    input.items[0]?.content === "I Accept";
+    input.items[0]?.content === t("I Accept");
 
   const pendingConsentMessages =
     isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
@@ -153,7 +154,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   }, [history, input, lastMessage, lastMessageText]);
 
   // Consent turns live entirely in the popup, so both the bot prompt and
-  // its "I Accept" reply stay out of the transcript permanently - not just
+  // its t("I Accept") reply stay out of the transcript permanently - not just
   // while that step is the pending input.
   const consentMessageIds = useMemo(() => {
     const resolvedConsentMessageIds = new Set();
@@ -161,7 +162,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       const message = history[i];
       if (
         message?.sender === "user" &&
-        extractMessageText(message) === "I Accept" &&
+        extractMessageText(message) === t("I Accept") &&
         history[i - 1]?.sender === "bot"
       ) {
         resolvedConsentMessageIds.add(history[i - 1].id);
@@ -386,7 +387,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     <div className={styles.page} ref={pageRef}>
       <div className={styles.panel}>
         <ChatHeader
-          title="IPRS Membership Assistant"
+          title={t("IPRS Membership Assistant")}
           language={language}
           onBack={onBack}
           onLogout={onLogout}
@@ -394,7 +395,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
         <div className={styles.trackerSlot}>
           <StepTracker
-            stages={STAGE_LABELS}
+            stages={stageLabels()}
             activeIndex={displayActiveIndex}
             progress={displayProgress}
           />
@@ -534,7 +535,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             key={input.id}
             onSend={sendAnswer}
             disabled={isTyping || !isTextStep}
-            placeholder="Write your message"
+            placeholder={t("Write your message")}
             inputMode={effectiveTextConfig.inputMode}
             type={effectiveTextConfig.type}
           />

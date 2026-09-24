@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import CloseIcon from "../icons/CloseIcon";
 import styles from "./BottomSheet.module.css";
+import { t } from "../../i18n";
 
 const BottomSheet = ({ open, title, children, footer, onClose }) => {
   useEffect(() => {
@@ -25,7 +26,7 @@ const BottomSheet = ({ open, title, children, footer, onClose }) => {
       >
         <span className={styles.handle} aria-hidden="true" />
         {onClose && (
-          <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Close">
+          <button type="button" className={styles.closeButton} onClick={onClose} aria-label={t("Close")}>
             <CloseIcon />
           </button>
         )}

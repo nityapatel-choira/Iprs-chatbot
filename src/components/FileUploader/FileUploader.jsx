@@ -8,6 +8,7 @@ import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
 
 import { dataUrlToFile } from "../../utils/fileUtils";
 import styles from "./FileUploader.module.css";
+import { t } from "../../i18n";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
 const ALLOWED_MIME_TYPES = new Set([
@@ -50,7 +51,7 @@ const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, foot
           type="button"
           className={styles.cropModalClose}
           onClick={onCancel}
-          aria-label="Close"
+          aria-label={t("Close")}
         >
           ✕
         </button>
@@ -74,7 +75,7 @@ const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, foot
 );
 
 const FileUploader = ({
-  title = "Choose a file or drag & drop it here",
+  title = t("Choose a file or drag & drop it here"),
   caption = "PNG, JPG/JPEG, PDF",
   accept = "image/*,application/pdf,.jpg,.jpeg,.png,.pdf",
   onFileSelected,
@@ -231,7 +232,7 @@ const FileUploader = ({
     setValidationError("");
 
     if (!isAllowedFile(file)) {
-      setValidationError("Invalid file format. Please upload a JPG, PNG, or PDF file.");
+      setValidationError(t("Invalid file format. Please upload a JPG, PNG, or PDF file."));
       return;
     }
 
@@ -536,9 +537,9 @@ const FileUploader = ({
           <span className={styles.errorIcon}>
             <AlertIcon />
           </span>
-          <span className={styles.title}>Upload failed</span>
+          <span className={styles.title}>{t("Upload failed")}</span>
           <span className={styles.caption}>{activeErrorMessage || "Something went wrong."}</span>
-          <span className={styles.retryLabel}>Tap to try again</span>
+          <span className={styles.retryLabel}>{t("Tap to try again")}</span>
         </div>
       );
     }
@@ -562,7 +563,7 @@ const FileUploader = ({
               disabled={isDisabled}
             >
               <CameraIcon width={18} height={18} />
-              <span>Take Photo</span>
+              <span>{t("Take Photo")}</span>
             </button>
           )}
           <button
@@ -593,7 +594,7 @@ const FileUploader = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         role="region"
-        aria-label="File upload area"
+        aria-label={t("File upload area")}
       >
         {renderDropzoneContent()}
       </div>
@@ -614,21 +615,21 @@ const FileUploader = ({
         className={styles.hiddenInput}
         onChange={handleChange}
         disabled={isDisabled}
-        aria-label="Take Photo"
+        aria-label={t("Take Photo")}
       />
 
       {showCameraModal && (
         <PreviewModal
-          title="Take Photo / Scan Document"
+          title={t("Take Photo / Scan Document")}
           onCancel={handleCloseCameraModal}
           onConfirm={cameraStatus === "scanning" ? captureCamera : undefined}
-          confirmLabel={cameraStatus === "scanning" ? "Capture Photo" : null}
+          confirmLabel={cameraStatus === "scanning" ? t("Capture Photo") : null}
           footerExtra={<canvas ref={cameraCanvasRef} className={styles.hiddenInput} aria-hidden="true" />}
         >
           {cameraStatus === "loading" && (
             <div className={styles.spinnerWrap} role="status" aria-live="polite">
               <span className={styles.spinner} />
-              <span className={styles.hint}>Starting camera...</span>
+              <span className={styles.hint}>{t("Starting camera...")}</span>
             </div>
           )}
 
@@ -637,8 +638,8 @@ const FileUploader = ({
               <span className={styles.errorIcon}>
                 <AlertIcon />
               </span>
-              <span className={styles.title}>Camera unavailable</span>
-              <span className={styles.caption}>{cameraErrorMessage || "Could not access camera."}</span>
+              <span className={styles.title}>{t("Camera unavailable")}</span>
+              <span className={styles.caption}>{cameraErrorMessage || t("Could not access camera.")}</span>
               <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
                 Try Again
               </button>
@@ -656,16 +657,16 @@ const FileUploader = ({
 
       {isCropping && pendingPreviewUrl && (
         <PreviewModal
-          title="Crop & Adjust Document"
+          title={t("Crop & Adjust Document")}
           onCancel={handleCancelCrop}
           onConfirm={handleConfirmCrop}
-          confirmLabel="Use Document"
+          confirmLabel={t("Use Document")}
         >
           <div className={styles.cropImageWrapper}>
             <img
               ref={imgRef}
               src={pendingPreviewUrl}
-              alt="Document preview"
+              alt={t("Document preview")}
               className={styles.cropImage}
             />
             <div
@@ -708,10 +709,10 @@ const FileUploader = ({
 
       {isPdfPreviewing && pendingFile && (
         <PreviewModal
-          title="Preview PDF Document"
+          title={t("Preview PDF Document")}
           onCancel={handleCancelPdfPreview}
           onConfirm={handleConfirmPdfUpload}
-          confirmLabel="Use Document"
+          confirmLabel={t("Use Document")}
           openUrl={pendingPreviewUrl}
         >
           <div className={styles.cropImageWrapper} style={{ overflow: 'hidden', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -722,11 +723,11 @@ const FileUploader = ({
             >
               <iframe
                 src={pendingPreviewUrl}
-                title="PDF preview"
+                title={t("PDF preview")}
                 className={styles.pdfObject}
               >
                 <div className={styles.spinnerWrap} role="alert">
-                  <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
+                  <span className={styles.hint} style={{ color: '#ef4444' }}>{t("Preview unavailable")}</span>
                 </div>
               </iframe>
             </object>
@@ -735,15 +736,15 @@ const FileUploader = ({
               {pdfImageUrl === 'error' ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                   <span className={styles.errorIcon} style={{ fontSize: '2rem' }}>⚠️</span>
-                  <span style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '600' }}>Preview unavailable</span>
-                  <span style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center' }}>The PDF could not be rendered.</span>
+                  <span style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '600' }}>{t("Preview unavailable")}</span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center' }}>{t("The PDF could not be rendered.")}</span>
                 </div>
               ) : pdfImageUrl ? (
-                <img src={pdfImageUrl} alt="PDF Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                <img src={pdfImageUrl} alt={t("PDF Preview")} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                   <span className={styles.spinner} />
-                  <span style={{ color: '#fff', fontSize: '0.875rem' }}>Loading PDF preview...</span>
+                  <span style={{ color: '#fff', fontSize: '0.875rem' }}>{t("Loading PDF preview...")}</span>
                 </div>
               )}
             </div>

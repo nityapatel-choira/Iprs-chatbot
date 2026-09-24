@@ -2,6 +2,7 @@ import { useState } from "react";
 import CheckIcon from "../icons/CheckIcon";
 import documentCheckIcon from "../../assets/image 4.svg";
 import styles from "./FeeSummaryCard.module.css";
+import { t } from "../../i18n";
 
 const FeeSummaryCard = ({
   entityLabel,
@@ -28,7 +29,7 @@ const FeeSummaryCard = ({
       <div className={styles.outerCard}>
         {showFeeCard && (
           <>
-            {hasEntityLabel && <p className={styles.feeIntro}>You&apos;re applying as an</p>}
+            {hasEntityLabel && <p className={styles.feeIntro}>{t("You're applying as an")}</p>}
             <div className={styles.feeCard}>
               {hasEntityLabel && <span className={styles.entityLabel}>{entityLabel}</span>}
               {hasFee && (

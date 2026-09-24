@@ -1,8 +1,12 @@
-export const STAGE_LABELS = [
-  "Personal Details",
-  "Information & Documents",
-  "Work & Music Details",
-  "Review & Payment",
+import { t } from "../../i18n";
+// A function, not a constant: this module is imported before the language screen
+// is answered, so translating at import time would pin the labels to English for
+// every first-time member.
+export const stageLabels = () => [
+  t("Personal Details"),
+  t("Information & Documents"),
+  t("Work & Music Details"),
+  t("Review & Payment"),
 ];
 
 export function determineStageIndex({

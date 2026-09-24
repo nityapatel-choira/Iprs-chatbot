@@ -2,8 +2,9 @@ import { useState } from "react";
 import BottomSheet from "../../../../components/BottomSheet/BottomSheet";
 import CheckIcon from "../../../../components/icons/CheckIcon";
 import styles from "./DeclarationSheet.module.css";
+import { t } from "../../../../i18n";
 
-const DeclarationSheet = ({ open, title = "A couple more things", options, onSubmit, onClose }) => {
+const DeclarationSheet = ({ open, title = t("A couple more things"), options, onSubmit, onClose }) => {
   const [checked, setChecked] = useState({});
 
   const toggle = (key) => setChecked((prev) => ({ ...prev, [key]: !prev[key] }));

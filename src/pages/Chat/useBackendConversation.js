@@ -27,6 +27,7 @@ import {
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress } from "../../services/conversationStorage";
+import { t } from "../../i18n";
 
 // Custom hook managing conversation state and UI interactions.
 const useBackendConversation = () => {

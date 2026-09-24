@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import BotAvatar from "../../pages/Chat/components/BotAvatar/BotAvatar";
 import QuickReplyCard from "../QuickReplyCard/QuickReplyCard";
 import styles from "./PaymentReview.module.css";
+import { t } from "../../i18n";
 
 function extractRawText(message, data) {
   if (Array.isArray(message?.richText)) {
@@ -63,7 +64,7 @@ function normalizeReviewPayload(data, input, message) {
 
   let introTitle = data?.title || input?.title || "";
   const sectionMap = new Map();
-  let activeSectionTitle = "Personal Details";
+  let activeSectionTitle = t("Personal Details");
 
   for (const line of lines) {
     if (!introTitle && /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i.test(line)) {
@@ -125,7 +126,7 @@ function normalizeReviewPayload(data, input, message) {
   }
 
   return {
-    introTitle: introTitle || "Please review all your details before proceeding to payment.",
+    introTitle: introTitle || t("Please review all your details before proceeding to payment."),
     sections,
     actions,
   };

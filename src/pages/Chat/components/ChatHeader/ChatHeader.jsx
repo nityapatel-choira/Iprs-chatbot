@@ -1,11 +1,12 @@
 import TranslateIcon from "../../../../components/icons/TranslateIcon";
 import styles from "./ChatHeader.module.css";
+import { t } from "../../../../i18n";
 
 const ChatHeader = ({ title, language, onBack, onLogout }) => {
   return (
     <header className={styles.header}>
       {onBack && (
-        <button type="button" className={styles.backButton} onClick={onBack} aria-label="Back">
+        <button type="button" className={styles.backButton} onClick={onBack} aria-label={t("Back")}>
           ←
         </button>
       )}

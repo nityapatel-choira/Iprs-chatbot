@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FileDocIcon from "../../../../components/icons/FileDocIcon";
 import getPdfThumbnailUrl, { getPdfFullPreviewUrl } from "../../../../utils/pdfThumbnail";
 import styles from "./FileMessageCard.module.css";
+import { t } from "../../../../i18n";
 
 const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp)$/i;
 const PDF_EXTENSION_PATTERN = /\.pdf$/i;
@@ -150,7 +151,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
 
   const linkHref = isBusy ? undefined : activePreviewUrl || "#";
   const linkTarget = isBusy ? undefined : activePreviewUrl ? "_blank" : undefined;
-  const linkTitle = isBusy ? "Uploading..." : activePreviewUrl ? "Click to view uploaded document" : undefined;
+  const linkTitle = isBusy ? t("Uploading...") : activePreviewUrl ? t("Click to view uploaded document") : undefined;
   const linkStyle = isBusy ? { pointerEvents: "none", cursor: "default" } : undefined;
 
   const handleCardClick = (e) => {
@@ -171,7 +172,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
       return (
         <img
           src={activeThumbnailUrl}
-          alt={fileName || "Document preview"}
+          alt={fileName || t("Document preview")}
           className={styles.thumbnail}
           style={isError ? { borderColor: "#fecaca" } : undefined}
         />
@@ -224,7 +225,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                 type="button"
                 className={styles.previewModalClose}
                 onClick={() => setIsPreviewOpen(false)}
-                aria-label="Close preview"
+                aria-label={t("Close preview")}
               >
                 ✕
               </button>
@@ -234,7 +235,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
             {isImage ? (
               <img
                 src={activePreviewUrl}
-                alt={fileName || "Document Preview"}
+                alt={fileName || t("Document Preview")}
                 className={styles.previewModalImage}
               />
             ) : (
@@ -246,7 +247,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
               >
                 <iframe
                   src={activePreviewUrl}
-                  title="PDF preview"
+                  title={t("PDF preview")}
                   className={styles.pdfObject}
                 >
                   <div style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
@@ -259,15 +260,15 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                 {pdfImageUrl === 'error' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                     <span className={styles.errorIcon} style={{ fontSize: '2rem' }}>⚠️</span>
-                    <span style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '600' }}>Preview unavailable</span>
-                    <span style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center' }}>The PDF could not be rendered.</span>
+                    <span style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '600' }}>{t("Preview unavailable")}</span>
+                    <span style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center' }}>{t("The PDF could not be rendered.")}</span>
                   </div>
                 ) : pdfImageUrl ? (
-                  <img src={pdfImageUrl} alt="PDF Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                  <img src={pdfImageUrl} alt={t("PDF Preview")} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                     <span className={styles.spinner} />
-                    <span style={{ color: '#fff', fontSize: '0.875rem' }}>Loading PDF preview...</span>
+                    <span style={{ color: '#fff', fontSize: '0.875rem' }}>{t("Loading PDF preview...")}</span>
                   </div>
                 )}
               </div>

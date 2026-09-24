@@ -3,6 +3,7 @@ import MicIcon from "../../../../components/icons/MicIcon";
 import SendIcon from "../../../../components/icons/SendIcon";
 import { isValidEmail, isValidGstin, isValidWorkLink, sanitizeGstin } from "../../../../utils/validators";
 import styles from "./ChatComposer.module.css";
+import { t } from "../../../../i18n";
 
 const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" }) => {
   const [value, setValue] = useState("");
@@ -39,12 +40,12 @@ const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" 
           style={{ visibility: value.trim() && !isValid ? "visible" : "hidden" }}
         >
           {isGstinType
-            ? "Invalid GSTIN format. Example: 22AAAAA0000A1Z5"
-            : "Invalid link. Example: https://youtube.com/watch?v=abc123"}
+            ? t("Invalid GSTIN format. Example: 22AAAAA0000A1Z5")
+            : t("Invalid link. Example: https://youtube.com/watch?v=abc123")}
         </p>
       )}
       <form className={styles.composer} onSubmit={handleSubmit}>
-        <button type="button" className={styles.micButton} aria-label="Voice input" disabled={disabled}>
+        <button type="button" className={styles.micButton} aria-label={t("Voice input")} disabled={disabled}>
           <MicIcon />
         </button>
         <input
@@ -55,10 +56,10 @@ const ChatComposer = ({ onSend, disabled, placeholder, inputMode, type = "text" 
           value={value}
           onChange={handleChange}
           disabled={disabled}
-          aria-label="Type your message"
+          aria-label={t("Type your message")}
           maxLength={isGstinType ? 15 : undefined}
         />
-        <button type="submit" className={styles.sendButton} disabled={disabled || !isValid} aria-label="Send">
+        <button type="submit" className={styles.sendButton} disabled={disabled || !isValid} aria-label={t("Send")}>
           <SendIcon />
         </button>
       </form>

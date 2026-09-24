@@ -34,7 +34,7 @@ const LanguageSelection = ({ onContinue }) => {
             </p>
           </div>
 
-          <div className={styles.grid} role="radiogroup" aria-label="Select your language">
+          <div className={styles.grid} role="radiogroup" aria-label={t("Select your language")}>
             {LANGUAGES.map((lang) => (
               <LanguageCard
                 key={lang.code}

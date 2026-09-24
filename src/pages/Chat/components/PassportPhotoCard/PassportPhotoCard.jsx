@@ -5,6 +5,7 @@ import FaceVerification from "../../../FaceVerification/FaceVerification";
 import FileUploader from "../../../../components/FileUploader/FileUploader";
 import { dataUrlToFile } from "../../../../utils/fileUtils";
 import styles from "./PassportPhotoCard.module.css";
+import { t } from "../../../../i18n";
 
 
 const PassportPhotoCard = ({
@@ -49,7 +50,7 @@ const PassportPhotoCard = ({
   if (mode === "upload") {
     return (
       <FileUploader
-        title={title || "Upload your Passport photo"}
+        title={title || t("Upload your Passport photo")}
         caption="PNG, JPG/JPEG"
         accept="image/*,.jpg,.jpeg,.png"
         onFileSelected={onFileSelected}
@@ -65,7 +66,7 @@ const PassportPhotoCard = ({
 
   return (
     <div className={styles.wrap}>
-      <span className={styles.title}>{title || "Passport Size Photo"}</span>
+      <span className={styles.title}>{title || t("Passport Size Photo")}</span>
       {caption && <span className={styles.caption}>{caption}</span>}
       <div className={styles.choiceRow}>
         <button

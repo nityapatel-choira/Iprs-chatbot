@@ -1,5 +1,6 @@
 import { getToken, clearToken } from "./tokenStorage";
 import { getLanguageCode } from "./languagePreference";
+import { t } from "../i18n";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.iprs.choira.io";
 
@@ -38,11 +39,11 @@ async function parseEnvelope(res) {
   try {
     json = await res.json();
   } catch {
-    throw new ApiError("Unexpected response from server.", { code: "PARSE_ERROR", status: res.status });
+    throw new ApiError(t("Unexpected response from server."), { code: "PARSE_ERROR", status: res.status });
   }
 
   if (!res.ok || json?.success === false) {
-    throw buildApiError(res.status, json, "Something went wrong. Please try again.");
+    throw buildApiError(res.status, json, t("Something went wrong. Please try again."));
   }
 
   return json.data;
@@ -67,7 +68,7 @@ async function request(path, { method = "GET", body, headers } = {}) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new ApiError("Network error. Please check your connection and try again.", { code: "NETWORK_ERROR" });
+    throw new ApiError(t("Network error. Please check your connection and try again."), { code: "NETWORK_ERROR" });
   }
 
   return parseEnvelope(res);
@@ -101,7 +102,7 @@ function uploadRequest(path, formData, onProgress, onUploadComplete) {
       try {
         json = JSON.parse(xhr.responseText);
       } catch {
-        reject(new ApiError("Unexpected response from server.", { code: "PARSE_ERROR", status: xhr.status }));
+        reject(new ApiError(t("Unexpected response from server."), { code: "PARSE_ERROR", status: xhr.status }));
         return;
       }
 
@@ -110,10 +111,10 @@ function uploadRequest(path, formData, onProgress, onUploadComplete) {
         return;
       }
 
-      reject(buildApiError(xhr.status, json, "Upload failed. Please try again."));
+      reject(buildApiError(xhr.status, json, t("Upload failed. Please try again.")));
     };
 
-    xhr.onerror = () => reject(new ApiError("Network error during upload.", { code: "NETWORK_ERROR" }));
+    xhr.onerror = () => reject(new ApiError(t("Network error during upload."), { code: "NETWORK_ERROR" }));
 
     xhr.send(formData);
   });

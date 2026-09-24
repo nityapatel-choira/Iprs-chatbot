@@ -1,13 +1,14 @@
 import styles from "./PhoneNumberField.module.css";
+import { t } from "../../i18n";
 
 const COUNTRY_CODES = [
-  { code: "+91", flag: "🇮🇳", label: "India" },
-  { code: "+1", flag: "🇺🇸", label: "United States" },
-  { code: "+44", flag: "🇬🇧", label: "United Kingdom" },
+  { code: "+91", flag: "🇮🇳", label: t("India") },
+  { code: "+1", flag: "🇺🇸", label: t("United States") },
+  { code: "+44", flag: "🇬🇧", label: t("United Kingdom") },
 ];
 
 const PhoneNumberField = ({
-  label = "Mobile number",
+  label = t("Mobile number"),
   countryCode,
   onCountryCodeChange,
   value,
@@ -28,7 +29,7 @@ const PhoneNumberField = ({
           value={countryCode}
           onChange={(e) => onCountryCodeChange?.(e.target.value)}
           disabled={disabled}
-          aria-label="Country code"
+          aria-label={t("Country code")}
         >
           {COUNTRY_CODES.map((c) => (
             <option key={c.code} value={c.code}>

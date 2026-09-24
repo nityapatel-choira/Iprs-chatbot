@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CheckIcon from "../icons/CheckIcon";
 import styles from "./CheckboxGroup.module.css";
+import { t } from "../../i18n";
 
 const CheckboxGroup = ({ options, caption, onSubmit, disabled }) => {
   const [checked, setChecked] = useState({});
@@ -19,7 +20,7 @@ const CheckboxGroup = ({ options, caption, onSubmit, disabled }) => {
   };
 
   return (
-    <div className={styles.card} role="group" aria-label="Selection options">
+    <div className={styles.card} role="group" aria-label={t("Selection options")}>
       {safeOptions.map((opt) => (
         <button
           key={opt.key}
