@@ -159,11 +159,11 @@ const useFaceDetection = ({ onCapture } = {}) => {
       stopEverything();
       setStatus("error");
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setErrorMessage("Camera access was denied. Please allow camera permission and try again.");
+        setErrorMessage(t("Camera access was denied. Please allow camera permission and try again."));
       } else if (err.name === "NotFoundError" || err.name === "NotSupportedError") {
-        setErrorMessage("No camera was found on this device.");
+        setErrorMessage(t("No camera was found on this device."));
       } else {
-        setErrorMessage("Couldn't start face scan. Please try again.");
+        setErrorMessage(t("Couldn't start face scan. Please try again."));
       }
     } finally {
       startingRef.current = false;
@@ -196,7 +196,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
         if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
           stopEverything();
           setStatus("error");
-          setErrorMessage("Face detection stopped unexpectedly. Please try again.");
+          setErrorMessage(t("Face detection stopped unexpectedly. Please try again."));
           return;
         }
       }

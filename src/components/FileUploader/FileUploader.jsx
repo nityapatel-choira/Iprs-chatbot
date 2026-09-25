@@ -8,7 +8,7 @@ import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
 
 import { dataUrlToFile } from "../../utils/fileUtils";
 import styles from "./FileUploader.module.css";
-import { t } from "../../i18n";
+import { t, t1 } from "../../i18n";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
 const ALLOWED_MIME_TYPES = new Set([
@@ -494,7 +494,7 @@ const FileUploader = ({
           )}
           
           <span className={styles.title}>
-            {isProcessing ? "Processing document" : `Uploading ${fileName}...`}
+            {isProcessing ? t("Processing document") : t1("Uploading {0}...", fileName)}
           </span>
           {isProcessing && (
             <span className={styles.typingDots}>
@@ -514,7 +514,7 @@ const FileUploader = ({
           )}
           
           <span className={styles.hint}>
-            {isProcessing ? "Please wait while we extract data." : "Please wait while we process your document."}
+            {isProcessing ? t("Please wait while we extract data.") : t("Please wait while we process your document.")}
           </span>
         </div>
       );
@@ -538,7 +538,7 @@ const FileUploader = ({
             <AlertIcon />
           </span>
           <span className={styles.title}>{t("Upload failed")}</span>
-          <span className={styles.caption}>{activeErrorMessage || "Something went wrong."}</span>
+          <span className={styles.caption}>{activeErrorMessage || t("Something went wrong.")}</span>
           <span className={styles.retryLabel}>{t("Tap to try again")}</span>
         </div>
       );

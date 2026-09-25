@@ -64,7 +64,7 @@ function normalizeReviewPayload(data, input, message) {
 
   let introTitle = data?.title || input?.title || "";
   const sectionMap = new Map();
-  let activeSectionTitle = t("Personal Details");
+  let activeSectionTitle = "Personal Details";
 
   for (const line of lines) {
     if (!introTitle && /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i.test(line)) {
@@ -155,7 +155,7 @@ const PaymentReview = ({ data, input, message, onAction }) => {
         <div key={`${section.title}-${idx}`} className={styles.sectionRow}>
           <BotAvatar />
           <div className={styles.sectionCard}>
-            <div className={styles.headerPill}>{section.title}</div>
+            <div className={styles.headerPill}>{t(section.title)}</div>
             <div className={styles.fieldsList}>
               {(section.fields || []).map((field, fIdx) => (
                 <div key={`${field.label}-${field.value}-${fIdx}`} className={styles.fieldRow}>

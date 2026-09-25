@@ -49,6 +49,17 @@ const App = () => {
     dispatch(setLanguage(code));
   };
 
+  // The bubbles already on screen were translated when they were sent, so
+  // switching language has to fetch them again. Remounting the chat (see key
+  // below) replays the current step through the same restore that runs on any
+  // page load - this time with the new language on the header.
+  const handleLanguageChange = (code) => {
+    if (code === languageCode) return;
+    setLanguageCode(code);
+    dispatch(setLanguage(code));
+    dispatch(resetConversation());
+  };
+
   const handleLogout = async () => {
     resetSession();
     clearLanguageCode();
@@ -108,7 +119,13 @@ const App = () => {
   const language = LANGUAGES.find((lang) => lang.code === languageCode)?.name;
   return (
     <Suspense fallback={null}>
-      <Chat language={language} onLogout={handleLogout} />
+      <Chat
+        key={languageCode}
+        language={language}
+        languageCode={languageCode}
+        onChangeLanguage={handleLanguageChange}
+        onLogout={handleLogout}
+      />
     </Suspense>
   );
 };

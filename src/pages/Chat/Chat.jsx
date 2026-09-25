@@ -42,7 +42,7 @@ const TEXT_INPUT_CONFIG = {
   "phone input": { type: "tel", inputMode: "tel" },
 };
 
-const Chat = ({ language = "English", onBack, onLogout }) => {
+const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLanguage }) => {
   const pageRef = useRef(null);
 
   const {
@@ -353,7 +353,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           key={input.id}
           title={
             input.title ||
-            (isProfilePhotoStep ? "Upload your Profile photo" : undefined)
+            (isProfilePhotoStep ? t("Upload your Profile photo") : undefined)
           }
           caption={input.caption}
           onFileSelected={submitFile}
@@ -368,7 +368,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       return (
         <FileUploader
           key={input.id}
-          title={input.title || "Choose a file or drag & drop it here"}
+          title={input.title || t("Choose a file or drag & drop it here")}
           caption={input.caption || "PNG, JPG/JPEG, PDF"}
           onFileSelected={submitFile}
           status={effectiveUploadStatus}
@@ -389,6 +389,8 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         <ChatHeader
           title={t("IPRS Membership Assistant")}
           language={language}
+          languageCode={languageCode}
+          onChangeLanguage={onChangeLanguage}
           onBack={onBack}
           onLogout={onLogout}
         />
@@ -512,7 +514,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <CityPicker
               key={input.id}
-              placeholder={input.placeholder || "Write your message"}
+              placeholder={input.placeholder || t("Write your message")}
               onSubmit={sendAnswer}
               disabled={isTyping}
             />
@@ -523,7 +525,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <ChatLanguagePicker
               key={`lang-${input.id}`}
-              placeholder={input.placeholder || "Write your message"}
+              placeholder={input.placeholder || t("Write your message")}
               onSubmit={sendAnswer}
               disabled={isTyping}
             />

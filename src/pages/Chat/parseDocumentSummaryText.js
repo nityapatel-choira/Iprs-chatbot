@@ -91,7 +91,7 @@ const parseDocumentSummaryText = (text) => {
     feeCaption: fee ? t("Total application fee") : "",
     infoText: extractRefundNote(text),
     docsHeading: `You'll need these ${docs.length} document${docs.length === 1 ? "" : "s"}`,
-    docsSubtext: "Make sure before you start you have gathered the below mentioned documents.",
+    docsSubtext: t("Make sure before you start you have gathered the below mentioned documents."),
     docs,
   };
 };
