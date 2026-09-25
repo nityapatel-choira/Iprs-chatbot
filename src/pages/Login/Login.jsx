@@ -131,10 +131,10 @@ const Login = ({ onContinue }) => {
                   onClick={handleChangeNumber}
                   disabled={isSubmitting}
                 >
-                  Change number
+                  {t("Change number")}
                 </button>
                 <button type="button" className={styles.linkButton} onClick={handleResend} disabled={isSubmitting}>
-                  Resend code
+                  {t("Resend code")}
                 </button>
               </div>
             </div>

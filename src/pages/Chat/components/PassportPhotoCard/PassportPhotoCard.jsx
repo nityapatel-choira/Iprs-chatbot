@@ -76,7 +76,7 @@ const PassportPhotoCard = ({
           disabled={disabled}
         >
           <CameraIcon width={20} height={20} />
-          Scan Face
+          {t("Scan Face")}
         </button>
         <button
           type="button"
@@ -85,7 +85,7 @@ const PassportPhotoCard = ({
           disabled={disabled}
         >
           <UploadCloudIcon />
-          Upload Photo
+          {t("Upload Photo")}
         </button>
       </div>
     </div>

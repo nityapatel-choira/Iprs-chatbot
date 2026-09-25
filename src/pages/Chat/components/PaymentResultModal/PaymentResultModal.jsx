@@ -30,7 +30,7 @@ const PaymentResultModal = ({ data, onClose }) => {
         <div className={styles.container}>
           <h2 className={styles.title}>{t("Verifying Payment...")}</h2>
           <p className={styles.message}>
-            Please wait while we securely check your payment status.
+            {t("Please wait while we securely check your payment status.")}
           </p>
         </div>
       );
@@ -44,7 +44,7 @@ const PaymentResultModal = ({ data, onClose }) => {
           </div>
           <h2 className={styles.title}>{t("Payment Successful!")}</h2>
           <p className={styles.message}>
-            Thank you! Your payment has been received and processed successfully.
+            {t("Thank you! Your payment has been received and processed successfully.")}
           </p>
 
           {(txnid || amount) && (
@@ -75,7 +75,7 @@ const PaymentResultModal = ({ data, onClose }) => {
         </div>
         <h2 className={styles.title}>{t("Payment Failed")}</h2>
         <p className={styles.message}>
-          Unfortunately, your payment could not be processed at this time.
+          {t("Unfortunately, your payment could not be processed at this time.")}
         </p>
 
         {(txnid || errorMessage) && (
@@ -107,7 +107,7 @@ const PaymentResultModal = ({ data, onClose }) => {
       footer={
         !isVerifying && (
           <button type="button" className={styles.closeButton} onClick={onClose}>
-            Close
+            {t("Close")}
           </button>
         )
       }

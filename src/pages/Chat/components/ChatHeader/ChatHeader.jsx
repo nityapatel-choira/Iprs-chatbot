@@ -17,7 +17,7 @@ const ChatHeader = ({ title, language, onBack, onLogout }) => {
       </span>
       {onLogout && (
         <button type="button" className={styles.logoutButton} onClick={onLogout}>
-          Logout
+          {t("Logout")}
         </button>
       )}
     </header>

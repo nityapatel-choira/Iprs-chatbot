@@ -46,7 +46,7 @@ const CheckboxGroup = ({ options, caption, onSubmit, disabled }) => {
         onClick={handleSubmit}
         disabled={!hasSelection || disabled}
       >
-        Submit
+        {t("Submit")}
       </button>
     </div>
   );

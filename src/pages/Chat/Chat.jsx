@@ -483,7 +483,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                 className={styles.retryButton}
                 onClick={retry}
               >
-                Retry
+                {t("Retry")}
               </button>
             </div>
           )}

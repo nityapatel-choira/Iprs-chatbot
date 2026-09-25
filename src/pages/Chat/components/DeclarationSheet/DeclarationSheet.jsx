@@ -20,7 +20,7 @@ const DeclarationSheet = ({ open, title = t("A couple more things"), options, on
       onClose={onClose}
       footer={
         <button type="button" className={styles.continueButton} onClick={handleSubmit}>
-          Continue
+          {t("Continue")}
         </button>
       }
     >

@@ -54,7 +54,7 @@ const LanguageSelection = ({ onContinue }) => {
             disabled={!selected}
             onClick={handleContinue}
           >
-            Continue
+            {t("Continue")}
           </button>
         </div>
       </div>

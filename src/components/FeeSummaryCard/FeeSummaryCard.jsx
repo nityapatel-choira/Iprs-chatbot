@@ -99,7 +99,7 @@ const FeeSummaryCard = ({
             disabled={!confirmed}
             onClick={() => onConfirm?.()}
           >
-            Continue
+            {t("Continue")}
           </button>
         </div>
       )}

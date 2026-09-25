@@ -47,10 +47,10 @@ const DocumentScanCard = ({
             <>
               <span className={styles.caption}>{title}</span>
               <button type="button" className={styles.actionButton} onClick={capture}>
-                Capture
+                {t("Capture")}
               </button>
               <button type="button" className={styles.linkButton} onClick={cancel}>
-                Cancel
+                {t("Cancel")}
               </button>
             </>
           )}
@@ -67,7 +67,7 @@ const DocumentScanCard = ({
             {errorMessage}
           </span>
           <button type="button" className={styles.actionButton} onClick={start}>
-            Try Again
+            {t("Try Again")}
           </button>
         </div>
       )}
@@ -82,7 +82,7 @@ const DocumentScanCard = ({
           </div>
           <span className={styles.title}>{t("Document captured")}</span>
           <button type="button" className={styles.linkButton} onClick={retake}>
-            Retake
+            {t("Retake")}
           </button>
         </div>
       )}

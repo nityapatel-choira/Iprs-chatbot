@@ -137,7 +137,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
   if (isBusy) {
     fileDetailContent = (
       <>
-        Uploading
+        {t("Uploading")}
         <span className={styles.typingDots}>
           <span className={styles.dot} />
           <span className={styles.dot} />
@@ -251,7 +251,7 @@ const FileMessageCard = ({ fileName, fileSize, previewUrl: initialPreviewUrl, mi
                   className={styles.pdfObject}
                 >
                   <div style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
-                    Preview unavailable
+                    {t("Preview unavailable")}
                   </div>
                 </iframe>
               </object>

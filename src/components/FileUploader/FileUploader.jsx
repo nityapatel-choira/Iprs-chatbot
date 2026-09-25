@@ -62,7 +62,7 @@ const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, foot
     </div>
     <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
       <button type="button" className={styles.cropCancelBtn} onClick={onCancel}>
-        Cancel
+        {t("Cancel")}
       </button>
       {confirmLabel && onConfirm && (
         <button type="button" className={styles.cropConfirmBtn} onClick={onConfirm}>
@@ -575,7 +575,7 @@ const FileUploader = ({
             }}
             disabled={isDisabled}
           >
-            Choose File
+            {t("Choose File")}
           </button>
         </div>
       </>
@@ -641,7 +641,7 @@ const FileUploader = ({
               <span className={styles.title}>{t("Camera unavailable")}</span>
               <span className={styles.caption}>{cameraErrorMessage || t("Could not access camera.")}</span>
               <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
-                Try Again
+                {t("Try Again")}
               </button>
             </div>
           )}

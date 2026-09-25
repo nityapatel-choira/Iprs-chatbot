@@ -138,7 +138,7 @@ const FaceVerification = ({
                 requireRearCamera={false}
               />
               <button type="button" className={styles.fallbackLink} onClick={switchToCamera}>
-                Use camera instead
+                {t("Use camera instead")}
               </button>
             </div>
           ) : (
@@ -194,7 +194,7 @@ const FaceVerification = ({
                     <CameraIcon width={30} height={30} />
                   </button>
                   <button type="button" className={styles.fallbackLink} onClick={switchToUpload}>
-                    Having trouble? Upload a photo instead
+                    {t("Having trouble? Upload a photo instead")}
                   </button>
                 </>
               )}
@@ -202,10 +202,10 @@ const FaceVerification = ({
               {!isUploadMode && status === "error" && (
                 <>
                   <button type="button" className={styles.retryButton} onClick={start}>
-                    Try Again
+                    {t("Try Again")}
                   </button>
                   <button type="button" className={styles.fallbackLink} onClick={switchToUpload}>
-                    Upload a photo instead
+                    {t("Upload a photo instead")}
                   </button>
                 </>
               )}
@@ -222,10 +222,10 @@ const FaceVerification = ({
                   ) : (
                     <>
                       <button type="button" className={styles.continueButton} onClick={() => onContinue?.(displayImage)} disabled={disabled}>
-                        Continue
+                        {t("Continue")}
                       </button>
                       <button type="button" className={styles.retakeButton} onClick={handleRetake} disabled={disabled}>
-                        Retake
+                        {t("Retake")}
                       </button>
                     </>
                   )}
