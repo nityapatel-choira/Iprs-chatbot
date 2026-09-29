@@ -185,6 +185,37 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     );
 
   const [visibleConsentMessageId, setVisibleConsentMessageId] = useState(null);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const lastWaitMessageIdRef = useRef(null);
+
+  // Extract OTP wait timer dynamically from backend message
+  useEffect(() => {
+    const botMessages = history.filter((m) => m.sender === "bot");
+    const lastBotMessage = botMessages[botMessages.length - 1];
+    if (!lastBotMessage) return;
+
+    if (lastBotMessage.id !== lastWaitMessageIdRef.current) {
+      lastWaitMessageIdRef.current = lastBotMessage.id;
+      const text = extractMessageText(lastBotMessage);
+      const match = /wait\s+(\d+)\s+second/i.exec(text);
+      if (match) {
+        const seconds = parseInt(match[1], 10);
+        if (!isNaN(seconds) && seconds > 0) {
+          setTimeout(() => setResendCountdown(seconds), 0);
+        }
+      }
+    }
+  }, [history]);
+
+  // Execute countdown
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
 
   useEffect(() => {
     if (!pendingConsentMessageId || !consentPrecededByDocSummary)
@@ -213,8 +244,6 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
   const pendingDocSummary = isNonConsentChoiceStep
     ? lastMessageDocSummary
     : null;
-
-
 
   const displayActiveIndex = useMemo(
     () =>
@@ -256,6 +285,26 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
   function renderActiveInputWidget() {
     if (isTyping) return null;
 
+    const renderResendQuickReplyCard = () => (
+      <QuickReplyCard
+        options={(input.items || []).map((item) => {
+          const rawLabel = item.content || item.label || String(item);
+          const isResend = /resend/i.test(rawLabel);
+          const disabled = isResend && resendCountdown > 0;
+          return {
+            label: disabled ? `Resend in ${resendCountdown}s` : rawLabel,
+            id: item.id,
+            disabled,
+            actionLabel: rawLabel,
+          };
+        })}
+        onSelect={(option) => {
+          if (option.disabled) return;
+          sendAnswer(option.actionLabel || option.label);
+        }}
+      />
+    );
+
     if (isPaymentReviewStep) {
       return null;
     }
@@ -265,15 +314,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     }
 
     if (textConfig && Array.isArray(input.items) && input.items.length > 0) {
-      return (
-        <QuickReplyCard
-          options={input.items.map((item) => ({
-            label: item.content || item.label,
-            id: item.id,
-          }))}
-          onSelect={(option) => sendAnswer(option.label)}
-        />
-      );
+      return renderResendQuickReplyCard();
     }
 
     if (
@@ -296,7 +337,16 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     }
 
     if (input?.type === "otp input") {
-      return <PinInput key={input.id} onComplete={sendAnswer} />;
+      return (
+        <>
+          <PinInput key={input.id} onComplete={sendAnswer} />
+          {Array.isArray(input.items) && input.items.length > 0 && (
+            <div style={{ marginTop: '0.75rem', width: '100%' }}>
+              {renderResendQuickReplyCard()}
+            </div>
+          )}
+        </>
+      );
     }
 
     if (input?.type === "checkbox input") {
