@@ -62,8 +62,16 @@ function normalizeReviewPayload(data, input, message) {
   const sectionMap = new Map();
   let activeSectionTitle = "Personal Details";
 
-  for (const line of lines) {
-    if (!introTitle && /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i.test(line)) {
+  for (const [index, line] of lines.entries()) {
+    // The intro is the sentence describeReview() puts above the body. Matching
+    // its English wording stopped working the moment the API began translating
+    // it - the line then fell through and was read as a section heading, so the
+    // first real section's fields were filed under the intro sentence. Its
+    // position is what identifies it in any language: first line, and carrying
+    // no label, which every other line in the body does.
+    const looksLikeIntro = index === 0 && !line.includes(":") && !/^[-*\u2022]/.test(line);
+    if (!introTitle && (looksLikeIntro
+        || /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i.test(line))) {
       introTitle = line;
       continue;
     }
