@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import BotAvatar from "../../pages/Chat/components/BotAvatar/BotAvatar";
 import QuickReplyCard from "../QuickReplyCard/QuickReplyCard";
 import styles from "./PaymentReview.module.css";
+import { t } from "../../i18n";
 
 function extractRawText(message, data) {
   if (Array.isArray(message?.richText)) {
@@ -121,7 +122,7 @@ function normalizeReviewPayload(data, input, message) {
   }
 
   return {
-    introTitle: introTitle || "Please review all your details before proceeding to payment.",
+    introTitle: introTitle || t("Please review all your details before proceeding to payment."),
     sections,
     actions,
   };
@@ -150,7 +151,7 @@ const PaymentReview = ({ data, input, message, onAction }) => {
         <div key={`${section.title}-${idx}`} className={styles.sectionRow}>
           <BotAvatar />
           <div className={styles.sectionCard}>
-            <div className={styles.headerPill}>{section.title}</div>
+            <div className={styles.headerPill}>{t(section.title)}</div>
             <div className={styles.fieldsList}>
               {(section.fields || []).map((field, fIdx) => (
                 <div key={`${field.label}-${field.value}-${fIdx}`} className={styles.fieldRow}>

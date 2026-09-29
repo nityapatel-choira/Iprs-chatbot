@@ -3,6 +3,7 @@ import { useCombobox } from "downshift";
 import { iso6393 } from 'iso-639-3';
 import SendIcon from "../icons/SendIcon";
 import styles from "./ChatLanguagePicker.module.css";
+import { t } from "../../i18n";
 
 const LANGUAGE_MAP = new Map();
 const LANGUAGE_LIST = [];
@@ -165,7 +166,7 @@ function getFittingSuggestions(candidates, containerWidth, isMobile) {
   return selected;
 }
 
-function ChatLanguagePicker({ onSubmit, disabled, placeholder = "Write your message" }) {
+function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your message") }) {
   const [inputValue, setInputValue] = useState("");
   const [containerWidth, setContainerWidth] = useState(360);
   const [isMobile, setIsMobile] = useState(false);
@@ -280,7 +281,7 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = "Write your mess
                 </li>
               ))
             ) : (
-              <li className={styles.noMatchesPill}>No languages found</li>
+              <li className={styles.noMatchesPill}>{t("No languages found")}</li>
             )}
           </ul>
         )}
@@ -291,14 +292,14 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = "Write your mess
               className: styles.input,
               placeholder,
               disabled,
-              "aria-label": "Language selection",
+              "aria-label": t("Language selection"),
             })}
           />
           <button
             type="submit"
             className={styles.sendButton}
             disabled={isSubmitDisabled}
-            aria-label="Submit language"
+            aria-label={t("Submit language")}
           >
             <SendIcon />
           </button>

@@ -1,8 +1,9 @@
 import { useRef } from "react";
 import { sanitizeDigits } from "../../utils/validators";
 import styles from "./OtpField.module.css";
+import { t } from "../../i18n";
 
-const OtpField = ({ label = "One-time code", value = "", onChange, onBlur, error, disabled, length = 4 }) => {
+const OtpField = ({ label = t("One-time code"), value = "", onChange, onBlur, error, disabled, length = 4 }) => {
   const inputRefs = useRef([]);
 
   const handleChange = (e, index = 0) => {

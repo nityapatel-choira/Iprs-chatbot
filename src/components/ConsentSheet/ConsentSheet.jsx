@@ -1,5 +1,6 @@
 import BottomSheet from "../BottomSheet/BottomSheet";
 import styles from "./ConsentSheet.module.css";
+import { t } from "../../i18n";
 
 const ConsentSheet = ({ open, title, children, onAccept, onBack }) => {
   return (
@@ -10,10 +11,10 @@ const ConsentSheet = ({ open, title, children, onAccept, onBack }) => {
       footer={
         <>
           <button type="button" className={styles.backButton} onClick={onBack}>
-            Go back
+            {t("Go back")}
           </button>
           <button type="button" className={styles.acceptButton} onClick={onAccept}>
-            I Accept
+            {t("I Accept")}
           </button>
         </>
       }

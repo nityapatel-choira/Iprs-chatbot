@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import iprsLogo from "../../assets/iprs-logo.png";
 import styles from "./Splash.module.css";
+import { t } from "../../i18n";
 
 const SPLASH_DURATION_MS = 1200;
 
@@ -13,7 +14,7 @@ const Splash = ({ onDone }) => {
   return (
     <div className={styles.page}>
       <img src={iprsLogo} alt="IPRS" className={styles.logo} />
-      <p className={styles.wordmark}>The Indian Performing Right Society Limited</p>
+      <p className={styles.wordmark}>{t("The Indian Performing Right Society Limited")}</p>
     </div>
   );
 };

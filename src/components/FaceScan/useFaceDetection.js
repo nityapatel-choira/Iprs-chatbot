@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { t } from "../../i18n";
 
 // Matches @mediapipe/tasks-vision version in package.json.
 const TASKS_VISION_VERSION = "1.0.1";
@@ -17,14 +18,15 @@ const TOO_CLOSE_WIDTH_RATIO = 0.85;
 const TOO_FAR_WIDTH_RATIO = 0.22;
 const CENTER_TOLERANCE = 0.18;
 
-export const ALIGNMENT_MESSAGES = {
-  "no-face": "Position your face inside the frame",
-  "multiple-faces": "Multiple faces detected - make sure it's just you",
-  "too-close": "Move back a little",
-  "too-far": "Move a little closer",
-  "off-center": "Center your face in the frame",
-  aligned: "Hold still, scanning...",
-};
+// Read at call time for the same reason as the step labels above.
+export const alignmentMessage = (alignment) => ({
+  "no-face": t("Position your face inside the frame"),
+  "multiple-faces": t("Multiple faces detected - make sure it's just you"),
+  "too-close": t("Move back a little"),
+  "too-far": t("Move a little closer"),
+  "off-center": t("Center your face in the frame"),
+  aligned: t("Hold still, scanning..."),
+}[alignment]);
 
 function classifyAlignment(detections, videoWidth, videoHeight) {
   if (!detections || detections.length === 0) return "no-face";
@@ -157,11 +159,11 @@ const useFaceDetection = ({ onCapture } = {}) => {
       stopEverything();
       setStatus("error");
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setErrorMessage("Camera access was denied. Please allow camera permission and try again.");
+        setErrorMessage(t("Camera access was denied. Please allow camera permission and try again."));
       } else if (err.name === "NotFoundError" || err.name === "NotSupportedError") {
-        setErrorMessage("No camera was found on this device.");
+        setErrorMessage(t("No camera was found on this device."));
       } else {
-        setErrorMessage("Couldn't start face scan. Please try again.");
+        setErrorMessage(t("Couldn't start face scan. Please try again."));
       }
     } finally {
       startingRef.current = false;
@@ -194,7 +196,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
         if (consecutiveErrorsRef.current >= MAX_CONSECUTIVE_ERRORS) {
           stopEverything();
           setStatus("error");
-          setErrorMessage("Face detection stopped unexpectedly. Please try again.");
+          setErrorMessage(t("Face detection stopped unexpectedly. Please try again."));
           return;
         }
       }
@@ -263,7 +265,7 @@ const useFaceDetection = ({ onCapture } = {}) => {
   return {
     status,
     alignment,
-    alignmentMessage: ALIGNMENT_MESSAGES[alignment],
+    alignmentMessage: alignmentMessage(alignment),
     errorMessage,
     capturedImage,
     videoRef,

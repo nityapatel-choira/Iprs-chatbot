@@ -3,6 +3,7 @@ import { useCombobox } from "downshift";
 import { getSuggestions } from "../../utils/locationSearch";
 import SendIcon from "../icons/SendIcon";
 import styles from "./CityPicker.module.css";
+import { t } from "../../i18n";
 
 function getEstimatedPillWidth(item, isMobile) {
   const showState = !isMobile && Boolean(item.state);
@@ -39,7 +40,7 @@ function getFittingSuggestions(candidates, containerWidth, isMobile) {
   return selected;
 }
 
-function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) {
+function CityPicker({ onSubmit, disabled, placeholder = t("Write your message") }) {
   const [inputValue, setInputValue] = useState("");
   const [containerWidth, setContainerWidth] = useState(360);
   const [isMobile, setIsMobile] = useState(false);
@@ -149,7 +150,7 @@ function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) 
                 </li>
               ))
             ) : (
-              <li className={styles.noMatchesPill}>No cities found</li>
+              <li className={styles.noMatchesPill}>{t("No cities found")}</li>
             )}
           </ul>
         )}
@@ -160,14 +161,14 @@ function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) 
               className: styles.input,
               placeholder,
               disabled,
-              "aria-label": "City selection",
+              "aria-label": t("City selection"),
             })}
           />
           <button
             type="submit"
             className={styles.sendButton}
             disabled={disabled || !canonicalMatch}
-            aria-label="Submit city"
+            aria-label={t("Submit city")}
           >
             <SendIcon />
           </button>

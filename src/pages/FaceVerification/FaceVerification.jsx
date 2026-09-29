@@ -7,6 +7,7 @@ import FileUploader from "../../components/FileUploader/FileUploader";
 import ChatHeader from "../Chat/components/ChatHeader/ChatHeader";
 import useFaceDetection from "../../components/FaceScan/useFaceDetection";
 import styles from "./FaceVerification.module.css";
+import { t } from "../../i18n";
 
 // Camera/upload face capture component. Can be embedded inline.
 const FaceVerification = ({
@@ -89,7 +90,7 @@ const FaceVerification = ({
       if (faceCount === 0) {
         setUpload({
           status: "error",
-          errorMessage: "No face detected. Please upload a clear photo of your face.",
+          errorMessage: t("No face detected. Please upload a clear photo of your face."),
           image: null,
         });
         return;
@@ -97,7 +98,7 @@ const FaceVerification = ({
       if (faceCount > 1) {
         setUpload({
           status: "error",
-          errorMessage: "Multiple faces detected. Please upload a photo with only your face.",
+          errorMessage: t("Multiple faces detected. Please upload a photo with only your face."),
           image: null,
         });
         return;
@@ -120,13 +121,13 @@ const FaceVerification = ({
   return (
     <div className={embedded ? styles.embeddedWrap : styles.page}>
       <div className={embedded ? styles.embeddedPanel : styles.panel}>
-        {!embedded && <ChatHeader title="Capture Now" language={language} onBack={handleBack} />}
+        {!embedded && <ChatHeader title={t("Capture Now")} language={language} onBack={handleBack} />}
 
         <div className={embedded ? styles.embeddedContent : styles.content}>
           {showUploadForm ? (
             <div className={styles.uploadArea}>
               <FileUploader
-                title="Upload a clear photo of your face"
+                title={t("Upload a clear photo of your face")}
                 caption="PNG, JPG/JPEG"
                 accept=".jpg,.jpeg,.png"
                 onFileSelected={handleFileSelected}
@@ -137,7 +138,7 @@ const FaceVerification = ({
                 requireRearCamera={false}
               />
               <button type="button" className={styles.fallbackLink} onClick={switchToCamera}>
-                Use camera instead
+                {t("Use camera instead")}
               </button>
             </div>
           ) : (
@@ -163,7 +164,7 @@ const FaceVerification = ({
                   )}
 
                   {showSuccess && displayImage && (
-                    <img src={displayImage} alt="Captured selfie" className={styles.resultImage} />
+                    <img src={displayImage} alt={t("Captured selfie")} className={styles.resultImage} />
                   )}
                 </div>
 
@@ -181,19 +182,19 @@ const FaceVerification = ({
                 role="status"
                 aria-live="polite"
               >
-                {!isUploadMode && (status === "idle" || status === "loading") && "Starting camera..."}
+                {!isUploadMode && (status === "idle" || status === "loading") && t("Starting camera...")}
                 {!isUploadMode && status === "error" && errorMessage}
                 {!isUploadMode && status === "scanning" && alignmentMessage}
-                {showSuccess && (isUploadMode ? "Photo uploaded successfully" : "Face captured successfully")}
+                {showSuccess && (isUploadMode ? t("Photo uploaded successfully") : t("Face captured successfully"))}
               </p>
 
               {!isUploadMode && status === "scanning" && (
                 <>
-                  <button type="button" className={styles.shutterButton} onClick={capture} aria-label="Capture photo">
+                  <button type="button" className={styles.shutterButton} onClick={capture} aria-label={t("Capture photo")}>
                     <CameraIcon width={30} height={30} />
                   </button>
                   <button type="button" className={styles.fallbackLink} onClick={switchToUpload}>
-                    Having trouble? Upload a photo instead
+                    {t("Having trouble? Upload a photo instead")}
                   </button>
                 </>
               )}
@@ -201,10 +202,10 @@ const FaceVerification = ({
               {!isUploadMode && status === "error" && (
                 <>
                   <button type="button" className={styles.retryButton} onClick={start}>
-                    Try Again
+                    {t("Try Again")}
                   </button>
                   <button type="button" className={styles.fallbackLink} onClick={switchToUpload}>
-                    Upload a photo instead
+                    {t("Upload a photo instead")}
                   </button>
                 </>
               )}
@@ -215,16 +216,16 @@ const FaceVerification = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <span className={styles.spinner} style={{ width: 22, height: 22, borderWidth: 2 }} />
                       <span style={{ color: '#0f172a', fontSize: '0.9375rem', fontWeight: 600 }}>
-                        {parentStatus === "processing" ? "Processing..." : "Uploading..."}
+                        {parentStatus === "processing" ? t("Processing...") : t("Uploading...")}
                       </span>
                     </div>
                   ) : (
                     <>
                       <button type="button" className={styles.continueButton} onClick={() => onContinue?.(displayImage)} disabled={disabled}>
-                        Continue
+                        {t("Continue")}
                       </button>
                       <button type="button" className={styles.retakeButton} onClick={handleRetake} disabled={disabled}>
-                        Retake
+                        {t("Retake")}
                       </button>
                     </>
                   )}
@@ -237,7 +238,7 @@ const FaceVerification = ({
         {!embedded && (
           <div className={styles.trustBadge}>
             <ShieldIcon width={14} height={14} />
-            <span>Secured by IPRS</span>
+            <span>{t("Secured by IPRS")}</span>
           </div>
         )}
 
