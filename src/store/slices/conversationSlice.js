@@ -13,7 +13,10 @@ function toRichTextMessages(messages) {
   const result = [];
   for (const msg of messages) {
     const converted = {
-      id: nextId(),
+      // Keep the backend's own message id (e.g. "resume-summary") when it sent one - Chat.jsx's
+      // mother-tongue/city-step detection scans history backward and relies on spotting that exact
+      // id to stop before folding the resume recap's old field labels into the current step's text.
+      id: msg?.id ?? nextId(),
       sender: "bot",
       kind: "richText",
       richText: msg?.content?.richText,
