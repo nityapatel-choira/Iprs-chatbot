@@ -215,7 +215,14 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     if (lastBotMessage.id !== lastWaitMessageIdRef.current) {
       lastWaitMessageIdRef.current = lastBotMessage.id;
       const text = extractMessageText(lastBotMessage);
-      const match = /wait\s+(\d+)\s+second/i.exec(text);
+      // The seconds are read out of the message the member is shown, which is no
+      // longer English - so the count is taken without the word around it, and
+      // only when this step is actually offering a Resend button. Anchoring on
+      // "wait ... second" meant the timer simply never started once the message
+      // was translated.
+      const offersResend = (input?.items || []).some(
+        (it) => (it.content || it.label || "") === t("Resend OTP") || /resend/i.test(it.content || ""));
+      const match = offersResend ? /\b(\d{1,3})\b/.exec(text) : null;
       if (match) {
         const seconds = parseInt(match[1], 10);
         if (!isNaN(seconds) && seconds > 0) {
@@ -223,7 +230,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
         }
       }
     }
-  }, [history]);
+  }, [history, input?.items]);
 
   // Execute countdown
   useEffect(() => {
@@ -307,7 +314,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
       <QuickReplyCard
         options={(input.items || []).map((item) => {
           const rawLabel = item.content || item.label || String(item);
-          const isResend = /resend/i.test(rawLabel);
+          const isResend = rawLabel === t("Resend OTP") || /resend/i.test(rawLabel);
           const disabled = isResend && resendCountdown > 0;
           return {
             label: disabled ? t1("Resend in {0}s", resendCountdown) : rawLabel,
