@@ -33,6 +33,18 @@ import { t, t1 } from "../../i18n";
 const PASSPORT_PHOTO_STEP_PATTERN =
   /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
 const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
+// The two steps that get their own input, by the flow's own variable id rather
+// than by the wording of the question.
+//
+// Matching the words is what put the language picker on the Alias / Trader Name
+// field: on a resume the backward scan folds the recap's "Mother tongue: ..."
+// line into the text it classifies on, so the alias step read as the
+// mother-tongue one and the member was told "No languages found" about a
+// perfectly good name. The wording also stopped matching at all once the API
+// began translating it. An id survives both - the same reason the server
+// recognises its payment blocks by id (see paymentBlockIds.js).
+const MOTHER_TONGUE_VARIABLE_ID = "vh4f2w089zbn113mboiqtm37f";
+const PLACE_OF_BIRTH_VARIABLE_ID = "vy80zc5eoveac6euqlurki58o";
 
 // Only these input types render the free-text composer.
 const TEXT_INPUT_CONFIG = {
@@ -137,9 +149,17 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     let _isCityStep = false;
     let _isMotherTongueStep = false;
 
+    const stepVariableId = input?.options?.variableId;
     if (input?.type === "city input") {
       _isCityStep = true;
-    } else if (input?.type === "text input") {
+    } else if (stepVariableId === MOTHER_TONGUE_VARIABLE_ID) {
+      _isMotherTongueStep = true;
+    } else if (stepVariableId === PLACE_OF_BIRTH_VARIABLE_ID) {
+      _isCityStep = true;
+    } else if (input?.type === "text input" && !stepVariableId) {
+      // Only for a block carrying no variable of its own - there is nothing
+      // else to go on there, and a block that has an id has already been
+      // decided above, so a reworded or translated question cannot reach this.
       const searchStr = `${input.placeholder || ""} ${input.title || ""} ${tText}`;
       if (/\bmother tongue\b/i.test(searchStr)) {
         _isMotherTongueStep = true;
