@@ -68,6 +68,24 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
 
   useVisualViewport(pageRef);
 
+  // Whether tapping this option should open checkout rather than answer the flow.
+  //
+  // The server recognises its four payment blocks by BLOCK ID and says so in as
+  // many words - see paymentBlockIds.js: "matched by block id, never by the
+  // button's label", because the label had already been renamed once and
+  // everything keyed to it broke silently. This end went on sniffing the label
+  // for /pay/ anyway, which held only while the label was English. Once the API
+  // began translating it, "Pay Application Fee" arrived as "আবেদন ফি প্রদান করুন",
+  // the test failed, and the tap fell through to sendAnswer() - so checkout never
+  // opened and the flow was handed the button's own text as if it were a reply.
+  //
+  // isPaymentStepFromBackend already carries the server's verdict, and those
+  // blocks offer a single choice, so on that step the offered action IS the
+  // payment one. The label test remains only as a tie-break, for the day a
+  // payment block offers more than one.
+  const isPayAction = (label, optionCount = 1) =>
+    isPaymentStepFromBackend && (optionCount === 1 || /pay/i.test(label ?? ""));
+
 
 
   const lastMessage = history[history.length - 1];
@@ -326,7 +344,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
         <QuickReplyCard
           options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
           onSelect={(option) => {
-            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+            if (isPayAction(option.label, (input.items || []).length)) {
               triggerPayment();
             } else {
               sendAnswer(option.label);
@@ -365,7 +383,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
           key={input.id}
           {...input.data}
           onOptionSelect={(option) => {
-            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
+            if (isPayAction(option.label, (input.items || []).length)) {
               triggerPayment();
             } else {
               sendAnswer(option.label);
@@ -373,7 +391,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
           }}
           onConfirm={() => {
             const label = input.data?.confirmLabel || "Confirmed";
-            if (isPaymentStepFromBackend && /pay/i.test(label)) {
+            if (isPayAction(label)) {
               triggerPayment();
             } else {
               sendAnswer(label);
@@ -480,7 +498,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
                     onAction={
                       isLast
                         ? (actionLabel) => {
-                            if (/pay/i.test(actionLabel)) {
+                            if (isPayAction(actionLabel, (input?.items || []).length)) {
                               triggerPayment();
                             } else {
                               sendAnswer(actionLabel);
@@ -509,7 +527,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
                         : undefined
                     }
                     onOptionSelect={(option) => {
-                      if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
+                      if (isLast && isPayAction(option.label, (input?.items || []).length)) {
                         triggerPayment();
                       } else {
                         sendAnswer(option.label);
