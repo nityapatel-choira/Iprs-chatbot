@@ -27,6 +27,7 @@ import {
 } from "../../store/slices/conversationSlice";
 import { setRegistrationCompleted, selectProgress, selectSessionEnded } from "../../store/slices/registrationSlice";
 import { setStoredProgress } from "../../services/conversationStorage";
+import { t } from "../../i18n";
 
 // Custom hook managing conversation state and UI interactions.
 const useBackendConversation = () => {
@@ -98,15 +99,15 @@ const useBackendConversation = () => {
   // Always relay the visible label, never an item id/key: the backend saves this text as-is into
   // the member's record (e.g. ApplicantPath, which the fee is looked up from) and matches replies
   // like "Yes"/"Start over" by text.
-  const sendAnswer = (text) => {
+  const sendAnswer = (text, display = text) => {
     if (!text || !text.trim()) return;
-    dispatch(addUserMessage(text));
+    dispatch(addUserMessage(display));
     dispatch(clearInput());
     runMessage(text);
   };
 
   const triggerPayment = () => {
-    dispatch(addUserMessage("Pay"));
+    dispatch(addUserMessage(t("Pay")));
     dispatch(clearInput());
     
     lastActionRef.current = () => triggerPayment();

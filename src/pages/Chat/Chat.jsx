@@ -407,7 +407,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
           key={input.id}
           title={input.title}
           caption={input.caption}
-          onCapture={() => sendAnswer("Document captured")}
+          onCapture={() => sendAnswer("Document captured", t("Document captured"))}
         />
       );
     }
@@ -562,7 +562,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
         {!isTyping && isConsentAcceptStep && showConsentPopup && (
           <ConsentDialog
             messages={pendingConsentMessages}
-            onAccept={() => sendAnswer("I Accept")}
+            onAccept={() => sendAnswer("I Accept", t("I Accept"))}
             onBack={() => {}}
           />
         )}
