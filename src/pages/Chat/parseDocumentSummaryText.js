@@ -1,4 +1,4 @@
-import { t } from "../../i18n";
+import { t, t1 } from "../../i18n";
 // Parses backend document requirement text into FeeSummaryCard props dynamically.
 
 const IS_UPLOAD_PROMPT = /\b(?:please\s+)?upload\b|\bshowing\s+your\b|\bselect\s+(?:a|any|one)\b/i;
@@ -90,7 +90,9 @@ const parseDocumentSummaryText = (text) => {
     fee,
     feeCaption: fee ? t("Total application fee") : "",
     infoText: extractRefundNote(text),
-    docsHeading: `You'll need these ${docs.length} document${docs.length === 1 ? "" : "s"}`,
+    docsHeading: docs.length === 1
+      ? t1("You'll need these {0} document", docs.length)
+      : t1("You'll need these {0} documents", docs.length),
     docsSubtext: t("Make sure before you start you have gathered the below mentioned documents."),
     docs,
   };

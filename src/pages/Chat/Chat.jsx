@@ -28,7 +28,7 @@ import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
 import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
-import { t } from "../../i18n";
+import { t, t1 } from "../../i18n";
 
 const PASSPORT_PHOTO_STEP_PATTERN =
   /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
@@ -310,7 +310,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
           const isResend = /resend/i.test(rawLabel);
           const disabled = isResend && resendCountdown > 0;
           return {
-            label: disabled ? `Resend in ${resendCountdown}s` : rawLabel,
+            label: disabled ? t1("Resend in {0}s", resendCountdown) : rawLabel,
             id: item.id,
             disabled,
             actionLabel: rawLabel,
