@@ -3,17 +3,22 @@ import { t, t1 } from "../../i18n";
 
 const IS_UPLOAD_PROMPT = /\b(?:please\s+)?upload\b|\bshowing\s+your\b|\bselect\s+(?:a|any|one)\b/i;
 const IS_REVIEW_PAYLOAD = /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i;
-const HAS_REQUIREMENTS_HEADER = /requirements/i;
+const HAS_REQUIREMENTS_HEADER = /requirements|आवश्यकता|જરૂરિયાત|આવશ્યકતા|প্রয়োজনীয়তা|আবশ্যকতা/i;
 
 function extractEntityLabel(text) {
-  const match = text.match(/requirements\s+(?:for|of|-|:)?\s*([^\n:]+)/i);
-  if (!match) return "";
-  const raw = match[1].trim();
-  const parenEndMatch = raw.match(/^([^(]+\([^)]+\))/);
-  if (parenEndMatch) {
-    return parenEndMatch[1].trim();
+  const firstLine = text.split('\n')[0].trim();
+  const match = firstLine.match(/requirements\s+(?:for|of|-|:)?\s*([^\n:]+)/i);
+  
+  if (match) {
+    const raw = match[1].trim();
+    const parenEndMatch = raw.match(/^([^(]+\([^)]+\))/);
+    if (parenEndMatch) {
+      return parenEndMatch[1].trim();
+    }
+    return raw.replace(/\.+$/, "");
   }
-  return raw.replace(/\.+$/, "");
+  
+  return firstLine.replace(/:\s*$/, "");
 }
 
 function extractFee(text) {
@@ -38,7 +43,10 @@ function extractDocs(text) {
     if (!cleanText || cleanText.length < 3) return;
 
     // Exclude entity title headers, fee lines, and refund notes from document list
-    if (/^requirements\s+(?:for|of|-|:)/i.test(cleanText) || /^requirements$/i.test(cleanText)) return;
+    const firstLineClean = text.split('\n')[0].replace(/^[-*•]\s*/, "").replace(/^\d+[.)]\s*/, "").replace(/[:.]+$/, "").trim().toLowerCase();
+    const currentClean = cleanText.replace(/[:.]+$/, "").toLowerCase();
+    
+    if (/^requirements\s+(?:for|of|-|:)/i.test(cleanText) || /^requirements$/i.test(cleanText) || currentClean === firstLineClean) return;
     if (/(?:application|registration)?\s*fee\s*:/i.test(cleanText) || /^₹\s*[\d,]+/i.test(cleanText)) return;
     if (/^non-?refundable$/i.test(cleanText) || (cleanText.length < 25 && /refundable/i.test(cleanText))) return;
 

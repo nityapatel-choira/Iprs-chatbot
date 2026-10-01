@@ -1,15 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
-import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
-import FileUploader from "../../components/FileUploader/FileUploader";
-import PinInput from "../../components/PinInput/PinInput";
 import CityPicker from "../../components/CityPicker/CityPicker";
 import ChatLanguagePicker from "../../components/ChatLanguagePicker/ChatLanguagePicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
-import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
-import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard";
-import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import PaymentReview from "../../components/PaymentReview/PaymentReview";
@@ -23,16 +17,22 @@ import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
+import ChatInputRenderer from "./components/ChatInputRenderer/ChatInputRenderer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
+import { 
+  isPassportPhotoStep as detectPassportPhotoStep, 
+  isProfilePhotoStep as detectProfilePhotoStep, 
+  isCityStep as detectCityStep, 
+  isMotherTongueStep as detectMotherTongueStep, 
+  isPaymentReviewStep as detectPaymentReviewStep 
+} from "./stepDetectors";
 import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
-import { t, t1 } from "../../i18n";
+import { t } from "../../i18n";
 
-const PASSPORT_PHOTO_STEP_PATTERN =
-  /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
-const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
+
 
 // Only these input types render the free-text composer.
 const TEXT_INPUT_CONFIG = {
@@ -94,7 +94,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
   const isConsentAcceptStep =
     input?.type === "choice input" &&
     (input.items || []).length === 1 &&
-    input.items[0]?.content === t("I Accept");
+    (input.items[0]?.content === "I Accept" || input.items[0]?.content === t("I Accept"));
 
   const pendingConsentMessages =
     isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
@@ -122,44 +122,11 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
       tText = `${extractMessageText(history[i])} ${tText}`;
     }
 
-    const _isPassportPhotoStep =
-      input?.type === "file input" &&
-      (PASSPORT_PHOTO_STEP_PATTERN.test(
-        `${input.title || ""} ${input.caption || ""}`,
-      ) ||
-        PASSPORT_PHOTO_STEP_PATTERN.test(tText));
-
-    const _isProfilePhotoStep =
-      input?.type === "file input" &&
-      (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
-        /profile photo/i.test(tText));
-
-    let _isCityStep = false;
-    let _isMotherTongueStep = false;
-
-    if (input?.type === "city input") {
-      _isCityStep = true;
-    } else if (input?.type === "text input") {
-      const searchStr = `${input.placeholder || ""} ${input.title || ""} ${tText}`;
-      if (/\bmother tongue\b/i.test(searchStr)) {
-        _isMotherTongueStep = true;
-      } else if (/\b(city|place of birth|current city)\b/i.test(searchStr)) {
-        _isCityStep = true;
-      }
-    }
-
-    const _isPaymentReviewStep =
-      (input?.id === "payment-review" ||
-        input?.type === "payment-review" ||
-        input?.type === "review input" ||
-        input?.data?.type === "payment-review" ||
-        lastMessage?.id === "payment-review" ||
-        lastMessage?.type === "payment-review" ||
-        /check\s+your\s+details|review\s+your\s+details/i.test(
-          lastMessageText,
-        )) &&
-      input?.id !== "payment-review-correction" &&
-      lastMessage?.id !== "payment-review-correction";
+    const _isPassportPhotoStep = detectPassportPhotoStep(input, tText);
+    const _isProfilePhotoStep = detectProfilePhotoStep(input, tText);
+    const _isCityStep = detectCityStep(input, tText);
+    const _isMotherTongueStep = detectMotherTongueStep(input, tText);
+    const _isPaymentReviewStep = detectPaymentReviewStep(input, lastMessage, lastMessageText);
 
     return {
       trailingBotText: tText,
@@ -180,7 +147,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
       const message = history[i];
       if (
         message?.sender === "user" &&
-        extractMessageText(message) === t("I Accept") &&
+        (extractMessageText(message) === "I Accept" || extractMessageText(message) === t("I Accept")) &&
         history[i - 1]?.sender === "bot"
       ) {
         resolvedConsentMessageIds.add(history[i - 1].id);
@@ -301,160 +268,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
   const showComposer =
     Boolean(effectiveTextConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep;
 
-  const isUploadForCurrentInput =
-    input?.type === "file input" && uploadForInputId === input.id;
-  const effectiveUploadStatus = isUploadForCurrentInput ? uploadStatus : "idle";
-  const effectiveUploadProgress = isUploadForCurrentInput ? uploadProgress : 0;
-  const effectiveUploadError = isUploadForCurrentInput ? uploadError : "";
 
-  function renderActiveInputWidget() {
-    if (isTyping) return null;
-
-    const renderResendQuickReplyCard = () => (
-      <QuickReplyCard
-        options={(input.items || []).map((item) => {
-          const rawLabel = item.content || item.label || String(item);
-          const isResend = rawLabel === t("Resend OTP") || /resend/i.test(rawLabel);
-          const disabled = isResend && resendCountdown > 0;
-          return {
-            label: disabled ? t1("Resend in {0}s", resendCountdown) : rawLabel,
-            id: item.id,
-            disabled,
-            actionLabel: rawLabel,
-          };
-        })}
-        onSelect={(option) => {
-          if (option.disabled) return;
-          sendAnswer(option.actionLabel || option.label);
-        }}
-      />
-    );
-
-    if (isPaymentReviewStep) {
-      return null;
-    }
-
-    if (isCityStep) {
-      return null;
-    }
-
-    if (textConfig && Array.isArray(input.items) && input.items.length > 0) {
-      return renderResendQuickReplyCard();
-    }
-
-    if (
-      input?.type === "choice input" &&
-      !isConsentAcceptStep &&
-      !pendingDocSummary
-    ) {
-      return (
-        <QuickReplyCard
-          options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
-          onSelect={(option) => {
-            if (isPayAction(option.label, (input.items || []).length)) {
-              triggerPayment();
-            } else {
-              sendAnswer(option.label);
-            }
-          }}
-        />
-      );
-    }
-
-    if (input?.type === "otp input") {
-      return (
-        <>
-          <PinInput key={input.id} onComplete={sendAnswer} />
-          {Array.isArray(input.items) && input.items.length > 0 && (
-            <div style={{ marginTop: '0.75rem', width: '100%' }}>
-              {renderResendQuickReplyCard()}
-            </div>
-          )}
-        </>
-      );
-    }
-
-    if (input?.type === "checkbox input") {
-      return (
-        <CheckboxGroup
-          options={input.options || []}
-          caption={input.caption}
-          onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
-        />
-      );
-    }
-
-    if (input?.type === "summary input") {
-      return (
-        <FeeSummaryCard
-          key={input.id}
-          {...input.data}
-          onOptionSelect={(option) => {
-            if (isPayAction(option.label, (input.items || []).length)) {
-              triggerPayment();
-            } else {
-              sendAnswer(option.label);
-            }
-          }}
-          onConfirm={() => {
-            const label = input.data?.confirmLabel || "Confirmed";
-            if (isPayAction(label)) {
-              triggerPayment();
-            } else {
-              sendAnswer(label);
-            }
-          }}
-        />
-      );
-    }
-
-    if (input?.type === "document input") {
-      return (
-        <DocumentScanCard
-          key={input.id}
-          title={input.title}
-          caption={input.caption}
-          onCapture={() => sendAnswer("Document captured", t("Document captured"))}
-        />
-      );
-    }
-
-    if (
-      input?.type === "file input" &&
-      (isPassportPhotoStep || isProfilePhotoStep)
-    ) {
-      return (
-        <PassportPhotoCard
-          key={input.id}
-          title={
-            input.title ||
-            (isProfilePhotoStep ? t("Upload your Profile photo") : undefined)
-          }
-          caption={input.caption}
-          onFileSelected={submitFile}
-          status={effectiveUploadStatus}
-          progress={effectiveUploadProgress}
-          errorMessage={effectiveUploadError}
-        />
-      );
-    }
-
-    if (input?.type === "file input") {
-      return (
-        <FileUploader
-          key={input.id}
-          title={input.title || t("Choose a file or drag & drop it here")}
-          caption={input.caption || "PNG, JPG/JPEG, PDF"}
-          onFileSelected={submitFile}
-          status={effectiveUploadStatus}
-          progress={effectiveUploadProgress}
-          errorMessage={effectiveUploadError}
-        />
-      );
-    }
-
-    return null;
-  }
 
   const paymentResultMsg = history.find(m => m.id === "payment_verify");
 
@@ -548,7 +362,26 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
 
           {isTyping && <TypingIndicator />}
 
-          {renderActiveInputWidget()}
+          <ChatInputRenderer
+            input={input}
+            isTyping={isTyping}
+            isPaymentReviewStep={isPaymentReviewStep}
+            isCityStep={isCityStep}
+            textConfig={textConfig}
+            isConsentAcceptStep={isConsentAcceptStep}
+            pendingDocSummary={pendingDocSummary}
+            isPayAction={isPayAction}
+            triggerPayment={triggerPayment}
+            sendAnswer={sendAnswer}
+            resendCountdown={resendCountdown}
+            isPassportPhotoStep={isPassportPhotoStep}
+            isProfilePhotoStep={isProfilePhotoStep}
+            submitFile={submitFile}
+            uploadStatus={uploadStatus}
+            uploadProgress={uploadProgress}
+            uploadError={uploadError}
+            uploadForInputId={uploadForInputId}
+          />
 
           {sessionEnded && !error && <CompletionCard />}
 
