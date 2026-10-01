@@ -42,7 +42,7 @@ function extractDocs(text) {
 
     if (!cleanText || cleanText.length < 3) return;
 
-    // Exclude entity title headers, fee lines, and refund notes from document list
+    // exclude headers and fee info from document list
     const firstLineClean = text.split('\n')[0].replace(/^[-*•]\s*/, "").replace(/^\d+[.)]\s*/, "").replace(/[:.]+$/, "").trim().toLowerCase();
     const currentClean = cleanText.replace(/[:.]+$/, "").toLowerCase();
     
@@ -53,7 +53,7 @@ function extractDocs(text) {
     let label = cleanText;
     let subtext;
 
-    // Extract title (group 1), inside-parenthesis (group 2), and remaining after-parenthesis (group 3)
+    // extract main label and subtext from parens
     const parenMatch = cleanText.match(/^([^(]+)\s*\(([^)]+)\)\s*(.*)$/);
     if (parenMatch) {
       label = parenMatch[1].trim();
@@ -69,11 +69,7 @@ function extractDocs(text) {
     docs.push(subtext ? { label, subtext } : { label });
   }
 
-  // Pre-split text by:
-  // 1. Newlines \n
-  // 2. Position after closing parenthesis followed by Capital letter: (?<=\))\s*\.?\s*(?=[A-Z])
-  // 3. Position after period followed by Capital letter: (?<=\.)\s*(?=[A-Z])
-  // 4. Word boundary between lowercase letter and a Capitalized Word (2+ chars): (?<=[a-z0-9])(?=[A-Z][a-z]{2,})
+  // split on newlines and punctuation followed by capital letter
   const rawChunks = text.split(/\n|(?<=\))\s*\.?\s*(?=[A-Z])|(?<=\.)\s*(?=[A-Z])|(?<=[a-z0-9])(?=[A-Z][a-z]{2,})/);
 
   for (const chunk of rawChunks) {
@@ -89,7 +85,6 @@ const parseDocumentSummaryText = (text) => {
   }
 
   const docs = extractDocs(text);
-  // REMOVED: if (docs.length === 0) return null;
 
   const fee = extractFee(text);
 

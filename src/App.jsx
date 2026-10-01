@@ -32,10 +32,17 @@ const App = () => {
     return !params.get("txnid") && !window.location.pathname.startsWith("/payment/");
   });
 
+  // Ends a session however it ended - the member pressing Logout, or the token
+  // expiring under them. The language goes with it either way: it is chosen at
+  // the start of a session, so a new session starts by choosing it again.
+  // Logout already did this; an expiry did not, which left the next person on
+  // that device in whichever language the last one had picked.
   const resetSession = useCallback(() => {
     dispatch(setAuthenticated(false));
     clearRegistrationCompleted();
     clearStoredConversation();
+    clearLanguageCode();
+    dispatch(clearLanguage());
     dispatch(resetConversation());
     dispatch(resetRegistration());
   }, [dispatch]);
@@ -62,8 +69,6 @@ const App = () => {
 
   const handleLogout = async () => {
     resetSession();
-    clearLanguageCode();
-    dispatch(clearLanguage());
     try {
       await logout();
     } catch {

@@ -85,10 +85,7 @@ export const CITY_TRANSLATIONS = {
   "chandigarh": { hi: "चंडीगढ़", mr: "चंदीगढ", gu: "ચંદીગઢ", bn: "চণ্ডীগড়" },
 };
 
-/**
- * Returns the localized name and state if available.
- * Falls back to the original English string if no translation is found.
- */
+// Returns localized names, falling back to English if missing.
 export function localizeLocation(name, state, lang) {
   if (!lang || lang === "en") {
     return { localName: name, localState: state };
@@ -103,7 +100,7 @@ export function localizeLocation(name, state, lang) {
   if (CITY_TRANSLATIONS[nameKey] && CITY_TRANSLATIONS[nameKey][lang]) {
     localName = CITY_TRANSLATIONS[nameKey][lang];
   } else if (STATE_TRANSLATIONS[nameKey] && STATE_TRANSLATIONS[nameKey][lang]) {
-    // If the "name" is actually a state (e.g. valid city states like Delhi)
+    // handle city-states like Delhi
     localName = STATE_TRANSLATIONS[nameKey][lang];
   }
 
