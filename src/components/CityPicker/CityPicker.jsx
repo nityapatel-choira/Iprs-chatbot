@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { getSuggestions } from "../../utils/locationSearch";
 import SearchablePicker from "../SearchablePicker/SearchablePicker";
 import { t } from "../../i18n";
+import { getLanguageCode } from "../../services/languagePreference";
 
 function getEstimatedPillWidth(item, isMobile) {
-  const showState = !isMobile && Boolean(item.state);
-  const text = showState ? `${item.name}, ${item.state}` : item.name;
+  const showState = !isMobile && Boolean(item.localState || item.state);
+  const text = showState ? `${item.localName || item.name}, ${item.localState || item.state}` : (item.localName || item.name);
   const charWidth = 8.2;
   const padding = 35;
   return Math.ceil(text.length * charWidth + padding);
@@ -27,10 +28,11 @@ function CityPicker({ onSubmit, disabled, placeholder = t("Write your message") 
 
   const trimmed = (inputValue || "").trim();
   const isMinLength = trimmed.length >= 3;
+  const currentLanguage = getLanguageCode() || "en";
   
   const matchingCities = useMemo(() => {
-    return isMinLength ? getSuggestions(trimmed, citiesList) : [];
-  }, [isMinLength, trimmed, citiesList]);
+    return isMinLength ? getSuggestions(trimmed, citiesList, currentLanguage) : [];
+  }, [isMinLength, trimmed, citiesList, currentLanguage]);
   
   const canonicalMatch = matchingCities.length > 0 ? matchingCities[0] : null;
 
@@ -50,10 +52,10 @@ function CityPicker({ onSubmit, disabled, placeholder = t("Write your message") 
       isSubmitDisabled={!canonicalMatch}
       renderPill={(item, isActive, isMobile) => (
         <>
-          <span style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{item.name}</span>
-          {!isMobile && item.state && (
+          <span style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{item.localName || item.name}</span>
+          {!isMobile && (item.localState || item.state) && (
             <span style={{ fontSize: "0.78rem", color: isActive ? "#3b82f6" : "#64748b", fontWeight: 400, whiteSpace: "nowrap" }}>
-              , {item.state}
+              , {item.localState || item.state}
             </span>
           )}
         </>

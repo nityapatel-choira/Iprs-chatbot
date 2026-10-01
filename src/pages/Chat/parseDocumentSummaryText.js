@@ -89,7 +89,7 @@ const parseDocumentSummaryText = (text) => {
   }
 
   const docs = extractDocs(text);
-  if (docs.length === 0) return null;
+  // REMOVED: if (docs.length === 0) return null;
 
   const fee = extractFee(text);
 

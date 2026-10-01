@@ -1,3 +1,4 @@
+import { localizeLocation } from "../constants/localizedLocations";
 
 const STATE_NAMES = new Set([
   "andhra pradesh", "arunachal pradesh", "assam", "bihar", "chhattisgarh", "goa", "gujarat",
@@ -102,7 +103,7 @@ export function normalizeLocationRecord(item) {
  * Priority 2: Prefix match on locality field.
  * Priority 3: Fallback substring match.
  */
-export function getSuggestions(query, locationList = []) {
+export function getSuggestions(query, locationList = [], lang = "en") {
   const cleanQuery = (query || "").toLowerCase().trim();
   if (!cleanQuery) return [];
 
@@ -116,12 +117,13 @@ export function getSuggestions(query, locationList = []) {
   for (let i = 0; i < normalizedList.length; i++) {
     const item = normalizedList[i];
     const cityLower = (item.city || "").toLowerCase();
+    const { localName, localState } = localizeLocation(item.city, item.state, lang);
 
     if (STATE_NAMES.has(cityLower) && !VALID_CITY_STATES.has(cityLower)) {
       continue;
     }
 
-    if (cityLower.startsWith(cleanQuery)) {
+    if (cityLower.startsWith(cleanQuery) || (localName && localName.toLowerCase().startsWith(cleanQuery))) {
       if (!seenCitiesP1.has(cityLower)) {
         seenCitiesP1.add(cityLower);
         priority1Matches.push({
@@ -129,6 +131,9 @@ export function getSuggestions(query, locationList = []) {
           state: item.state,
           city: item.city,
           label: item.state ? `${item.city}, ${item.state}` : item.city,
+          localName,
+          localState,
+          localLabel: localState ? `${localName}, ${localState}` : localName,
         });
       }
     }
@@ -146,20 +151,28 @@ export function getSuggestions(query, locationList = []) {
     const item = normalizedList[i];
     const localityLower = (item.locality || "").toLowerCase();
     const cityLower = (item.city || "").toLowerCase();
+    const { localName: localCity, localState } = localizeLocation(item.city, item.state, lang);
+    const { localName: localLocality } = localizeLocation(item.locality || item.city, "", lang);
 
     if (STATE_NAMES.has(cityLower) && !VALID_CITY_STATES.has(cityLower)) {
       continue;
     }
 
-    if (localityLower && localityLower.startsWith(cleanQuery)) {
+    if ((localityLower && localityLower.startsWith(cleanQuery)) || (localLocality && localLocality.toLowerCase().startsWith(cleanQuery))) {
       const key = `${localityLower}-${cityLower}`;
       if (!seenLocalitiesP2.has(key)) {
         seenLocalitiesP2.add(key);
+        const nameToUse = item.locality || item.city;
+        const localNameToUse = item.locality ? localLocality : localCity;
+        
         priority2Matches.push({
-          name: item.locality || item.city,
+          name: nameToUse,
           state: item.state,
           city: item.city,
-          label: item.state ? `${item.locality || item.city}, ${item.state}` : (item.locality || item.city),
+          label: item.state ? `${nameToUse}, ${item.state}` : nameToUse,
+          localName: localNameToUse,
+          localState,
+          localLabel: localState ? `${localNameToUse}, ${localState}` : localNameToUse,
         });
       }
     }
@@ -178,6 +191,9 @@ export function getSuggestions(query, locationList = []) {
     const cityLower = (item.city || "").toLowerCase();
     const localityLower = (item.locality || "").toLowerCase();
     const nameLower = (item.name || "").toLowerCase();
+    
+    const cityName = item.city || item.name;
+    const { localName: localCity, localState } = localizeLocation(cityName, item.state, lang);
 
     if (STATE_NAMES.has(cityLower) && !VALID_CITY_STATES.has(cityLower)) {
       continue;
@@ -186,9 +202,9 @@ export function getSuggestions(query, locationList = []) {
     if (
       cityLower.includes(cleanQuery) ||
       localityLower.includes(cleanQuery) ||
-      nameLower.includes(cleanQuery)
+      nameLower.includes(cleanQuery) ||
+      (localCity && localCity.toLowerCase().includes(cleanQuery))
     ) {
-      const cityName = item.city || item.name;
       const key = cityName.toLowerCase();
       if (!seenKeysP3.has(key)) {
         seenKeysP3.add(key);
@@ -197,6 +213,9 @@ export function getSuggestions(query, locationList = []) {
           state: item.state,
           city: cityName,
           label: item.state ? `${cityName}, ${item.state}` : cityName,
+          localName: localCity,
+          localState,
+          localLabel: localState ? `${localCity}, ${localState}` : localCity,
         });
       }
     }
