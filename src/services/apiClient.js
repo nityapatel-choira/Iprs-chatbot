@@ -121,3 +121,25 @@ function uploadRequest(path, formData, onProgress, onUploadComplete) {
 }
 
 export { request, uploadRequest, onUnauthorized, ApiError };
+
+/**
+ * Where the document sits in a photograph, so the crop box can open around it.
+ *
+ * Deliberately forgiving: any failure resolves to { detected: false } rather
+ * than throwing. This runs between taking a photo and uploading it, and nobody
+ * should be stopped from uploading their PAN card because a convenience failed.
+ */
+export async function detectDocumentEdges(file) {
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    const body = await request("/conversation/detect-edges", { method: "POST", body: { image: base64 } });
+    return body?.data ?? body ?? { detected: false };
+  } catch {
+    return { detected: false };
+  }
+}
