@@ -1,10 +1,4 @@
-import ProfileIcon from "../icons/ProfileIcon";
-import BankIcon from "../icons/BankIcon";
-import MusicNoteIcon from "../icons/MusicNoteIcon";
-import AgreementIcon from "../icons/AgreementIcon";
 import styles from "./StepTracker.module.css";
-
-const ICONS = [ProfileIcon, BankIcon, MusicNoteIcon, AgreementIcon];
 
 const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
   const lastIndex = stages.length - 1;
@@ -23,11 +17,14 @@ const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
         <div className={styles.track}>
           {stages.map((stage, i) => {
             const status = i < effectiveActiveIndex ? "completed" : i === effectiveActiveIndex ? "active" : "pending";
-            const Icon = ICONS[i] || ProfileIcon;
             return (
               <div key={stage} className={styles.node}>
-                <span className={`${styles.circle} ${styles[status]}`} aria-hidden="true">
-                  <Icon />
+                <span
+                  className={`${styles.circle} ${styles[status]}`}
+                  aria-label={`${stage}${status === "completed" ? " (completed)" : status === "active" ? " (current)" : ""}`}
+                  aria-current={status === "active" ? "step" : undefined}
+                >
+                  {i + 1}
                 </span>
               </div>
             );

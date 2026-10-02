@@ -4,6 +4,8 @@ import { LANGUAGES } from "../../../../constants/languages";
 import styles from "./ChatHeader.module.css";
 import { t } from "../../../../i18n";
 
+import LogoutIcon from "../../../../components/icons/LogoutIcon";
+
 const ChatHeader = ({ title, language, languageCode, onBack, onLogout, onChangeLanguage }) => {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -77,8 +79,14 @@ const ChatHeader = ({ title, language, languageCode, onBack, onLogout, onChangeL
       </div>
 
       {onLogout && (
-        <button type="button" className={styles.logoutButton} onClick={onLogout}>
-          {t("Logout")}
+        <button
+          type="button"
+          className={styles.logoutButton}
+          onClick={onLogout}
+          aria-label={t("Logout")}
+          title={t("Logout")}
+        >
+          <LogoutIcon />
         </button>
       )}
     </header>

@@ -64,8 +64,10 @@
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
-  padding: 0.4rem 0.2rem;
-  white-space: nowrap;
+  padding: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logoutButton:hover {
