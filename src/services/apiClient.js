@@ -2,7 +2,7 @@ import { getToken, clearToken } from "./tokenStorage";
 import { getLanguageCode } from "./languagePreference";
 import { t } from "../i18n";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.iprs.choira.io";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.iprsv2.choira.in";
 
 class ApiError extends Error {
   constructor(message, { code, status, details } = {}) {

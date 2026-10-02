@@ -110,20 +110,9 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
-.cityName {
+.itemName {
   font-weight: 600;
   white-space: nowrap;
-}
-
-.stateName {
-  font-size: 0.78rem;
-  color: #64748b;
-  font-weight: 400;
-  white-space: nowrap;
-}
-
-.pillActive .stateName {
-  color: #3b82f6;
 }
 
 .noMatchesPill {
@@ -158,9 +147,5 @@
   .pill {
     padding: 7px 12px;
     font-size: 0.8125rem;
-  }
-
-  .stateName {
-    display: none;
   }
 }
