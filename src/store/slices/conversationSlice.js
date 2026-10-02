@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { t } from "../../i18n";
 import { sendMessage, initiatePayment, uploadFile, checkPaymentStatus } from "../../services/conversationService";
 import { getRegistrationCompleted } from "../../services/registrationState";
 import { consumeFreshLoginFlag } from "../../services/conversationStorage";
@@ -111,7 +112,7 @@ function applyConversationResponse(state, data) {
         id: nextId(),
         sender: "bot",
         kind: "richText",
-        richText: [{ type: "p", children: [{ text: "Your registration is still in progress." }] }],
+        richText: [{ type: "p", children: [{ text: t("Your registration is still in progress.") }] }],
       };
       messagesToAppend = [inProgressNotice, ...incomingMessages];
     }
@@ -145,7 +146,7 @@ export const triggerPayuIntegration = createAsyncThunk(
       const data = await initiatePayment();
       return data;
     } catch (err) {
-      return rejectWithValue(err.message || "Failed to initiate payment");
+      return rejectWithValue(err.message || t("Failed to initiate payment"));
     }
   }
 );
@@ -172,7 +173,7 @@ export const uploadConversationFile = createAsyncThunk(
       return { ...data, __isFreshLogin: consumeFreshLoginFlag() };
     } catch (err) {
       dispatch(setFileMessageStatus({ fileId, status: "error" }));
-      return rejectWithValue(err.message || "Upload failed. Please try again.");
+      return rejectWithValue(err.message || t("Upload failed. Please try again."));
     }
   }
 );
@@ -186,7 +187,7 @@ export const verifyPayment = createAsyncThunk(
       return { ...data, txnid: txnId, __isFreshLogin: consumeFreshLoginFlag() };
     } catch (err) {
       return rejectWithValue({
-        message: err.message || "Failed to connect to the server to verify payment status.",
+        message: err.message || t("Failed to connect to the server to verify payment status."),
         txnid: txnId,
       });
     }
@@ -264,7 +265,7 @@ const conversationSlice = createSlice({
         state.isTyping = false;
       })
       .addCase(sendConversationTurn.rejected, (state, action) => {
-        state.error = action.error?.message || "Something went wrong. Please try again.";
+        state.error = action.error?.message || t("Something went wrong. Please try again.");
         state.isTyping = false;
       })
       .addCase(uploadConversationFile.fulfilled, (state, action) => {
@@ -277,7 +278,7 @@ const conversationSlice = createSlice({
       })
       .addCase(uploadConversationFile.rejected, (state, action) => {
         state.uploadStatus = "error";
-        state.uploadError = action.payload || "Upload failed. Please try again.";
+        state.uploadError = action.payload || t("Upload failed. Please try again.");
       })
       .addCase(triggerPayuIntegration.pending, (state) => {
         state.isTyping = true;
@@ -291,14 +292,14 @@ const conversationSlice = createSlice({
             params: action.payload.params,
           };
         } else {
-          state.error = "Could not start the payment. Please try again.";
+          state.error = t("Could not start the payment. Please try again.");
         }
       })
       // triggerPayment() has already cleared the Pay button, so without this the member is left
       // with nothing to tap - setting error surfaces the retry, which re-runs triggerPayment().
       .addCase(triggerPayuIntegration.rejected, (state, action) => {
         state.isTyping = false;
-        state.error = action.payload || "Could not start the payment. Please try again.";
+        state.error = action.payload || t("Could not start the payment. Please try again.");
       })
       .addCase(verifyPayment.pending, (state) => {
         state.isTyping = true;
@@ -340,7 +341,7 @@ const conversationSlice = createSlice({
         if (verifyMsgIndex !== -1) {
           state.history[verifyMsgIndex].data = {
             status: "FAILED",
-            errorMessage: action.payload?.message || action.error?.message || "Transaction not found or server error",
+            errorMessage: action.payload?.message || action.error?.message || t("Transaction not found or server error"),
             txnid: action.payload?.txnid
           };
         }

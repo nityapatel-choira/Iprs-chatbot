@@ -1,50 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useCombobox } from "downshift";
+import { useEffect, useMemo, useState } from "react";
 import { getSuggestions } from "../../utils/locationSearch";
-import SendIcon from "../icons/SendIcon";
-import styles from "./CityPicker.module.css";
+import SearchablePicker from "../SearchablePicker/SearchablePicker";
+import { t } from "../../i18n";
+import { getLanguageCode } from "../../services/languagePreference";
 
 function getEstimatedPillWidth(item, isMobile) {
-  const showState = !isMobile && Boolean(item.state);
-  const text = showState ? `${item.name}, ${item.state}` : item.name;
+  const showState = !isMobile && Boolean(item.localState || item.state);
+  const text = showState ? `${item.localName || item.name}, ${item.localState || item.state}` : (item.localName || item.name);
   const charWidth = 8.2;
   const padding = 35;
   return Math.ceil(text.length * charWidth + padding);
 }
 
-function getFittingSuggestions(candidates, containerWidth, isMobile) {
-  if (!candidates || candidates.length === 0) return [];
-  const maxW = containerWidth || 360;
-  const gap = isMobile ? 6 : 8;
-  const selected = [];
-  let currentUsedW = 0;
-
-  for (let i = 0; i < candidates.length; i++) {
-    const item = candidates[i];
-    const w = getEstimatedPillWidth(item, isMobile);
-
-    if (selected.length === 0) {
-      selected.push(item);
-      currentUsedW = w;
-    } else if (selected.length < 3) {
-      if (currentUsedW + gap + w <= maxW) {
-        selected.push(item);
-        currentUsedW += gap + w;
-      }
-    }
-
-    if (selected.length === 3) break;
-  }
-
-  return selected;
-}
-
-function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) {
+function CityPicker({ onSubmit, disabled, placeholder = t("Write your message") }) {
   const [inputValue, setInputValue] = useState("");
-  const [containerWidth, setContainerWidth] = useState(360);
-  const [isMobile, setIsMobile] = useState(false);
   const [citiesList, setCitiesList] = useState([]);
-  const formRef = useRef(null);
 
   useEffect(() => {
     let isCancelled = false;
@@ -56,124 +26,41 @@ function CityPicker({ onSubmit, disabled, placeholder = "Write your message" }) 
     };
   }, []);
 
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (formRef.current) {
-        setContainerWidth(formRef.current.clientWidth);
-      }
-      setIsMobile(window.innerWidth <= 480);
-    };
-
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
-
   const trimmed = (inputValue || "").trim();
   const isMinLength = trimmed.length >= 3;
+  const currentLanguage = getLanguageCode() || "en";
   
   const matchingCities = useMemo(() => {
-    return isMinLength ? getSuggestions(trimmed, citiesList) : [];
-  }, [isMinLength, trimmed, citiesList]);
+    return isMinLength ? getSuggestions(trimmed, citiesList, currentLanguage) : [];
+  }, [isMinLength, trimmed, citiesList, currentLanguage]);
   
-  const suggestions = useMemo(() => {
-    return getFittingSuggestions(matchingCities, containerWidth, isMobile);
-  }, [matchingCities, containerWidth, isMobile]);
-
   const canonicalMatch = matchingCities.length > 0 ? matchingCities[0] : null;
 
-  const {
-    isOpen,
-    getMenuProps,
-    getInputProps,
-    highlightedIndex,
-    getItemProps,
-  } = useCombobox({
-    items: suggestions,
-    inputValue,
-    onInputValueChange({ inputValue: nextVal }) {
-      setInputValue(nextVal || "");
-    },
-    onSelectedItemChange({ selectedItem }) {
-      if (selectedItem && !disabled) {
-        onSubmit?.(selectedItem.name);
-      }
-    },
-    itemToString(item) {
-      return item ? item.label : "";
-    },
-  });
-
-  const showMenu = isOpen && isMinLength;
-
-  useEffect(() => {
-    if (showMenu && formRef.current) {
-      const messagesContainer = document.querySelector("[class*='messages']");
-      if (messagesContainer) {
-        requestAnimationFrame(() => {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        });
-      }
-    }
-  }, [showMenu]);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (disabled || !canonicalMatch) return;
-    onSubmit?.(canonicalMatch.name);
-  };
-
   return (
-    <div className={styles.container}>
-      <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
-        {showMenu && (
-          <ul
-            {...getMenuProps({
-              className: styles.suggestionsRow,
-            })}
-          >
-            {suggestions.length > 0 ? (
-              suggestions.map((item, index) => (
-                <li
-                  key={`${item.name}-${item.state}-${index}`}
-                  {...getItemProps({
-                    item,
-                    index,
-                    className: `${styles.pill} ${
-                      highlightedIndex === index ? styles.pillActive : ""
-                    }`,
-                  })}
-                >
-                  <span className={styles.cityName}>{item.name}</span>
-                  {!isMobile && item.state && <span className={styles.stateName}>, {item.state}</span>}
-                </li>
-              ))
-            ) : (
-              <li className={styles.noMatchesPill}>No cities found</li>
-            )}
-          </ul>
-        )}
-
-        <div className={styles.inputContainer}>
-          <input
-            {...getInputProps({
-              className: styles.input,
-              placeholder,
-              disabled,
-              "aria-label": "City selection",
-            })}
-          />
-          <button
-            type="submit"
-            className={styles.sendButton}
-            disabled={disabled || !canonicalMatch}
-            aria-label="Submit city"
-          >
-            <SendIcon />
-          </button>
-        </div>
-      </form>
-    </div>
+    <SearchablePicker
+      inputValue={inputValue}
+      onInputValueChange={setInputValue}
+      matchingItems={matchingCities}
+      getEstimatedWidth={getEstimatedPillWidth}
+      canonicalMatch={canonicalMatch}
+      onSubmit={(item) => onSubmit?.(item.name)}
+      disabled={disabled}
+      placeholder={placeholder}
+      ariaLabel={t("City selection")}
+      noMatchesText={t("No cities found")}
+      showMenu={isMinLength}
+      isSubmitDisabled={!canonicalMatch}
+      renderPill={(item, isActive, isMobile) => (
+        <>
+          <span style={{ fontWeight: 600, whiteSpace: "nowrap" }}>{item.localName || item.name}</span>
+          {!isMobile && (item.localState || item.state) && (
+            <span style={{ fontSize: "0.78rem", color: isActive ? "#3b82f6" : "#64748b", fontWeight: 400, whiteSpace: "nowrap" }}>
+              , {item.localState || item.state}
+            </span>
+          )}
+        </>
+      )}
+    />
   );
 }
 

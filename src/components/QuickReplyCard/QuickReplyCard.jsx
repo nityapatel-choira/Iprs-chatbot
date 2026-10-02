@@ -1,10 +1,11 @@
 import styles from "./QuickReplyCard.module.css";
+import { t } from "../../i18n";
 
 const QuickReplyCard = ({ options, onSelect, disabled }) => {
   const safeOptions = options || [];
 
   return (
-    <div className={styles.card} role="group" aria-label="Choice options">
+    <div className={styles.card} role="group" aria-label={t("Choice options")}>
       {safeOptions.map((option, index) => (
         <button
           key={option.value || option.label || index}

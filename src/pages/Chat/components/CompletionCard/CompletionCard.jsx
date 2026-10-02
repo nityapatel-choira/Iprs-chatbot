@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import styles from "./CompletionCard.module.css";
+import { t } from "../../../../i18n";
 
 function getOrdinalSuffix(day) {
   const v = day % 100;
@@ -32,9 +33,9 @@ function getApprovalSteps() {
   d3.setDate(d3.getDate() + 14);
 
   return [
-    { step: 1, label: "Level 1 Approval", date: formatDate(d1) },
-    { step: 2, label: "Level 2 Approval", date: formatDate(d2) },
-    { step: 3, label: "Level 3 Approval", date: formatDate(d3) },
+    { step: 1, label: t("Level 1 Approval"), date: formatDate(d1) },
+    { step: 2, label: t("Level 2 Approval"), date: formatDate(d2) },
+    { step: 3, label: t("Level 3 Approval"), date: formatDate(d3) },
   ];
 }
 
@@ -43,7 +44,7 @@ const CompletionCard = () => {
 
   return (
     <div className={styles.card}>
-      <div className={styles.headerPill}>Approval Timeline</div>
+      <div className={styles.headerPill}>{t("Approval Timeline")}</div>
 
       <div className={styles.timelineList}>
         {approvalSteps.map((item, idx) => {

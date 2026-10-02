@@ -1,6 +1,7 @@
 import { useState } from "react";
 import OtpField from "../OtpField/OtpField";
 import styles from "./PinInput.module.css";
+import { t } from "../../i18n";
 
 const PinInput = ({ length = 4, onComplete, disabled }) => {
   const [value, setValue] = useState("");
@@ -22,7 +23,7 @@ const PinInput = ({ length = 4, onComplete, disabled }) => {
         disabled={disabled} 
       />
       <button type="submit" className={styles.verifyButton} disabled={!isComplete || disabled}>
-        Verify
+        {t("Verify")}
       </button>
     </form>
   );

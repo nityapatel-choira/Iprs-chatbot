@@ -1,37 +1,47 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
-import QuickReplyCard from "../../components/QuickReplyCard/QuickReplyCard";
-import FileUploader from "../../components/FileUploader/FileUploader";
-import PinInput from "../../components/PinInput/PinInput";
 import CityPicker from "../../components/CityPicker/CityPicker";
 import ChatLanguagePicker from "../../components/ChatLanguagePicker/ChatLanguagePicker";
 import CompletionCard from "./components/CompletionCard/CompletionCard";
-import CheckboxGroup from "../../components/CheckboxGroup/CheckboxGroup";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
-import DocumentScanCard from "../../components/DocumentScanCard/DocumentScanCard";
-import PassportPhotoCard from "./components/PassportPhotoCard/PassportPhotoCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
 import PaymentReview from "../../components/PaymentReview/PaymentReview";
 import PaymentResultModal from "./components/PaymentResultModal/PaymentResultModal";
 import StepTracker from "../../components/StepTracker/StepTracker";
 import {
-  STAGE_LABELS,
+  stageLabels,
   determineStageIndex,
 } from "../../components/StepTracker/stepProgress";
 import ChatHeader from "./components/ChatHeader/ChatHeader";
 import MessageRow from "./components/MessageRow/MessageRow";
 import TypingIndicator from "./components/TypingIndicator/TypingIndicator";
 import ChatComposer from "./components/ChatComposer/ChatComposer";
+import ChatInputRenderer from "./components/ChatInputRenderer/ChatInputRenderer";
 import useBackendConversation from "./useBackendConversation";
 import { extractMessageText } from "../../store/slices/conversationSlice";
 import parseDocumentSummaryText from "./parseDocumentSummaryText";
+
 import PayURedirect from "../../components/PayURedirect/PayURedirect";
 import styles from "./Chat.module.css";
+import { t } from "../../i18n";
+
 
 const PASSPORT_PHOTO_STEP_PATTERN =
   /passport.{0,15}(size|photo)|photo.{0,15}passport/i;
 const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
+// The two steps that get their own input, by the flow's own variable id rather
+// than by the wording of the question.
+//
+// Matching the words is what put the language picker on the Alias / Trader Name
+// field: on a resume the backward scan folds the recap's "Mother tongue: ..."
+// line into the text it classifies on, so the alias step read as the
+// mother-tongue one and the member was told "No languages found" about a
+// perfectly good name. The wording also stopped matching at all once the API
+// began translating it. An id survives both - the same reason the server
+// recognises its payment blocks by id (see paymentBlockIds.js).
+const MOTHER_TONGUE_VARIABLE_ID = "vh4f2w089zbn113mboiqtm37f";
+const PLACE_OF_BIRTH_VARIABLE_ID = "vy80zc5eoveac6euqlurki58o";
 
 // Only these input types render the free-text composer.
 const TEXT_INPUT_CONFIG = {
@@ -41,7 +51,7 @@ const TEXT_INPUT_CONFIG = {
   "phone input": { type: "tel", inputMode: "tel" },
 };
 
-const Chat = ({ language = "English", onBack, onLogout }) => {
+const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLanguage }) => {
   const pageRef = useRef(null);
 
   const {
@@ -67,6 +77,24 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
   useVisualViewport(pageRef);
 
+  // Whether tapping this option should open checkout rather than answer the flow.
+  //
+  // The server recognises its four payment blocks by BLOCK ID and says so in as
+  // many words - see paymentBlockIds.js: "matched by block id, never by the
+  // button's label", because the label had already been renamed once and
+  // everything keyed to it broke silently. This end went on sniffing the label
+  // for /pay/ anyway, which held only while the label was English. Once the API
+  // began translating it, "Pay Application Fee" arrived as "আবেদন ফি প্রদান করুন",
+  // the test failed, and the tap fell through to sendAnswer() - so checkout never
+  // opened and the flow was handed the button's own text as if it were a reply.
+  //
+  // isPaymentStepFromBackend already carries the server's verdict, and those
+  // blocks offer a single choice, so on that step the offered action IS the
+  // payment one. The label test remains only as a tie-break, for the day a
+  // payment block offers more than one.
+  const isPayAction = (label, optionCount = 1) =>
+    isPaymentStepFromBackend && (optionCount === 1 || /pay/i.test(label ?? ""));
+
 
 
   const lastMessage = history[history.length - 1];
@@ -75,7 +103,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const isConsentAcceptStep =
     input?.type === "choice input" &&
     (input.items || []).length === 1 &&
-    input.items[0]?.content === "I Accept";
+    (input.items[0]?.content === "I Accept" || input.items[0]?.content === t("I Accept"));
 
   const pendingConsentMessages =
     isConsentAcceptStep && lastMessage?.sender === "bot" ? [lastMessage] : [];
@@ -118,9 +146,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     let _isCityStep = false;
     let _isMotherTongueStep = false;
 
+    const stepVariableId = input?.options?.variableId;
     if (input?.type === "city input") {
       _isCityStep = true;
-    } else if (input?.type === "text input") {
+    } else if (stepVariableId === MOTHER_TONGUE_VARIABLE_ID) {
+      _isMotherTongueStep = true;
+    } else if (stepVariableId === PLACE_OF_BIRTH_VARIABLE_ID) {
+      _isCityStep = true;
+    } else if (input?.type === "text input" && !stepVariableId) {
+      // Only for a block carrying no variable of its own - there is nothing
+      // else to go on there, and a block that has an id has already been
+      // decided above, so a reworded or translated question cannot reach this.
       const searchStr = `${input.placeholder || ""} ${input.title || ""} ${tText}`;
       if (/\bmother tongue\b/i.test(searchStr)) {
         _isMotherTongueStep = true;
@@ -153,7 +189,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   }, [history, input, lastMessage, lastMessageText]);
 
   // Consent turns live entirely in the popup, so both the bot prompt and
-  // its "I Accept" reply stay out of the transcript permanently - not just
+  // its t("I Accept") reply stay out of the transcript permanently - not just
   // while that step is the pending input.
   const consentMessageIds = useMemo(() => {
     const resolvedConsentMessageIds = new Set();
@@ -161,7 +197,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
       const message = history[i];
       if (
         message?.sender === "user" &&
-        extractMessageText(message) === "I Accept" &&
+        (extractMessageText(message) === "I Accept" || extractMessageText(message) === t("I Accept")) &&
         history[i - 1]?.sender === "bot"
       ) {
         resolvedConsentMessageIds.add(history[i - 1].id);
@@ -196,7 +232,10 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     if (lastBotMessage.id !== lastWaitMessageIdRef.current) {
       lastWaitMessageIdRef.current = lastBotMessage.id;
       const text = extractMessageText(lastBotMessage);
-      const match = /wait\s+(\d+)\s+second/i.exec(text);
+      // extract seconds from the translated message text only when a Resend button is offered
+      const offersResend = (input?.items || []).some(
+        (it) => (it.content || it.label || "") === t("Resend OTP") || /resend/i.test(it.content || ""));
+      const match = offersResend ? /\b(\d{1,3})\b/.exec(text) : null;
       if (match) {
         const seconds = parseInt(match[1], 10);
         if (!isNaN(seconds) && seconds > 0) {
@@ -204,7 +243,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         }
       }
     }
-  }, [history]);
+  }, [history, input?.items]);
 
   // Execute countdown
   useEffect(() => {
@@ -275,160 +314,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
   const showComposer =
     Boolean(effectiveTextConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep;
 
-  const isUploadForCurrentInput =
-    input?.type === "file input" && uploadForInputId === input.id;
-  const effectiveUploadStatus = isUploadForCurrentInput ? uploadStatus : "idle";
-  const effectiveUploadProgress = isUploadForCurrentInput ? uploadProgress : 0;
-  const effectiveUploadError = isUploadForCurrentInput ? uploadError : "";
 
-  function renderActiveInputWidget() {
-    if (isTyping) return null;
-
-    const renderResendQuickReplyCard = () => (
-      <QuickReplyCard
-        options={(input.items || []).map((item) => {
-          const rawLabel = item.content || item.label || String(item);
-          const isResend = /resend/i.test(rawLabel);
-          const disabled = isResend && resendCountdown > 0;
-          return {
-            label: disabled ? `Resend in ${resendCountdown}s` : rawLabel,
-            id: item.id,
-            disabled,
-            actionLabel: rawLabel,
-          };
-        })}
-        onSelect={(option) => {
-          if (option.disabled) return;
-          sendAnswer(option.actionLabel || option.label);
-        }}
-      />
-    );
-
-    if (isPaymentReviewStep) {
-      return null;
-    }
-
-    if (isCityStep) {
-      return null;
-    }
-
-    if (textConfig && Array.isArray(input.items) && input.items.length > 0) {
-      return renderResendQuickReplyCard();
-    }
-
-    if (
-      input?.type === "choice input" &&
-      !isConsentAcceptStep &&
-      !pendingDocSummary
-    ) {
-      return (
-        <QuickReplyCard
-          options={(input.items || []).map((item) => ({ label: item.content || item.label, id: item.id || item.value || item.key }))}
-          onSelect={(option) => {
-            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
-              triggerPayment();
-            } else {
-              sendAnswer(option.label);
-            }
-          }}
-        />
-      );
-    }
-
-    if (input?.type === "otp input") {
-      return (
-        <>
-          <PinInput key={input.id} onComplete={sendAnswer} />
-          {Array.isArray(input.items) && input.items.length > 0 && (
-            <div style={{ marginTop: '0.75rem', width: '100%' }}>
-              {renderResendQuickReplyCard()}
-            </div>
-          )}
-        </>
-      );
-    }
-
-    if (input?.type === "checkbox input") {
-      return (
-        <CheckboxGroup
-          options={input.options || []}
-          caption={input.caption}
-          onSubmit={(selected) => sendAnswer(selected.map((opt) => opt.label).join(", "))}
-        />
-      );
-    }
-
-    if (input?.type === "summary input") {
-      return (
-        <FeeSummaryCard
-          key={input.id}
-          {...input.data}
-          onOptionSelect={(option) => {
-            if (isPaymentStepFromBackend && /pay/i.test(option.label)) {
-              triggerPayment();
-            } else {
-              sendAnswer(option.label);
-            }
-          }}
-          onConfirm={() => {
-            const label = input.data?.confirmLabel || "Confirmed";
-            if (isPaymentStepFromBackend && /pay/i.test(label)) {
-              triggerPayment();
-            } else {
-              sendAnswer(label);
-            }
-          }}
-        />
-      );
-    }
-
-    if (input?.type === "document input") {
-      return (
-        <DocumentScanCard
-          key={input.id}
-          title={input.title}
-          caption={input.caption}
-          onCapture={() => sendAnswer("Document captured")}
-        />
-      );
-    }
-
-    if (
-      input?.type === "file input" &&
-      (isPassportPhotoStep || isProfilePhotoStep)
-    ) {
-      return (
-        <PassportPhotoCard
-          key={input.id}
-          title={
-            input.title ||
-            (isProfilePhotoStep ? "Upload your Profile photo" : undefined)
-          }
-          caption={input.caption}
-          onFileSelected={submitFile}
-          status={effectiveUploadStatus}
-          progress={effectiveUploadProgress}
-          errorMessage={effectiveUploadError}
-        />
-      );
-    }
-
-    if (input?.type === "file input") {
-      return (
-        <FileUploader
-          key={input.id}
-          title={input.title || "Choose a file or drag & drop it here"}
-          caption={input.caption || "PNG, JPG/JPEG, PDF"}
-          onFileSelected={submitFile}
-          status={effectiveUploadStatus}
-          progress={effectiveUploadProgress}
-          errorMessage={effectiveUploadError}
-        />
-      );
-    }
-
-    return null;
-  }
 
   const paymentResultMsg = history.find(m => m.id === "payment_verify");
 
@@ -436,15 +322,17 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
     <div className={styles.page} ref={pageRef}>
       <div className={styles.panel}>
         <ChatHeader
-          title="IPRS Membership Assistant"
+          title={t("IPRS Membership Assistant")}
           language={language}
+          languageCode={languageCode}
+          onChangeLanguage={onChangeLanguage}
           onBack={onBack}
           onLogout={onLogout}
         />
 
         <div className={styles.trackerSlot}>
           <StepTracker
-            stages={STAGE_LABELS}
+            stages={stageLabels()}
             activeIndex={displayActiveIndex}
             progress={displayProgress}
           />
@@ -477,7 +365,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                     onAction={
                       isLast
                         ? (actionLabel) => {
-                            if (/pay/i.test(actionLabel)) {
+                            if (isPayAction(actionLabel, (input?.items || []).length)) {
                               triggerPayment();
                             } else {
                               sendAnswer(actionLabel);
@@ -506,7 +394,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                         : undefined
                     }
                     onOptionSelect={(option) => {
-                      if (isLast && isPaymentStepFromBackend && /pay/i.test(option.label)) {
+                      if (isLast && isPayAction(option.label, (input?.items || []).length)) {
                         triggerPayment();
                       } else {
                         sendAnswer(option.label);
@@ -520,7 +408,26 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
 
           {isTyping && <TypingIndicator />}
 
-          {renderActiveInputWidget()}
+          <ChatInputRenderer
+            input={input}
+            isTyping={isTyping}
+            isPaymentReviewStep={isPaymentReviewStep}
+            isCityStep={isCityStep}
+            textConfig={textConfig}
+            isConsentAcceptStep={isConsentAcceptStep}
+            pendingDocSummary={pendingDocSummary}
+            isPayAction={isPayAction}
+            triggerPayment={triggerPayment}
+            sendAnswer={sendAnswer}
+            resendCountdown={resendCountdown}
+            isPassportPhotoStep={isPassportPhotoStep}
+            isProfilePhotoStep={isProfilePhotoStep}
+            submitFile={submitFile}
+            uploadStatus={uploadStatus}
+            uploadProgress={uploadProgress}
+            uploadError={uploadError}
+            uploadForInputId={uploadForInputId}
+          />
 
           {sessionEnded && !error && <CompletionCard />}
 
@@ -532,7 +439,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
                 className={styles.retryButton}
                 onClick={retry}
               >
-                Retry
+                {t("Retry")}
               </button>
             </div>
           )}
@@ -541,7 +448,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
         {!isTyping && isConsentAcceptStep && showConsentPopup && (
           <ConsentDialog
             messages={pendingConsentMessages}
-            onAccept={() => sendAnswer("I Accept")}
+            onAccept={() => sendAnswer("I Accept", t("I Accept"))}
             onBack={() => {}}
           />
         )}
@@ -561,7 +468,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <CityPicker
               key={input.id}
-              placeholder={input.placeholder || "Write your message"}
+              placeholder={input.placeholder || t("Write your message")}
               onSubmit={sendAnswer}
               disabled={isTyping}
             />
@@ -572,7 +479,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
           <div className={styles.cityComposerWrap}>
             <ChatLanguagePicker
               key={`lang-${input.id}`}
-              placeholder={input.placeholder || "Write your message"}
+              placeholder={input.placeholder || t("Write your message")}
               onSubmit={sendAnswer}
               disabled={isTyping}
             />
@@ -584,7 +491,7 @@ const Chat = ({ language = "English", onBack, onLogout }) => {
             key={input.id}
             onSend={sendAnswer}
             disabled={isTyping || !isTextStep}
-            placeholder="Write your message"
+            placeholder={t("Write your message")}
             inputMode={effectiveTextConfig.inputMode}
             type={effectiveTextConfig.type}
           />

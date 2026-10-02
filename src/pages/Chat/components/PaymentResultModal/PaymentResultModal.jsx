@@ -1,6 +1,7 @@
 import styles from "./PaymentResultModal.module.css";
 import CheckIcon from "../../../../components/icons/CheckIcon";
 import BottomSheet from "../../../../components/BottomSheet/BottomSheet";
+import { t } from "../../../../i18n";
 
 const ErrorIcon = () => (
   <svg
@@ -27,9 +28,9 @@ const PaymentResultModal = ({ data, onClose }) => {
     if (status === "VERIFYING") {
       return (
         <div className={styles.container}>
-          <h2 className={styles.title}>Verifying Payment...</h2>
+          <h2 className={styles.title}>{t("Verifying Payment...")}</h2>
           <p className={styles.message}>
-            Please wait while we securely check your payment status.
+            {t("Please wait while we securely check your payment status.")}
           </p>
         </div>
       );
@@ -41,22 +42,22 @@ const PaymentResultModal = ({ data, onClose }) => {
           <div className={styles.successIconWrap}>
             <CheckIcon />
           </div>
-          <h2 className={styles.title}>Payment Successful!</h2>
+          <h2 className={styles.title}>{t("Payment Successful!")}</h2>
           <p className={styles.message}>
-            Thank you! Your payment has been received and processed successfully.
+            {t("Thank you! Your payment has been received and processed successfully.")}
           </p>
 
           {(txnid || amount) && (
             <div className={styles.detailsBox}>
               {txnid && (
                 <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Transaction ID:</span>
+                  <span className={styles.detailLabel}>{t("Transaction ID:")}</span>
                   <span className={styles.detailValue}>{txnid}</span>
                 </div>
               )}
               {amount && (
                 <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Amount Paid:</span>
+                  <span className={styles.detailLabel}>{t("Amount Paid:")}</span>
                   <span className={styles.detailValue}>₹{amount}</span>
                 </div>
               )}
@@ -72,16 +73,16 @@ const PaymentResultModal = ({ data, onClose }) => {
         <div className={styles.errorIconWrap}>
           <ErrorIcon />
         </div>
-        <h2 className={styles.title}>Payment Failed</h2>
+        <h2 className={styles.title}>{t("Payment Failed")}</h2>
         <p className={styles.message}>
-          Unfortunately, your payment could not be processed at this time.
+          {t("Unfortunately, your payment could not be processed at this time.")}
         </p>
 
         {(txnid || errorMessage) && (
           <div className={styles.detailsBox}>
             {txnid && (
               <div className={styles.detailRow}>
-                <span className={styles.detailLabel}>Transaction ID:</span>
+                <span className={styles.detailLabel}>{t("Transaction ID:")}</span>
                 <span className={styles.detailValue}>{txnid}</span>
               </div>
             )}
@@ -106,7 +107,7 @@ const PaymentResultModal = ({ data, onClose }) => {
       footer={
         !isVerifying && (
           <button type="button" className={styles.closeButton} onClick={onClose}>
-            Close
+            {t("Close")}
           </button>
         )
       }

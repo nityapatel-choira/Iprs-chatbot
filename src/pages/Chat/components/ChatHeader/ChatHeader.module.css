@@ -49,6 +49,12 @@
   font-weight: 500;
   color: #1a1a1a;
   white-space: nowrap;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.langToggle:hover {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .logoutButton {
@@ -64,4 +70,63 @@
 
 .logoutButton:hover {
   color: #0f172a;
+}
+
+.langWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.caret {
+  font-size: 0.6rem;
+  opacity: 0.65;
+}
+
+.langMenu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 30;
+  min-width: 11rem;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.langOption {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  color: #1a1a1a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.langOption:hover {
+  background: #f1f5f9;
+}
+
+.langOptionActive {
+  background: #eef2ff;
+  font-weight: 600;
+}
+
+.langNative {
+  font-size: 0.875rem;
+}
+
+.langName {
+  font-size: 0.75rem;
+  color: #64748b;
 }

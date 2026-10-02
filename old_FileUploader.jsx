@@ -5,13 +5,9 @@ import AlertIcon from "../icons/AlertIcon";
 import CameraIcon from "../icons/CameraIcon";
 import useCameraCapture from "../DocumentScanCard/useCameraCapture";
 import { getPdfFullPreviewUrl } from "../../utils/pdfThumbnail";
+
 import { dataUrlToFile } from "../../utils/fileUtils";
 import styles from "./FileUploader.module.css";
-import { t, t1 } from "../../i18n";
-
-import PreviewModal from "./PreviewModal";
-import ImageCropModal from "./ImageCropModal";
-import PdfPreviewModal from "./PdfPreviewModal";
 
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".pdf"];
 const ALLOWED_MIME_TYPES = new Set([
@@ -22,6 +18,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/x-png",
   "application/pdf",
 ]);
+
 
 function isAllowedFile(file) {
   if (!file) return false;
@@ -34,8 +31,50 @@ function isAllowedFile(file) {
   return validExt || validMime;
 }
 
+const PreviewModal = ({ title, onCancel, onConfirm, confirmLabel, children, footerExtra, openUrl }) => (
+  <div className={styles.cropModalOverlay} onClick={onCancel}>
+    <div className={styles.cropModalHeader} onClick={(e) => e.stopPropagation()}>
+      <span className={styles.cropModalTitle}>{title}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {openUrl && (
+          <a
+            href={openUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: '#60a5fa', textDecoration: 'none', fontSize: '0.875rem', fontWeight: '600' }}
+          >
+            Open ↗
+          </a>
+        )}
+        <button
+          type="button"
+          className={styles.cropModalClose}
+          onClick={onCancel}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+    <div className={styles.cropStage} onClick={(e) => e.stopPropagation()}>
+      {children}
+    </div>
+    <div className={styles.cropFooter} onClick={(e) => e.stopPropagation()}>
+      <button type="button" className={styles.cropCancelBtn} onClick={onCancel}>
+        Cancel
+      </button>
+      {confirmLabel && onConfirm && (
+        <button type="button" className={styles.cropConfirmBtn} onClick={onConfirm}>
+          {confirmLabel}
+        </button>
+      )}
+    </div>
+    {footerExtra}
+  </div>
+);
+
 const FileUploader = ({
-  title = t("Choose a file or drag & drop it here"),
+  title = "Choose a file or drag & drop it here",
   caption = "PNG, JPG/JPEG, PDF",
   accept = "image/*,application/pdf,.jpg,.jpeg,.png,.pdf",
   onFileSelected,
@@ -49,6 +88,7 @@ const FileUploader = ({
 }) => {
   const inputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const imgRef = useRef(null);
 
   const [fileName, setFileName] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -58,6 +98,7 @@ const FileUploader = ({
   const [pendingFile, setPendingFile] = useState(null);
   const [pendingPreviewUrl, setPendingPreviewUrl] = useState(null);
   const [isCropping, setIsCropping] = useState(false);
+  const [cropRect, setCropRect] = useState({ x: 5, y: 5, width: 90, height: 90 });
 
   const [isPdfPreviewing, setIsPdfPreviewing] = useState(false);
   const [pdfImageUrl, setPdfImageUrl] = useState(null);
@@ -106,10 +147,13 @@ const FileUploader = ({
           if (hasExplicitRear) {
             setHasCamera(true);
           } else if (allLabelsEmpty && videoInputs.length > 1) {
+            // Unlabelled multiple cameras (likely mobile)
             setHasCamera(true);
           } else if (!allLabelsEmpty) {
+            // Labelled but no rear camera found
             setHasCamera(false);
           } else {
+            // Single unlabelled camera (likely desktop)
             setHasCamera(false);
           }
         })
@@ -135,6 +179,10 @@ const FileUploader = ({
     capture: captureCamera,
     cancel: cancelCamera,
   } = useCameraCapture({ onCapture: handleCameraCapturedImage });
+
+  const isDraggingHandle = useRef(false);
+  const dragHandleType = useRef(null);
+  const dragStartCoords = useRef({ x: 0, y: 0, rect: { x: 5, y: 5, width: 90, height: 90 } });
 
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null);
 
@@ -163,6 +211,8 @@ const FileUploader = ({
     };
   }, [pendingPreviewUrl]);
 
+
+
   useEffect(() => {
     if (autoOpen && !disabled) {
       if (inputRef.current) inputRef.current.value = "";
@@ -181,7 +231,7 @@ const FileUploader = ({
     setValidationError("");
 
     if (!isAllowedFile(file)) {
-      setValidationError(t("Invalid file format. Please upload a JPG, PNG, or PDF file."));
+      setValidationError("Invalid file format. Please upload a JPG, PNG, or PDF file.");
       return;
     }
 
@@ -192,6 +242,7 @@ const FileUploader = ({
       const url = URL.createObjectURL(file);
       setPendingFile(file);
       setPendingPreviewUrl(url);
+      setCropRect({ x: 5, y: 5, width: 90, height: 90 });
       setIsCropping(true);
     } else if (isPdf) {
       const url = URL.createObjectURL(file);
@@ -211,21 +262,151 @@ const FileUploader = ({
     }
   };
 
-  const clearPending = () => {
+  const handleCancelCrop = () => {
     if (pendingPreviewUrl) {
       URL.revokeObjectURL(pendingPreviewUrl);
     }
     setPendingFile(null);
     setPendingPreviewUrl(null);
     setIsCropping(false);
+  };
+
+  const handleCancelPdfPreview = () => {
+    if (pendingPreviewUrl) {
+      URL.revokeObjectURL(pendingPreviewUrl);
+    }
+    setPendingFile(null);
+    setPendingPreviewUrl(null);
     setIsPdfPreviewing(false);
   };
 
-  const handleConfirmFile = (file) => {
-    setSelectedFile(file);
-    setFileName(file.name);
-    clearPending();
-    onFileSelected?.(file);
+  const handleConfirmPdfUpload = () => {
+    if (!pendingFile) return;
+    const activeFile = pendingFile;
+    setSelectedFile(activeFile);
+    setFileName(activeFile.name);
+    handleCancelPdfPreview();
+    onFileSelected?.(activeFile);
+  };
+
+  const handleConfirmCrop = () => {
+    if (!pendingFile || !pendingPreviewUrl || !imgRef.current) return;
+
+    const img = imgRef.current;
+    const canvas = document.createElement("canvas");
+    const naturalWidth = img.naturalWidth || img.width;
+    const naturalHeight = img.naturalHeight || img.height;
+
+    const cropX = (cropRect.x / 100) * naturalWidth;
+    const cropY = (cropRect.y / 100) * naturalHeight;
+    const cropW = (cropRect.width / 100) * naturalWidth;
+    const cropH = (cropRect.height / 100) * naturalHeight;
+
+    canvas.width = Math.max(1, Math.round(cropW));
+    canvas.height = Math.max(1, Math.round(cropH));
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+    const fileMime =
+      pendingFile.type && pendingFile.type.startsWith("image/") ? pendingFile.type : "image/jpeg";
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          const croppedFile = new File([blob], pendingFile.name, {
+            type: fileMime,
+            lastModified: Date.now(),
+          });
+          setSelectedFile(croppedFile);
+          setFileName(croppedFile.name);
+          onFileSelected?.(croppedFile);
+        }
+        handleCancelCrop();
+      },
+      fileMime,
+      0.92
+    );
+  };
+
+  const handlePointerDown = (handleType, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isDraggingHandle.current = true;
+    dragHandleType.current = handleType;
+    dragStartCoords.current = {
+      x: e.clientX,
+      y: e.clientY,
+      rect: { ...cropRect },
+    };
+
+    if (e.currentTarget.setPointerCapture) {
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // ignore fallback
+      }
+    }
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDraggingHandle.current || !imgRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const imgWidth = imgRef.current.clientWidth;
+    const imgHeight = imgRef.current.clientHeight;
+    if (!imgWidth || !imgHeight) return;
+
+    const deltaX = ((e.clientX - dragStartCoords.current.x) / imgWidth) * 100;
+    const deltaY = ((e.clientY - dragStartCoords.current.y) / imgHeight) * 100;
+    const initialRect = dragStartCoords.current.rect;
+    const handleType = dragHandleType.current;
+
+    let { x, y, width, height } = initialRect;
+
+    if (handleType === "nw") {
+      const newX = Math.max(0, Math.min(initialRect.x + initialRect.width - 10, initialRect.x + deltaX));
+      const newY = Math.max(0, Math.min(initialRect.y + initialRect.height - 10, initialRect.y + deltaY));
+      width = initialRect.width - (newX - initialRect.x);
+      height = initialRect.height - (newY - initialRect.y);
+      x = newX;
+      y = newY;
+    } else if (handleType === "ne") {
+      const newY = Math.max(0, Math.min(initialRect.y + initialRect.height - 10, initialRect.y + deltaY));
+      width = Math.max(10, Math.min(100 - initialRect.x, initialRect.width + deltaX));
+      height = initialRect.height - (newY - initialRect.y);
+      y = newY;
+    } else if (handleType === "sw") {
+      const newX = Math.max(0, Math.min(initialRect.x + initialRect.width - 10, initialRect.x + deltaX));
+      height = Math.max(10, Math.min(100 - initialRect.y, initialRect.height + deltaY));
+      width = initialRect.width - (newX - initialRect.x);
+      x = newX;
+    } else if (handleType === "se") {
+      width = Math.max(10, Math.min(100 - initialRect.x, initialRect.width + deltaX));
+      height = Math.max(10, Math.min(100 - initialRect.y, initialRect.height + deltaY));
+    }
+
+    setCropRect({
+      x: Math.max(0, Math.min(90, x)),
+      y: Math.max(0, Math.min(90, y)),
+      width: Math.max(10, Math.min(100 - x, width)),
+      height: Math.max(10, Math.min(100 - y, height)),
+    });
+  };
+
+  const handlePointerUp = (e) => {
+    if (isDraggingHandle.current) {
+      isDraggingHandle.current = false;
+      dragHandleType.current = null;
+      if (e.currentTarget.releasePointerCapture && e.pointerId !== undefined) {
+        try {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        } catch {
+          // ignore fallback
+        }
+      }
+    }
   };
 
   const handleChange = (e) => {
@@ -312,7 +493,7 @@ const FileUploader = ({
           )}
           
           <span className={styles.title}>
-            {isProcessing ? t("Processing document") : t1("Uploading {0}...", fileName)}
+            {isProcessing ? "Processing document" : `Uploading ${fileName}...`}
           </span>
           {isProcessing && (
             <span className={styles.typingDots}>
@@ -332,7 +513,7 @@ const FileUploader = ({
           )}
           
           <span className={styles.hint}>
-            {isProcessing ? t("Please wait while we extract data.") : t("Please wait while we process your document.")}
+            {isProcessing ? "Please wait while we extract data." : "Please wait while we process your document."}
           </span>
         </div>
       );
@@ -355,9 +536,9 @@ const FileUploader = ({
           <span className={styles.errorIcon}>
             <AlertIcon />
           </span>
-          <span className={styles.title}>{t("Upload failed")}</span>
-          <span className={styles.caption}>{activeErrorMessage || t("Something went wrong.")}</span>
-          <span className={styles.retryLabel}>{t("Tap to try again")}</span>
+          <span className={styles.title}>Upload failed</span>
+          <span className={styles.caption}>{activeErrorMessage || "Something went wrong."}</span>
+          <span className={styles.retryLabel}>Tap to try again</span>
         </div>
       );
     }
@@ -381,7 +562,7 @@ const FileUploader = ({
               disabled={isDisabled}
             >
               <CameraIcon width={18} height={18} />
-              <span>{t("Take Photo")}</span>
+              <span>Take Photo</span>
             </button>
           )}
           <button
@@ -393,7 +574,7 @@ const FileUploader = ({
             }}
             disabled={isDisabled}
           >
-            {t("Choose File")}
+            Choose File
           </button>
         </div>
       </>
@@ -412,7 +593,7 @@ const FileUploader = ({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         role="region"
-        aria-label={t("File upload area")}
+        aria-label="File upload area"
       >
         {renderDropzoneContent()}
       </div>
@@ -433,21 +614,21 @@ const FileUploader = ({
         className={styles.hiddenInput}
         onChange={handleChange}
         disabled={isDisabled}
-        aria-label={t("Take Photo")}
+        aria-label="Take Photo"
       />
 
       {showCameraModal && (
         <PreviewModal
-          title={t("Take Photo / Scan Document")}
+          title="Take Photo / Scan Document"
           onCancel={handleCloseCameraModal}
           onConfirm={cameraStatus === "scanning" ? captureCamera : undefined}
-          confirmLabel={cameraStatus === "scanning" ? t("Capture Photo") : null}
+          confirmLabel={cameraStatus === "scanning" ? "Capture Photo" : null}
           footerExtra={<canvas ref={cameraCanvasRef} className={styles.hiddenInput} aria-hidden="true" />}
         >
           {cameraStatus === "loading" && (
             <div className={styles.spinnerWrap} role="status" aria-live="polite">
               <span className={styles.spinner} />
-              <span className={styles.hint}>{t("Starting camera...")}</span>
+              <span className={styles.hint}>Starting camera...</span>
             </div>
           )}
 
@@ -456,10 +637,10 @@ const FileUploader = ({
               <span className={styles.errorIcon}>
                 <AlertIcon />
               </span>
-              <span className={styles.title}>{t("Camera unavailable")}</span>
-              <span className={styles.caption}>{cameraErrorMessage || t("Could not access camera.")}</span>
+              <span className={styles.title}>Camera unavailable</span>
+              <span className={styles.caption}>{cameraErrorMessage || "Could not access camera."}</span>
               <button type="button" className={styles.cropConfirmBtn} onClick={startCamera}>
-                {t("Try Again")}
+                Try Again
               </button>
             </div>
           )}
@@ -474,22 +655,100 @@ const FileUploader = ({
       )}
 
       {isCropping && pendingPreviewUrl && (
-        <ImageCropModal
-          pendingFile={pendingFile}
-          pendingPreviewUrl={pendingPreviewUrl}
-          onCancel={clearPending}
-          onConfirm={handleConfirmFile}
-        />
+        <PreviewModal
+          title="Crop & Adjust Document"
+          onCancel={handleCancelCrop}
+          onConfirm={handleConfirmCrop}
+          confirmLabel="Use Document"
+        >
+          <div className={styles.cropImageWrapper}>
+            <img
+              ref={imgRef}
+              src={pendingPreviewUrl}
+              alt="Document preview"
+              className={styles.cropImage}
+            />
+            <div
+              className={styles.cropSelectionBox}
+              style={{
+                left: `${cropRect.x}%`,
+                top: `${cropRect.y}%`,
+                width: `${cropRect.width}%`,
+                height: `${cropRect.height}%`,
+              }}
+            >
+              <span
+                className={`${styles.cropHandle} ${styles.handleNw}`}
+                onPointerDown={(e) => handlePointerDown("nw", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
+              <span
+                className={`${styles.cropHandle} ${styles.handleNe}`}
+                onPointerDown={(e) => handlePointerDown("ne", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
+              <span
+                className={`${styles.cropHandle} ${styles.handleSw}`}
+                onPointerDown={(e) => handlePointerDown("sw", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
+              <span
+                className={`${styles.cropHandle} ${styles.handleSe}`}
+                onPointerDown={(e) => handlePointerDown("se", e)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+              />
+            </div>
+          </div>
+        </PreviewModal>
       )}
 
       {isPdfPreviewing && pendingFile && (
-        <PdfPreviewModal
-          pendingFile={pendingFile}
-          pendingPreviewUrl={pendingPreviewUrl}
-          pdfImageUrl={pdfImageUrl}
-          onCancel={clearPending}
-          onConfirm={handleConfirmFile}
-        />
+        <PreviewModal
+          title="Preview PDF Document"
+          onCancel={handleCancelPdfPreview}
+          onConfirm={handleConfirmPdfUpload}
+          confirmLabel="Use Document"
+          openUrl={pendingPreviewUrl}
+        >
+          <div className={styles.cropImageWrapper} style={{ overflow: 'hidden', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <object
+              data={pendingPreviewUrl}
+              type="application/pdf"
+              className={styles.pdfObject}
+            >
+              <iframe
+                src={pendingPreviewUrl}
+                title="PDF preview"
+                className={styles.pdfObject}
+              >
+                <div className={styles.spinnerWrap} role="alert">
+                  <span className={styles.hint} style={{ color: '#ef4444' }}>Preview unavailable</span>
+                </div>
+              </iframe>
+            </object>
+            
+            <div className={styles.mobilePdfFallback}>
+              {pdfImageUrl === 'error' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <span className={styles.errorIcon} style={{ fontSize: '2rem' }}>⚠️</span>
+                  <span style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: '600' }}>Preview unavailable</span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.75rem', textAlign: 'center' }}>The PDF could not be rendered.</span>
+                </div>
+              ) : pdfImageUrl ? (
+                <img src={pdfImageUrl} alt="PDF Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                  <span className={styles.spinner} />
+                  <span style={{ color: '#fff', fontSize: '0.875rem' }}>Loading PDF preview...</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </PreviewModal>
       )}
     </div>
   );

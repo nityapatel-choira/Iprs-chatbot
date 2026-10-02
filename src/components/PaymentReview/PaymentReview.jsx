@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import BotAvatar from "../../pages/Chat/components/BotAvatar/BotAvatar";
 import QuickReplyCard from "../QuickReplyCard/QuickReplyCard";
 import styles from "./PaymentReview.module.css";
+import { t } from "../../i18n";
 
 function extractRawText(message, data) {
   if (Array.isArray(message?.richText)) {
@@ -61,8 +62,16 @@ function normalizeReviewPayload(data, input, message) {
   const sectionMap = new Map();
   let activeSectionTitle = "Personal Details";
 
-  for (const line of lines) {
-    if (!introTitle && /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i.test(line)) {
+  for (const [index, line] of lines.entries()) {
+    // The intro is the sentence describeReview() puts above the body. Matching
+    // its English wording stopped working the moment the API began translating
+    // it - the line then fell through and was read as a section heading, so the
+    // first real section's fields were filed under the intro sentence. Its
+    // position is what identifies it in any language: first line, and carrying
+    // no label, which every other line in the body does.
+    const looksLikeIntro = index === 0 && !line.includes(":") && !/^[-*\u2022]/.test(line);
+    if (!introTitle && (looksLikeIntro
+        || /check\s+your\s+details|review\s+your\s+details|review\s+all\s+the\s+details/i.test(line))) {
       introTitle = line;
       continue;
     }
@@ -121,7 +130,7 @@ function normalizeReviewPayload(data, input, message) {
   }
 
   return {
-    introTitle: introTitle || "Please review all your details before proceeding to payment.",
+    introTitle: introTitle || t("Please review all your details before proceeding to payment."),
     sections,
     actions,
   };
@@ -150,7 +159,7 @@ const PaymentReview = ({ data, input, message, onAction }) => {
         <div key={`${section.title}-${idx}`} className={styles.sectionRow}>
           <BotAvatar />
           <div className={styles.sectionCard}>
-            <div className={styles.headerPill}>{section.title}</div>
+            <div className={styles.headerPill}>{t(section.title)}</div>
             <div className={styles.fieldsList}>
               {(section.fields || []).map((field, fIdx) => (
                 <div key={`${field.label}-${field.value}-${fIdx}`} className={styles.fieldRow}>
