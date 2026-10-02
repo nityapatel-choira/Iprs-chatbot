@@ -112,3 +112,10 @@
     height: 3px;
   }
 }
+
+.stepNumber {
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}

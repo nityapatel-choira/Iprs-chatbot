@@ -42,6 +42,12 @@ const PROFILE_PHOTO_VARIABLE_ID = "vww01qa7jizgywxikfu1yu48x";
 // recognises its payment blocks by id (see paymentBlockIds.js).
 const MOTHER_TONGUE_VARIABLE_ID = "vh4f2w089zbn113mboiqtm37f";
 const PLACE_OF_BIRTH_VARIABLE_ID = "vy80zc5eoveac6euqlurki58o";
+// The two alias steps. Both accept a comma-separated list, which the flow's own
+// wording never says - so people enter one name and move on.
+const ALIAS_VARIABLE_IDS = new Set([
+  "vixob6tfcj9w3m44slwh3p1kq", // Your alias / stage name
+  "vknu81teyb5mr1zsrzggz6wzb", // Alias / Trader Name
+]);
 
 // Only these input types render the free-text composer.
 const TEXT_INPUT_CONFIG = {
@@ -484,6 +490,15 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
               disabled={isTyping}
             />
           </div>
+        )}
+
+        {/* The alias steps take a list, which nothing on screen said - so people
+            entered one name and moved on. Shown here rather than added to the
+            flow's wording, which would mean editing a production Typebot. */}
+        {showComposer && ALIAS_VARIABLE_IDS.has(input?.options?.variableId) && (
+          <p className={styles.inputHint}>
+            {t("You can enter several, separated by commas - for example: Alias 1, Alias 2, Alias 3")}
+          </p>
         )}
 
         {showComposer && (
