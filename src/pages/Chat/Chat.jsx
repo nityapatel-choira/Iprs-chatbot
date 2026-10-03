@@ -121,6 +121,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     isCityStep,
     isMotherTongueStep,
     isPaymentReviewStep,
+    isSongLanguageStep,
   } = useMemo(() => {
     let tText = "";
     for (
@@ -147,14 +148,18 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     const _isProfilePhotoStep =
       input?.type === "file input" &&
       (input.options?.variableId === PROFILE_PHOTO_VARIABLE_ID ||
-        /profile photo/i.test(tText));
+        /profile photo|प्रोफ़ाइल फोटो|પ્રોફાઇલ ફોટો|প্রোফাইল ফটো/i.test(tText) ||
+        /profile photo|प्रोफ़ाइल फोटो|પ્રોફાઇલ ફોટો|প্রোফাইল ফটো/i.test(input.title || ""));
 
     let _isCityStep = false;
     let _isMotherTongueStep = false;
+    let _isSongLanguageStep = false;
 
     const stepVariableId = input?.options?.variableId;
     if (input?.type === "city input") {
       _isCityStep = true;
+    } else if (input?.id === "work-language") {
+      _isSongLanguageStep = true;
     } else if (stepVariableId === MOTHER_TONGUE_VARIABLE_ID) {
       _isMotherTongueStep = true;
     } else if (stepVariableId === PLACE_OF_BIRTH_VARIABLE_ID) {
@@ -191,6 +196,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
       isCityStep: _isCityStep,
       isMotherTongueStep: _isMotherTongueStep,
       isPaymentReviewStep: _isPaymentReviewStep,
+      isSongLanguageStep: _isSongLanguageStep,
     };
   }, [history, input, lastMessage, lastMessageText]);
 
@@ -241,11 +247,17 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
       // extract seconds from the translated message text only when a Resend button is offered
       const offersResend = (input?.items || []).some(
         (it) => (it.content || it.label || "") === t("Resend OTP") || /resend/i.test(it.content || ""));
-      const match = offersResend ? /\b(\d{1,3})\b/.exec(text) : null;
-      if (match) {
-        const seconds = parseInt(match[1], 10);
-        if (!isNaN(seconds) && seconds > 0) {
-          setTimeout(() => setResendCountdown(seconds), 0);
+      
+      if (offersResend) {
+        // Extract all numbers from the text to avoid matching "4" in "4-digit OTP"
+        const matches = [...text.matchAll(/\b(\d{1,3})\b/g)];
+        if (matches.length > 0) {
+          // Take the largest number found (e.g. 60 or 30, ignoring small numbers like 4)
+          const seconds = Math.max(...matches.map(m => parseInt(m[1], 10)));
+          // Only start a timer if it's a reasonable countdown value (>= 10)
+          if (!isNaN(seconds) && seconds >= 10) {
+            setTimeout(() => setResendCountdown(seconds), 0);
+          }
         }
       }
     }
@@ -318,7 +330,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
 
   const isTextStep = Boolean(effectiveTextConfig) && !isTyping;
   const showComposer =
-    Boolean(effectiveTextConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep;
+    Boolean(effectiveTextConfig) && !isCityStep && !isPaymentReviewStep && !isMotherTongueStep && !isSongLanguageStep;
 
 
 
@@ -488,6 +500,18 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
               placeholder={input.placeholder || t("Write your message")}
               onSubmit={sendAnswer}
               disabled={isTyping}
+            />
+          </div>
+        )}
+
+        {!isTyping && isSongLanguageStep && (
+          <div className={styles.cityComposerWrap}>
+            <ChatLanguagePicker
+              key={`multi-lang-${input.id}`}
+              placeholder={input.placeholder || t("Write your message")}
+              onSubmit={sendAnswer}
+              disabled={isTyping}
+              isMulti={true}
             />
           </div>
         )}

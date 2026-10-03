@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useCombobox } from "downshift";
 import SendIcon from "../icons/SendIcon";
 import styles from "./SearchablePicker.module.css";
@@ -45,6 +45,8 @@ function SearchablePicker({
   noMatchesText,
   showMenu,
   isSubmitDisabled,
+  onSelectSuggestion,
+  stateReducer,
 }) {
   const [containerWidth, setContainerWidth] = useState(360);
   const [isMobile, setIsMobile] = useState(false);
@@ -63,12 +65,14 @@ function SearchablePicker({
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
-  const suggestions = getFittingSuggestions(
-    matchingItems,
-    containerWidth,
-    isMobile,
-    getEstimatedWidth
-  );
+  const suggestions = useMemo(() => {
+    return getFittingSuggestions(
+      matchingItems,
+      containerWidth,
+      isMobile,
+      getEstimatedWidth
+    );
+  }, [matchingItems, containerWidth, isMobile, getEstimatedWidth]);
 
   const {
     isOpen,
@@ -84,11 +88,16 @@ function SearchablePicker({
     },
     onSelectedItemChange({ selectedItem }) {
       if (selectedItem && !disabled) {
-        onSubmit?.(selectedItem);
+        if (onSelectSuggestion) {
+          onSelectSuggestion(selectedItem);
+        } else {
+          onSubmit?.(selectedItem);
+        }
       }
     },
+    stateReducer: stateReducer || ((state, actionAndChanges) => actionAndChanges.changes),
     itemToString(item) {
-      return item ? item.name || item.label || "" : "";
+      return item ? item.localName || item.name || item.label || "" : "";
     },
   });
 
