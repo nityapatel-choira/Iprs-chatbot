@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useCombobox } from "downshift";
 import { iso6393 } from 'iso-639-3';
 import SearchablePicker from "../SearchablePicker/SearchablePicker";
 import { t } from "../../i18n";
@@ -133,10 +134,12 @@ function getEstimatedPillWidth(item) {
   return Math.ceil(item.name.length * charWidth + padding);
 }
 
-function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your message") }) {
+function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your message"), clearOnSubmit = false, isMulti = false }) {
   const [inputValue, setInputValue] = useState("");
 
-  const trimmed = (inputValue || "").trim();
+  const parts = isMulti ? inputValue.split(",") : [inputValue];
+  const lastPart = parts[parts.length - 1] || "";
+  const trimmed = lastPart.trim();
   const isMinLength = trimmed.length >= 2;
   
   const matchingLanguages = useMemo(() => {
@@ -152,17 +155,57 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your me
     return matchingLanguages.length > 0 ? matchingLanguages[0] : null;
   }, [trimmed, matchingLanguages]);
 
-  const handleSubmit = (item) => {
-    if (disabled) return;
-    const lower = trimmed.toLowerCase();
-    if (LANGUAGE_MAP.has(lower)) {
-      onSubmit?.(LANGUAGE_MAP.get(lower));
-    } else if (item && LANGUAGE_MAP.has(item.name.toLowerCase())) {
-      onSubmit?.(item.name);
+  const handleSelectSuggestion = (item) => {
+    if (disabled || !item) return;
+    
+    const itemName = LANGUAGE_MAP.has(item.name.toLowerCase()) ? LANGUAGE_MAP.get(item.name.toLowerCase()) : item.name;
+    
+    if (isMulti) {
+      const allParts = inputValue.split(",");
+      allParts.pop(); // remove partial search term
+      const newValue = [...allParts.map(p => p.trim()).filter(Boolean), itemName].join(", ");
+      setInputValue(newValue);
     }
   };
 
-  const isSubmitDisabled = disabled || (!LANGUAGE_MAP.has(trimmed.toLowerCase()) && !canonicalMatch);
+  const stateReducer = (state, actionAndChanges) => {
+    const { type, changes } = actionAndChanges;
+    if (isMulti && (type === useCombobox.stateChangeTypes.ItemClick || type === useCombobox.stateChangeTypes.InputKeyDownEnter)) {
+      // Prevent Downshift from overriding the input in multi-select mode
+      return {
+        ...changes,
+        inputValue: state.inputValue,
+      };
+    }
+    return changes;
+  };
+
+  const handleSubmit = (item) => {
+    if (disabled) return;
+    const lower = trimmed.toLowerCase();
+    let submittedValue = null;
+    
+    if (isMulti) {
+      submittedValue = inputValue.split(",").map(s => s.trim()).filter(Boolean).join(", ");
+    } else {
+      if (LANGUAGE_MAP.has(lower)) {
+        submittedValue = LANGUAGE_MAP.get(lower);
+      } else if (item && LANGUAGE_MAP.has(item.name.toLowerCase())) {
+        submittedValue = item.name;
+      }
+    }
+
+    if (submittedValue) {
+      onSubmit?.(submittedValue);
+      if (clearOnSubmit) {
+        setInputValue("");
+      }
+    }
+  };
+
+  const isSubmitDisabled = disabled || (isMulti 
+    ? inputValue.trim().length === 0 
+    : (!LANGUAGE_MAP.has(trimmed.toLowerCase()) && !canonicalMatch));
 
   return (
     <SearchablePicker
@@ -178,6 +221,8 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your me
       noMatchesText={t("No languages found")}
       showMenu={isMinLength}
       isSubmitDisabled={isSubmitDisabled}
+      onSelectSuggestion={isMulti ? handleSelectSuggestion : undefined}
+      stateReducer={stateReducer}
     />
   );
 }
