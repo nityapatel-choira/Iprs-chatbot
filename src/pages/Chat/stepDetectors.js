@@ -38,6 +38,10 @@ export function isMotherTongueStep(input, trailingBotText) {
   return false;
 }
 
+export function isSongLanguageStep(input) {
+  return input?.id === "work-language";
+}
+
 export function isPaymentReviewStep(input, lastMessage, lastMessageText) {
   return (
     (input?.id === "payment-review" ||

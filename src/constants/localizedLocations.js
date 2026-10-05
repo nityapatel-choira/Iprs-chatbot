@@ -83,6 +83,7 @@ export const CITY_TRANSLATIONS = {
   "kota": { hi: "कोटा", mr: "कोटा", gu: "કોટા", bn: "কোটা" },
   "guwahati": { hi: "गुवाहाटी", mr: "गुवाहाटी", gu: "ગુવાહાટી", bn: "গুয়াহাটি" },
   "chandigarh": { hi: "चंडीगढ़", mr: "चंदीगढ", gu: "ચંદીગઢ", bn: "চণ্ডীগড়" },
+  "ballia": { hi: "बलिया", mr: "बलिया", gu: "બલિયા", bn: "বালিয়া" },
 };
 
 // Returns localized names, falling back to English if missing.

@@ -1,11 +1,42 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./FileUploader.module.css";
 import { t } from "../../i18n";
 import PreviewModal from "./PreviewModal";
+import { detectDocumentEdges } from "../../services/apiClient";
 
 function ImageCropModal({ pendingFile, pendingPreviewUrl, onCancel, onConfirm }) {
   const imgRef = useRef(null);
+  // The old default was a fixed 90% box the member had to drag to their document
+  // every time. The reader can see where the page actually is, so the box starts
+  // there instead - and stays at the default if it cannot, which is what happens
+  // for a photo with no clear page in it.
   const [cropRect, setCropRect] = useState({ x: 5, y: 5, width: 90, height: 90 });
+  useEffect(() => {
+    let live = true;
+    if (!pendingFile) return undefined;
+
+    // Nothing is set synchronously here: the box keeps its default until the
+    // answer arrives, so there is no second render before the image has even
+    // been read.
+    detectDocumentEdges(pendingFile).then((found) => {
+      if (!live) return;
+      if (found?.detected && found.rect) {
+        // A little air around the edges: a crop flush to the detected border
+        // shaves the characters sitting right on it.
+        const pad = 1.5;
+        setCropRect({
+          x: Math.max(0, found.rect.x * 100 - pad),
+          y: Math.max(0, found.rect.y * 100 - pad),
+          width: Math.min(100, found.rect.width * 100 + pad * 2),
+          height: Math.min(100, found.rect.height * 100 + pad * 2),
+        });
+      }
+    });
+
+    return () => {
+      live = false;
+    };
+  }, [pendingFile]);
   const isDraggingHandle = useRef(false);
   const dragHandleType = useRef(null);
   const dragStartCoords = useRef({ x: 0, y: 0, rect: { x: 5, y: 5, width: 90, height: 90 } });
