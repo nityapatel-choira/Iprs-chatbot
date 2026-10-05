@@ -58,48 +58,31 @@
 }
 
 .logoutButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border: none;
   background: transparent;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: #64748b;
   cursor: pointer;
-  padding: 0.4rem;
-  transition: color 0.2s;
-  position: relative;
+  padding: 0.5rem;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  transition: all 0.2s ease;
 }
 
 .logoutButton:hover {
   color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
 }
 
-.logoutButton::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  background-color: #1e293b;
-  color: #ffffff;
-  font-size: 0.75rem;
-  font-weight: 500;
-  font-family: var(--font-body, inherit);
-  border-radius: 6px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: all 0.2s ease;
-  z-index: 50;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.logoutButton:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+@media (max-width: 480px) {
+  .logoutButton {
+    font-size: 1.15rem;
+    padding: 0.4rem;
+  }
 }
 
 .langWrap {
@@ -160,3 +143,5 @@
   font-size: 0.75rem;
   color: #64748b;
 }
+
+
