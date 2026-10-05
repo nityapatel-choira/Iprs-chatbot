@@ -1,6 +1,6 @@
-const LogoutIcon = () => {
+const LogoutIcon = ({ className }) => {
   return (
-    <svg viewBox="0 0 20 20" width="16" height="16" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 20 20" width="1.5em" height="1.5em" fill="none" aria-hidden="true" className={className}>
       <path
         d="M12.5 6V4.5A1.5 1.5 0 0 0 11 3H4.5A1.5 1.5 0 0 0 3 4.5v11A1.5 1.5 0 0 0 4.5 17H11a1.5 1.5 0 0 0 1.5-1.5V14"
         stroke="currentColor"

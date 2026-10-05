@@ -60,16 +60,29 @@
 .logoutButton {
   border: none;
   background: transparent;
-  font-size: 0.8125rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
-  padding: 0.4rem 0.2rem;
+  padding: 0.5rem;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  transition: all 0.2s ease;
 }
 
 .logoutButton:hover {
   color: #0f172a;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 480px) {
+  .logoutButton {
+    font-size: 1.15rem;
+    padding: 0.4rem;
+  }
 }
 
 .langWrap {
@@ -131,14 +144,4 @@
   color: #64748b;
 }
 
-.logoutButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.35rem;
-  border-radius: 7px;
-}
 
-.logoutButton:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
