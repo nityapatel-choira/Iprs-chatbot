@@ -1,3 +1,4 @@
+import CheckIcon from "../icons/CheckIcon";
 import styles from "./StepTracker.module.css";
 
 const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
@@ -17,14 +18,25 @@ const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
         <div className={styles.track}>
           {stages.map((stage, i) => {
             const status = i < effectiveActiveIndex ? "completed" : i === effectiveActiveIndex ? "active" : "pending";
+            // A number says where you are in a way four small icons could not:
+            // nothing about a bank or a music note tells you it is step 2 of 4,
+            // or how many are left. A finished step keeps a tick instead, because
+            // a number on its own cannot show that it is behind you.
             return (
               <div key={stage} className={styles.node}>
                 <span
                   className={`${styles.circle} ${styles[status]}`}
+                  // The stage name alone does not say where it sits in the
+                  // sequence; a screen reader gets the position and the state.
                   aria-label={`${stage}${status === "completed" ? " (completed)" : status === "active" ? " (current)" : ""}`}
                   aria-current={status === "active" ? "step" : undefined}
+                  title={stage}
                 >
-                  {i + 1}
+                  {status === "completed" ? (
+                    <CheckIcon />
+                  ) : (
+                    <span className={styles.stepNumber}>{i + 1}</span>
+                  )}
                 </span>
               </div>
             );

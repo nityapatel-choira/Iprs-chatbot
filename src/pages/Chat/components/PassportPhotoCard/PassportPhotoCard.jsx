@@ -47,48 +47,43 @@ const PassportPhotoCard = ({
     );
   }
 
-  if (mode === "upload") {
-    return (
-      <FileUploader
-        title={title || t("Upload your Passport photo")}
-        caption="PNG, JPG/JPEG"
-        accept="image/*,.jpg,.jpeg,.png"
-        onFileSelected={onFileSelected}
-        onCameraClick={() => setMode("camera")}
-        status={status}
-        progress={progress}
-        errorMessage={errorMessage}
-        disabled={disabled}
-        autoOpen
-      />
-    );
-  }
-
   return (
-    <div className={styles.wrap}>
-      <span className={styles.title}>{title || t("Passport Size Photo")}</span>
-      {caption && <span className={styles.caption}>{caption}</span>}
-      <div className={styles.choiceRow}>
-        <button
-          type="button"
-          className={styles.choiceButton}
-          onClick={() => setMode("camera")}
-          disabled={disabled}
-        >
-          <CameraIcon width={20} height={20} />
-          {t("Scan Face")}
-        </button>
-        <button
-          type="button"
-          className={`${styles.choiceButton} ${styles.choiceButtonSecondary}`}
-          onClick={() => setMode("upload")}
-          disabled={disabled}
-        >
-          <UploadCloudIcon />
-          {t("Upload Photo")}
-        </button>
-      </div>
-    </div>
+    <FileUploader
+      title={title || t("Upload your Passport photo")}
+      caption={caption || "PNG, JPG/JPEG"}
+      accept="image/*,.jpg,.jpeg,.png"
+      onFileSelected={onFileSelected}
+      status={status}
+      progress={progress}
+      errorMessage={errorMessage}
+      disabled={disabled}
+      renderCustomUI={({ openFilePicker, isUploading }) => (
+        <div className={styles.wrap}>
+          <span className={styles.title}>{title || t("Passport Size Photo")}</span>
+          {caption && <span className={styles.caption}>{caption}</span>}
+          <div className={styles.choiceRow}>
+            <button
+              type="button"
+              className={styles.choiceButton}
+              onClick={() => setMode("camera")}
+              disabled={disabled || isUploading}
+            >
+              <CameraIcon width={20} height={20} />
+              {t("Scan Face")}
+            </button>
+            <button
+              type="button"
+              className={`${styles.choiceButton} ${styles.choiceButtonSecondary}`}
+              onClick={openFilePicker}
+              disabled={disabled || isUploading}
+            >
+              <UploadCloudIcon />
+              {isUploading ? t("Uploading...") : t("Upload Photo")}
+            </button>
+          </div>
+        </div>
+      )}
+    />
   );
 };
 

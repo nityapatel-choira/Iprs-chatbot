@@ -46,6 +46,9 @@ const FileUploader = ({
   disabled,
   autoOpen = false,
   requireRearCamera = true,
+  preserveLayout = false,
+  disableDropzoneClick = false,
+  renderCustomUI,
 }) => {
   const inputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -301,7 +304,7 @@ const FileUploader = ({
   const activeErrorMessage = validationError || errorMessage;
 
   function renderDropzoneContent() {
-    if (effectiveStatus === "uploading" || effectiveStatus === "processing") {
+    if ((effectiveStatus === "uploading" || effectiveStatus === "processing") && !preserveLayout) {
       const isProcessing = effectiveStatus === "processing";
       return (
         <div className={styles.spinnerWrap} role="status" aria-live="polite">
@@ -338,7 +341,7 @@ const FileUploader = ({
       );
     }
 
-    if (effectiveStatus === "success") {
+    if (effectiveStatus === "success" && !preserveLayout) {
       return (
         <div className={styles.spinnerWrap} role="status" aria-live="polite">
           <span className={styles.successIcon}>
@@ -349,7 +352,7 @@ const FileUploader = ({
       );
     }
 
-    if (effectiveStatus === "error") {
+    if (effectiveStatus === "error" && !preserveLayout) {
       return (
         <div className={styles.spinnerWrap} role="alert">
           <span className={styles.errorIcon}>
@@ -393,7 +396,7 @@ const FileUploader = ({
             }}
             disabled={isDisabled}
           >
-            {t("Choose File")}
+            {busy ? t("Uploading...") : t("Choose File")}
           </button>
         </div>
       </>
@@ -403,18 +406,19 @@ const FileUploader = ({
   return (
     <div className={styles.wrap}>
       <div
-        className={`${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""} ${
+        className={renderCustomUI ? "" : `${styles.dropzone} ${isDragging ? styles.dropzoneDragging : ""} ${
           busy ? styles.dropzoneUploading : ""
-        } ${effectiveStatus === "error" ? styles.dropzoneError : ""}`}
-        onClick={handleClick}
+        } ${effectiveStatus === "error" ? styles.dropzoneError : ""} ${disableDropzoneClick ? styles.dropzoneNoClick : ""}`}
+        onClick={renderCustomUI || disableDropzoneClick ? undefined : handleClick}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        role="region"
-        aria-label={t("File upload area")}
+        role={renderCustomUI ? undefined : "region"}
+        aria-label={renderCustomUI ? undefined : t("File upload area")}
       >
-        {renderDropzoneContent()}
+        {/* eslint-disable-next-line react-hooks/refs */}
+        {renderCustomUI ? renderCustomUI({ openFilePicker: handleClick, isUploading: busy, status: effectiveStatus, progress }) : renderDropzoneContent()}
       </div>
       <input
         ref={inputRef}

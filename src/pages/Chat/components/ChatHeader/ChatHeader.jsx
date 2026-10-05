@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import TranslateIcon from "../../../../components/icons/TranslateIcon";
+import LogoutIcon from "../../../../components/icons/LogoutIcon";
 import { LANGUAGES } from "../../../../constants/languages";
 import styles from "./ChatHeader.module.css";
 import { t } from "../../../../i18n";
 
-import LogoutIcon from "../../../../components/icons/LogoutIcon";
-
 const ChatHeader = ({ title, language, languageCode, onBack, onLogout, onChangeLanguage }) => {
   const [open, setOpen] = useState(false);
+  const [canHover, setCanHover] = useState(false);
   const wrapRef = useRef(null);
+
+  useEffect(() => {
+    setCanHover(window.matchMedia("(hover: hover)").matches);
+  }, []);
 
   // The menu floats over the chat with no backdrop behind it, so closing it on a
   // tap elsewhere (or Escape) has to be handled here.
@@ -84,8 +88,11 @@ const ChatHeader = ({ title, language, languageCode, onBack, onLogout, onChangeL
           className={styles.logoutButton}
           onClick={onLogout}
           aria-label={t("Logout")}
-          title={t("Logout")}
+          title={canHover ? t("Logout") : undefined}
         >
+          {/* The word was the widest thing in the header and had to be
+              translated four ways; the symbol reads the same in all of them.
+              The label stays for screen readers and as the tooltip. */}
           <LogoutIcon />
         </button>
       )}
