@@ -26,6 +26,9 @@ const StepTracker = ({ stages, activeIndex, progress = 0 }) => {
               <div key={stage} className={styles.node}>
                 <span
                   className={`${styles.circle} ${styles[status]}`}
+                  // The stage name alone does not say where it sits in the
+                  // sequence; a screen reader gets the position and the state.
+                  aria-label={`${stage}${status === "completed" ? " (completed)" : status === "active" ? " (current)" : ""}`}
                   aria-current={status === "active" ? "step" : undefined}
                   title={stage}
                 >

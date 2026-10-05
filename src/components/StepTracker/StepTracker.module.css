@@ -55,7 +55,9 @@
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
   border-radius: 50%;
   transition: all 0.3s var(--ease, ease);
 }
@@ -87,6 +89,15 @@
   transition-delay: var(--line-duration);
 }
 
+.circle.active {
+  box-shadow: 0 0 0 2px #007BFF, 0 0 0 5px rgba(0, 123, 255, 0.25);
+}
+
+.circle.completed {
+  background: #16a34a;
+  box-shadow: 0 0 0 2px #16a34a;
+}
+
 .circle.pending {
   border: none;
   background: #e2e8f0;
@@ -97,7 +108,7 @@
   .circle {
     width: 32px;
     height: 32px;
-    font-size: 18px;
+    font-size: 14px;
   }
 }
 
@@ -105,7 +116,7 @@
   .circle {
     width: 26px;
     height: 26px;
-    font-size: 15px;
+    font-size: 12px;
   }
 
   .progressBarBg {
