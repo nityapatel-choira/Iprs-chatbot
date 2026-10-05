@@ -28,6 +28,26 @@ function toRichTextMessages(messages) {
   return result;
 }
 
+// The backend replays a returning member's saved answers and sends the whole conversation back
+// (`data.history`: bot bubbles and the member's own answers, in order). Drawing it as ordinary
+// bubbles is what makes a relogin feel like the chat never closed, instead of a recap card.
+function toReplayedHistory(history) {
+  if (!Array.isArray(history)) return [];
+  const result = [];
+  for (const entry of history) {
+    if (entry?.sender === "user") {
+      const file = Array.isArray(entry.attachedFileUrls) ? entry.attachedFileUrls[0] : null;
+      const text = file ? decodeURIComponent(String(file).split("?")[0].split("/").pop() || "") : entry.answer;
+      if (typeof text === "string" && text.trim()) {
+        result.push({ id: entry.id ?? nextId(), sender: "user", kind: "text", text });
+      }
+    } else {
+      result.push(...toRichTextMessages([entry]));
+    }
+  }
+  return result;
+}
+
 // Wraps terminal AI reply as a richText message.
 function replyToRichTextMessage(data) {
   if (Array.isArray(data?.messages) && data.messages.length > 0) return null;
@@ -88,6 +108,12 @@ export function classifySessionEnded(data) {
 }
 
 function applyConversationResponse(state, data) {
+  const replayed = toReplayedHistory(data?.history);
+  if (replayed.length > 0) {
+    // A relogin starts from an empty screen; anything already shown (the resume offer) stays above.
+    state.history = [...state.history, ...replayed];
+  }
+
   const replyMessage = replyToRichTextMessage(data);
   const incomingMessages = replyMessage ? [replyMessage] : toRichTextMessages(data?.messages);
   const isSessionEnded = classifySessionEnded(data);
