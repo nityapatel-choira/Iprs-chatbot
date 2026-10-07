@@ -1,0 +1,40 @@
+.cancelButton {
+  flex: 1;
+  padding: 12px 20px;
+  min-height: 44px;
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: 16px;
+  background: #ffffff;
+  color: #1a1a1a;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.logoutButton {
+  flex: 1;
+  padding: 8px 20px;
+  min-height: 44px;
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(90deg, #1a5ce6 39%, #3b7aff 100%);
+  box-shadow: 0 0 12px rgba(59, 122, 255, 0.2);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s var(--ease);
+}
+
+.logoutButton:active {
+  transform: scale(0.98);
+}
+
+.bodyText {
+  margin: 10px 0 20px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: #333333;
+}
