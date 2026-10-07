@@ -1,11 +1,13 @@
 .scrim {
   position: fixed;
   inset: 0;
-  background: rgba(39, 39, 39, 0.7);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: flex-end;
   justify-content: center;
   z-index: 100;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   animation: fadeIn 0.2s var(--ease);
 }
 
@@ -98,6 +100,15 @@
     border-radius: 20px;
     padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
     animation: fadeUp 0.25s var(--ease);
+  }
+
+  .transparentDesktop {
+    background: transparent;
+  }
+
+  .transparentDesktop .sheet {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--card-border, #e2e8f0);
   }
 
   @keyframes fadeUp {

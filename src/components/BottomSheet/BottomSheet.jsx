@@ -3,7 +3,7 @@ import CloseIcon from "../icons/CloseIcon";
 import styles from "./BottomSheet.module.css";
 import { t } from "../../i18n";
 
-const BottomSheet = ({ open, title, children, footer, onClose }) => {
+const BottomSheet = ({ open, title, children, footer, onClose, transparentDesktop = false, hideDivider = false }) => {
   useEffect(() => {
     if (!open) return undefined;
     const handleKeyDown = (e) => {
@@ -16,7 +16,7 @@ const BottomSheet = ({ open, title, children, footer, onClose }) => {
   if (!open) return null;
 
   return (
-    <div className={styles.scrim} role="presentation" onClick={onClose}>
+    <div className={`${styles.scrim} ${transparentDesktop ? styles.transparentDesktop : ""}`} role="presentation" onClick={onClose}>
       <div
         className={styles.sheet}
         role="dialog"
@@ -34,7 +34,7 @@ const BottomSheet = ({ open, title, children, footer, onClose }) => {
         <div className={styles.body}>{children}</div>
         {footer && (
           <>
-            <div className={styles.divider} aria-hidden="true" />
+            {!hideDivider && <div className={styles.divider} aria-hidden="true" />}
             <div className={styles.footer}>{footer}</div>
           </>
         )}

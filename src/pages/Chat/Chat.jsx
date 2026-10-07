@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useVisualViewport } from "../../hooks/useVisualViewport";
 import CityPicker from "../../components/CityPicker/CityPicker";
 import ChatLanguagePicker from "../../components/ChatLanguagePicker/ChatLanguagePicker";
-import CompletionCard from "./components/CompletionCard/CompletionCard";
 import FeeSummaryCard from "../../components/FeeSummaryCard/FeeSummaryCard";
 import ConsentDialog from "./components/ConsentDialog/ConsentDialog";
 import DeclarationSheet from "./components/DeclarationSheet/DeclarationSheet";
@@ -447,7 +446,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
             uploadForInputId={uploadForInputId}
           />
 
-          {sessionEnded && !error && <CompletionCard />}
+          {/* sessionEnded && !error && <CompletionCard /> */}
 
           {error && (
             <div className={styles.errorBanner} role="alert">

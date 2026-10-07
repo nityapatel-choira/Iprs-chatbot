@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import TranslateIcon from "../../../../components/icons/TranslateIcon";
 import LogoutIcon from "../../../../components/icons/LogoutIcon";
+import LogoutConfirmSheet from "../../../../components/LogoutConfirmSheet/LogoutConfirmSheet";
 import { LANGUAGES } from "../../../../constants/languages";
 import styles from "./ChatHeader.module.css";
 import { t } from "../../../../i18n";
 
 const ChatHeader = ({ title, language, languageCode, onBack, onLogout, onChangeLanguage }) => {
   const [open, setOpen] = useState(false);
-  const [canHover, setCanHover] = useState(false);
+  const [canHover] = useState(() => 
+    typeof window !== "undefined" ? window.matchMedia("(hover: hover)").matches : false
+  );
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const wrapRef = useRef(null);
-
-  useEffect(() => {
-    setCanHover(window.matchMedia("(hover: hover)").matches);
-  }, []);
 
   // The menu floats over the chat with no backdrop behind it, so closing it on a
   // tap elsewhere (or Escape) has to be handled here.
@@ -83,18 +83,29 @@ const ChatHeader = ({ title, language, languageCode, onBack, onLogout, onChangeL
       </div>
 
       {onLogout && (
-        <button
-          type="button"
-          className={styles.logoutButton}
-          onClick={onLogout}
-          aria-label={t("Logout")}
-          title={canHover ? t("Logout") : undefined}
-        >
-          {/* The word was the widest thing in the header and had to be
-              translated four ways; the symbol reads the same in all of them.
-              The label stays for screen readers and as the tooltip. */}
-          <LogoutIcon />
-        </button>
+        <>
+          <button
+            type="button"
+            className={styles.logoutButton}
+            onClick={() => setIsLogoutConfirmOpen(true)}
+            aria-label={t("Logout")}
+            title={canHover ? t("Logout") : undefined}
+          >
+            {/* The word was the widest thing in the header and had to be
+                translated four ways; the symbol reads the same in all of them.
+                The label stays for screen readers and as the tooltip. */}
+            <LogoutIcon />
+          </button>
+          
+          <LogoutConfirmSheet
+            open={isLogoutConfirmOpen}
+            onConfirm={() => {
+              setIsLogoutConfirmOpen(false);
+              onLogout();
+            }}
+            onCancel={() => setIsLogoutConfirmOpen(false)}
+          />
+        </>
       )}
     </header>
   );

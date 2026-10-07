@@ -60,11 +60,11 @@
 .logoutButton {
   border: none;
   background: transparent;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.4rem 0.2rem;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -76,13 +76,6 @@
 .logoutButton:hover {
   color: #0f172a;
   background: rgba(0, 0, 0, 0.05);
-}
-
-@media (max-width: 480px) {
-  .logoutButton {
-    font-size: 1.15rem;
-    padding: 0.4rem;
-  }
 }
 
 .langWrap {
