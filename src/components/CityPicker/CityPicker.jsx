@@ -43,7 +43,7 @@ function CityPicker({ onSubmit, disabled, placeholder = t("Write your message") 
       matchingItems={matchingCities}
       getEstimatedWidth={getEstimatedPillWidth}
       canonicalMatch={canonicalMatch}
-      onSubmit={(item) => onSubmit?.(item.name)}
+      onSubmit={(item) => onSubmit?.(item.name, item.localName || item.name)}
       disabled={disabled}
       placeholder={placeholder}
       ariaLabel={t("City selection")}

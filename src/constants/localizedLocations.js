@@ -1,3 +1,7 @@
+import { phoneticTransliterate } from "../utils/transliterate.js";
+
+const TRANSLITERATION_CACHE = new Map();
+
 export const STATE_TRANSLATIONS = {
   "andhra pradesh": { hi: "आंध्र प्रदेश", mr: "आंध्र प्रदेश", gu: "આંધ્રપ્રદેશ", bn: "অন্ধ্রপ্রদেশ" },
   "arunachal pradesh": { hi: "अरुणाचल प्रदेश", mr: "अरुणाचल प्रदेश", gu: "અરુણાચલ પ્રદેશ", bn: "অরুণাচল প্রদেশ" },
@@ -103,10 +107,26 @@ export function localizeLocation(name, state, lang) {
   } else if (STATE_TRANSLATIONS[nameKey] && STATE_TRANSLATIONS[nameKey][lang]) {
     // handle city-states like Delhi
     localName = STATE_TRANSLATIONS[nameKey][lang];
+  } else if (nameKey) {
+    const cacheKey = `${lang}:${nameKey}`;
+    if (TRANSLITERATION_CACHE.has(cacheKey)) {
+      localName = TRANSLITERATION_CACHE.get(cacheKey);
+    } else {
+      localName = phoneticTransliterate(name, lang);
+      TRANSLITERATION_CACHE.set(cacheKey, localName);
+    }
   }
 
   if (STATE_TRANSLATIONS[stateKey] && STATE_TRANSLATIONS[stateKey][lang]) {
     localState = STATE_TRANSLATIONS[stateKey][lang];
+  } else if (stateKey) {
+    const cacheKey = `${lang}:${stateKey}`;
+    if (TRANSLITERATION_CACHE.has(cacheKey)) {
+      localState = TRANSLITERATION_CACHE.get(cacheKey);
+    } else {
+      localState = phoneticTransliterate(state, lang);
+      TRANSLITERATION_CACHE.set(cacheKey, localState);
+    }
   }
 
   return { localName, localState };
