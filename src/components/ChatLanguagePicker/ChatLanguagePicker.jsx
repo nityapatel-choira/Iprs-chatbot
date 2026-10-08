@@ -1,169 +1,51 @@
 import { useMemo, useState } from "react";
 import { useCombobox } from "downshift";
-import { iso6393 } from 'iso-639-3';
 import SearchablePicker from "../SearchablePicker/SearchablePicker";
 import { t } from "../../i18n";
-
-const LANGUAGE_MAP = new Map();
-const LANGUAGE_LIST = [];
-
-const ALIASES = {
-  "panjabi": "Punjabi",
-  "bodo (india)": "Bodo",
-  "oriya": "Odia",
-};
-const EXTRA_SEARCH_KEYS = {
-  "punjabi": "Punjabi",
-  "meitei": "Manipuri",
-  "panjabi": "Punjabi",
-  "oriya": "Odia"
-};
-
-const INDIAN = new Set([
-  "Assamese", "Bengali", "Bodo", "Dogri", "Gujarati", "Hindi", "Kannada", "Kashmiri", "Konkani", "Maithili", "Malayalam", "Manipuri", "Marathi", "Nepali", "Odia", "Punjabi", "Sanskrit", "Santali", "Sindhi", "Tamil", "Telugu", "Urdu", "Bhojpuri", "English"
-]);
-
-iso6393
-  .filter(lang => lang.scope !== 'special' && ['living', 'ancient', 'constructed'].includes(lang.type))
-  .forEach(lang => {
-    let cleanName = lang.name.replace(/\s*\((macrolanguage|individual language)\)$/i, '').trim();
-    let key = cleanName.toLowerCase();
-    
-    if (ALIASES[key]) {
-      cleanName = ALIASES[key];
-      key = cleanName.toLowerCase();
-    }
-    
-    const priority = !!lang.iso6391 || INDIAN.has(cleanName);
-
-    if (!LANGUAGE_MAP.has(key)) {
-      LANGUAGE_MAP.set(key, cleanName);
-    }
-    
-    const existing = LANGUAGE_LIST.find(item => item.name === cleanName);
-    if (existing) {
-      if (priority) existing.isPriority = true;
-    } else {
-      LANGUAGE_LIST.push({ name: cleanName, lower: key, isPriority: priority });
-    }
-  });
-
-Object.entries(EXTRA_SEARCH_KEYS).forEach(([key, name]) => {
-  LANGUAGE_MAP.set(key, name);
-  const canonicalItem = LANGUAGE_LIST.find(item => item.name === name);
-  const isPriority = canonicalItem ? canonicalItem.isPriority : false;
-
-  if (!LANGUAGE_LIST.some(item => item.lower === key)) {
-    LANGUAGE_LIST.push({ name, lower: key, isPriority });
-  }
-});
-
-function getSuggestions(query) {
-  const normalized = query.toLowerCase().trim();
-  if (!normalized) return [];
-
-  const exactPriority = [];
-  const indianStartsWith = [];
-  const priorityStartsWith = [];
-  const otherStartsWith = [];
-  const contains = [];
-  const noisyContains = [];
-
-  for (let i = 0; i < LANGUAGE_LIST.length; i++) {
-    const lang = LANGUAGE_LIST[i];
-    
-    if (!lang.lower.includes(normalized)) continue;
-    
-    const isNoisy = /(creole|pidgin|cape)/i.test(lang.name);
-    const isIndian = INDIAN.has(lang.name);
-
-    if (lang.lower === normalized) {
-      if (lang.isPriority || isIndian) {
-        exactPriority.push(lang);
-      } else {
-        otherStartsWith.push(lang);
-      }
-    } else if (lang.lower.startsWith(normalized)) {
-      if (isIndian) {
-        indianStartsWith.push(lang);
-      } else if (lang.isPriority) {
-        priorityStartsWith.push(lang);
-      } else {
-        otherStartsWith.push(lang);
-      }
-    } else {
-      if (isNoisy) {
-        noisyContains.push(lang);
-      } else {
-        contains.push(lang);
-      }
-    }
-  }
-
-  exactPriority.sort((a, b) => a.name.localeCompare(b.name));
-  indianStartsWith.sort((a, b) => a.name.localeCompare(b.name));
-  priorityStartsWith.sort((a, b) => a.name.localeCompare(b.name));
-  otherStartsWith.sort((a, b) => a.name.localeCompare(b.name));
-  contains.sort((a, b) => a.name.localeCompare(b.name));
-  noisyContains.sort((a, b) => a.name.localeCompare(b.name));
-
-  const all = [
-    ...exactPriority, 
-    ...indianStartsWith, 
-    ...priorityStartsWith, 
-    ...otherStartsWith, 
-    ...contains, 
-    ...noisyContains
-  ];
-  
-  const uniqueNames = new Set();
-  const result = [];
-  for (const item of all) {
-    if (!uniqueNames.has(item.name)) {
-      uniqueNames.add(item.name);
-      result.push(item);
-    }
-  }
-
-  return result;
-}
+import { getLanguageCode } from "../../services/languagePreference";
+import { searchLanguages, getCanonicalName, getLanguageDisplayName } from "../../../packages/choira-iso-639-3/index.js";
 
 function getEstimatedPillWidth(item) {
   const charWidth = 8.2;
   const padding = 35;
-  return Math.ceil(item.name.length * charWidth + padding);
+  const displayName = item.displayName || item.name || "";
+  return Math.ceil(displayName.length * charWidth + padding);
 }
 
 function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your message"), clearOnSubmit = false, isMulti = false }) {
   const [inputValue, setInputValue] = useState("");
+  const uiLanguageCode = getLanguageCode() || "en";
 
   const parts = isMulti ? inputValue.split(",") : [inputValue];
   const lastPart = parts[parts.length - 1] || "";
   const trimmed = lastPart.trim();
-  const isMinLength = trimmed.length >= 2;
-  
+  const isSearchable = trimmed.length >= 2;
+
   const matchingLanguages = useMemo(() => {
-    return isMinLength ? getSuggestions(trimmed) : [];
-  }, [isMinLength, trimmed]);
+    return isSearchable ? searchLanguages(trimmed, uiLanguageCode) : [];
+  }, [isSearchable, trimmed, uiLanguageCode]);
 
   const canonicalMatch = useMemo(() => {
     if (!trimmed) return null;
-    const lower = trimmed.toLowerCase();
-    if (LANGUAGE_MAP.has(lower)) {
-      return { name: LANGUAGE_MAP.get(lower) };
+    const canonical = getCanonicalName(trimmed);
+    if (canonical) {
+      return {
+        canonicalName: canonical,
+        name: getLanguageDisplayName(canonical, uiLanguageCode)
+      };
     }
     return matchingLanguages.length > 0 ? matchingLanguages[0] : null;
-  }, [trimmed, matchingLanguages]);
+  }, [trimmed, uiLanguageCode, matchingLanguages]);
 
   const handleSelectSuggestion = (item) => {
     if (disabled || !item) return;
-    
-    const itemName = LANGUAGE_MAP.has(item.name.toLowerCase()) ? LANGUAGE_MAP.get(item.name.toLowerCase()) : item.name;
-    
+
+    const canonical = item.canonicalName || getCanonicalName(item.name) || item.name;
+
     if (isMulti) {
       const allParts = inputValue.split(",");
       allParts.pop(); // remove partial search term
-      const newValue = [...allParts.map(p => p.trim()).filter(Boolean), itemName].join(", ");
+      const newValue = [...allParts.map(p => p.trim()).filter(Boolean), canonical].join(", ");
       setInputValue(newValue);
     }
   };
@@ -182,21 +64,29 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your me
 
   const handleSubmit = (item) => {
     if (disabled) return;
-    const lower = trimmed.toLowerCase();
     let submittedValue = null;
-    
+    let displayValue = null;
+
     if (isMulti) {
-      submittedValue = inputValue.split(",").map(s => s.trim()).filter(Boolean).join(", ");
+      const canonicals = inputValue.split(",").map(s => s.trim()).filter(Boolean).map(val => getCanonicalName(val) || val);
+      submittedValue = canonicals.join(", ");
+      displayValue = canonicals.map(c => getLanguageDisplayName(c, uiLanguageCode)).join(", ");
     } else {
-      if (LANGUAGE_MAP.has(lower)) {
-        submittedValue = LANGUAGE_MAP.get(lower);
-      } else if (item && LANGUAGE_MAP.has(item.name.toLowerCase())) {
-        submittedValue = item.name;
+      const directCanonical = getCanonicalName(trimmed);
+      if (directCanonical) {
+        submittedValue = directCanonical;
+        displayValue = getLanguageDisplayName(directCanonical, uiLanguageCode);
+      } else if (item) {
+        submittedValue = item.canonicalName || getCanonicalName(item.name) || item.name;
+        displayValue = item.displayName || getLanguageDisplayName(submittedValue, uiLanguageCode);
+      } else if (canonicalMatch) {
+        submittedValue = canonicalMatch.canonicalName;
+        displayValue = canonicalMatch.name;
       }
     }
 
     if (submittedValue) {
-      onSubmit?.(submittedValue);
+      onSubmit?.(submittedValue, displayValue || submittedValue);
       if (clearOnSubmit) {
         setInputValue("");
       }
@@ -205,7 +95,7 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your me
 
   const isSubmitDisabled = disabled || (isMulti 
     ? inputValue.trim().length === 0 
-    : (!LANGUAGE_MAP.has(trimmed.toLowerCase()) && !canonicalMatch));
+    : (!getCanonicalName(trimmed) && !canonicalMatch));
 
   return (
     <SearchablePicker
@@ -219,7 +109,7 @@ function ChatLanguagePicker({ onSubmit, disabled, placeholder = t("Write your me
       placeholder={placeholder}
       ariaLabel={t("Language selection")}
       noMatchesText={t("No languages found")}
-      showMenu={isMinLength}
+      showMenu={isSearchable}
       isSubmitDisabled={isSubmitDisabled}
       onSelectSuggestion={isMulti ? handleSelectSuggestion : undefined}
       stateReducer={stateReducer}
