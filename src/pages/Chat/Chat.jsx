@@ -80,7 +80,7 @@ const Chat = ({ language = "English", languageCode, onBack, onLogout, onChangeLa
     dismissPaymentResult,
   } = useBackendConversation();
 
-  useVisualViewport(pageRef);
+  useVisualViewport(pageRef, messagesRef);
 
   // Whether tapping this option should open checkout rather than answer the flow.
   //
