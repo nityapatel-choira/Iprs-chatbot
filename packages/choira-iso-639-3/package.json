@@ -1,0 +1,14 @@
+{
+  "name": "@choira/iso-639-3",
+  "version": "1.0.0",
+  "description": "ISO 639-3 language metadata with localization and search capabilities for Choira",
+  "main": "index.js",
+  "type": "module",
+  "files": [
+    "index.js",
+    "iso6393.js"
+  ],
+  "dependencies": {
+    "iso-639-3": "^3.0.1"
+  }
+}
